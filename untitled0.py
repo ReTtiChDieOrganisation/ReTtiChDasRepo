@@ -40,7 +40,7 @@ payload = {
 refresh_tokens = ['']
 
 
-payload['refresh_token']=refresh_token_FB
+payload['refresh_token']=refresh_tokens[0]
 print("Requesting Token...\n")
 res = requests.post(auth_url, data=payload, verify=False)
 access_token = res.json()['access_token']
