@@ -12,10 +12,6 @@ import time
 import random
 
 
-
-
-felix_id = '68579963'
-
 auth_url = "https://www.strava.com/oauth/token"
 
 payload = {
@@ -41,20 +37,6 @@ print("Access Token = {}\n".format(access_token))
 
 header = {'Authorization': 'Bearer ' + access_token}
 param = {'per_page': 20, 'page': 1}
-
-# =============================================================================
-# year to day stats
-# =============================================================================
-
-# y2d_stats_url = 'https://www.strava.com/api/v3/athletes/'+felix_id+'/stats?access_token='+access_token
-# year_to_day_stats_ret = requests.get(y2d_stats_url, headers=header, params=param).json()
-
-# # =============================================================================
-# # profile information
-# # =============================================================================
-
-# profile_url = "https://www.strava.com/api/v3/athletes/"+felix_id
-# profile_ret = requests.get(profile_url, headers=header, params=param).json()
 
 
 # =============================================================================
