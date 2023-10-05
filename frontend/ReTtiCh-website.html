@@ -93,7 +93,7 @@
 		let idx = -1
 
 
-		for (i = 0; i < felix_all.length; i++){
+		for (i = 0; i < felix_all.length-1; i++){
 			point = felix_all[i];
 			if (distance(point,[e.latlng.lat, e.latlng.lng])<dist){
 				dist = distance(point,[e.latlng.lat, e.latlng.lng]);
@@ -107,7 +107,7 @@
 		dist = 99999999.0
 		idx = -1
 
-		for (i = 0; i < philipp_all.length; i++){
+		for (i = 0; i < philipp_all.length-1; i++){
 			point = philipp_all[i];
 			if (distance(point,[e.latlng.lat, e.latlng.lng])<dist){
 				dist = distance(point,[e.latlng.lat, e.latlng.lng]);
