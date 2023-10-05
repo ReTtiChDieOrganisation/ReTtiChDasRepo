@@ -17,17 +17,10 @@ import random
 felix_id = '68579963'
 
 auth_url = "https://www.strava.com/oauth/token"
-# segments_url = "https://www.strava.com/api/v3/segments/14581228"
-# segments_url = "https://www.strava.com/api/v3/segments/14581228/leaderboard?"#?gender=male"#"&following=1"
-# segments_url = "https://www.strava.com/api/v3/athletes/68579963"
-# segments_url = 'https://www.strava.com/api/v3/activities/9921823048?include_all_efforts=True'
-# segments_url = "https://www.strava.com/api/v3/activities/9921823048"
-# segments_url = "https://www.strava.com/api/v3/activities/1"
-# segments_url ="https://www.strava.com/activities/9921823048"
-# segments_url ="https://www.strava.com/activities/9973161774"
+
 payload = {
     'client_id': "114307",
-    'client_secret': '2731411b1af539de9847632c978f376b92aa3ea5',
+    'client_secret':'XXXXXXXXXX',
     'refresh_token': '',
 
     'grant_type': "refresh_token",
@@ -75,8 +68,5 @@ id_last_tour = my_dataset[0]['id']
 segments_url = 'https://www.strava.com/api/v3/activities/'+str(id_last_tour)+'?include_all_efforts=True'
 my_segments = requests.get(segments_url, headers=header, params=param).json()
 
-
-# segment_url = "https://www.strava.com/api/v3/segments/14581228"
-# segment = requests.get(segment_url, headers=header).json()
 
 
