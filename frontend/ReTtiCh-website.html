@@ -76,19 +76,19 @@
 		let durations = elapsed_times.map(x => x * duration_f)
 
 		var color;
-
+	
 		trackPolyLs = []	
 		seqGroups = []	
 		for (let i=0; i < all_data.length; i++){
 			var r = Math.floor(Math.random() * 255);
-		var g = Math.floor(Math.random() * 255);
-		var b = Math.floor(Math.random() * 255);
-		color= "rgb("+r+" ,"+g+","+ b+")"; 
-		trackPolyLs.push(L.motion.polyline(lat_lngs[i], {color: color}).motionDuration(durations[i]));
-		seqGroups.push(L.motion.seq([
-			L.motion.polyline(lat_lngs[i], {color: color}).motionDuration(durations[i])
-			]).addTo(map));
+			var g = Math.floor(Math.random() * 255);
+			var b = Math.floor(Math.random() * 255);
+			color= "rgb("+r+" ,"+g+","+ b+")"; 
+			seqGroups.push(L.motion.seq([
+				L.motion.polyline(lat_lngs[i], {color: color},{duration:durations[i]})
+				]).addTo(map));
 		}
+		console.log(durations)
 		for (seqGroup of seqGroups){
 			seqGroup.motionStart();
 		}
