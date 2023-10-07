@@ -44,87 +44,96 @@
 	const felix_all = (JSON.parse(felix_json));
 	console.log(felix_all);
 	const philipp_all = (JSON.parse(philipp_json));
-	
-	const felix_latlng = felix_all.latlng.data
+	const flo_all = (JSON.parse(flo_json));
+
+
+	const all_data = [philipp_all,felix_all,flo_all];
+
+
+
+ 	const felix_latlng = felix_all.latlng.data
 	const philipp_latlng = philipp_all.latlng.data
-	
+	console.log(felix_latlng) 
+
 
     let felixIcon = L.icon({
 		iconUrl: './piqs/felix.png',
 		iconAnchor: [17, 17]
 	}); 
-	function draw(felix_latlng,philipp_latlng){
-		let conv_felix = felix_latlng.map(([lat, lng]) => ({ lat, lng }));
-		let conv_philipp = philipp_latlng.map(([lat, lng]) => ({ lat, lng }));
+	function draw(idx_set){
+		// draws all data in all_all starting with the corresponding index. So index_set should be an array of indices with the same size as all_data
+		let lat_lngs = [];
+		let elapsed_times = [];
+		for (let i=0; i < all_data.length; i++){
+			full_json = all_data[i];
+			sliced_latlng = full_json.latlng.data.slice(idx_set[i]);
+			lat_lngs.push(sliced_latlng.map(([lat, lng]) => ({ lat, lng })));
 
-		let felix_cnt = felix_latlng.length;
-		let philipp_cnt = philipp_latlng.length;
-		
-		let trackPolyline = L.motion.polyline(conv_felix, {color: "orangered"},{duration:10000} ,{icon: felixIcon, showMarker:true, iconSize: L.point(27.5, 24)});
-		let trackPolyline2 = L.motion.polyline(conv_philipp).motionDuration(10000*philipp_cnt/felix_cnt);
+			et = full_json.time.data.at(-1)-full_json.time.data[idx_set[i]];
+			elapsed_times.push(et);
+		}
+		let duration_f =10000 / Math.max(...elapsed_times);
+		let durations = elapsed_times.map(x => x * duration_f)
 
-		// Build the Sequence Group:
-		let seqGroup = L.motion.seq([
-				trackPolyline
-			]).addTo(map);
-		
-		let seqGroup2 = L.motion.seq([
-			trackPolyline2
-		]).addTo(map);
+		var color;
 
-		// Start the motion (you could put this in a timer, or some other event)
-		seqGroup.motionStart();
-		seqGroup2.motionStart();
-		return [seqGroup, seqGroup2]
+		trackPolyLs = []	
+		seqGroups = []	
+		for (let i=0; i < all_data.length; i++){
+			var r = Math.floor(Math.random() * 255);
+		var g = Math.floor(Math.random() * 255);
+		var b = Math.floor(Math.random() * 255);
+		color= "rgb("+r+" ,"+g+","+ b+")"; 
+		trackPolyLs.push(L.motion.polyline(lat_lngs[i], {color: color}).motionDuration(durations[i]));
+		seqGroups.push(L.motion.seq([
+			L.motion.polyline(lat_lngs[i], {color: color}).motionDuration(durations[i])
+			]).addTo(map));
+		}
+		for (seqGroup of seqGroups){
+			seqGroup.motionStart();
+		}
+		//let trackPolyline = L.motion.polyline(conv_felix, {color: color},{duration:10000} ,{icon: felixIcon, showMarker:true, iconSize: L.point(27.5, 24)});
+		return seqGroups
 
 	}
 
-	seqGroups = draw(felix_latlng,philipp_latlng)
-    /* const marker = L.marker([50.8524, 7.12359]).addTo(map)
-		.bindPopup('<b>Ziel!</b><br />Endlich da.').openPopup(); */
-	
-/* 	const popup = L.popup()
-	.setLatLng([50.8524, 7.12359])
-	.openOn(map); */
+	seqGroups = draw([1,1,1])
+
 	function distance(p,q) {
     	return Math.sqrt(Math.pow(p[0] - q[0], 2) + Math.pow(p[1] - q[1], 2))
 	}
+
+	function findClosestIndex(arrayOP, point){
+		// Claculates the index of the array of points for the closest to point
+		// does not check the last index
+		let dist = 99999999.0;
+		let idx = -1;
+
+		for (i = 0; i < arrayOP.length-1; i++){
+			point_i = arrayOP[i];
+			dist_i = distance(point_i,point)
+			if (dist_i<dist){
+				dist = dist_i;
+				idx = i;
+			}
+		}
+		return idx
+	}
+
 	function onMapClick(e) {
 
-		let dist = 99999999.0
-		let idx = -1
-
-
-		for (i = 0; i < felix_latlng.length-1; i++){
-			point = felix_latlng[i];
-			if (distance(point,[e.latlng.lat, e.latlng.lng])<dist){
-				dist = distance(point,[e.latlng.lat, e.latlng.lng]);
-				idx = i;
-			}
-		}
-		console.log(dist)
-		felix_window =  felix_latlng.slice(idx);
-
-
-		dist = 99999999.0
-		idx = -1
-
-		for (i = 0; i < philipp_latlng.length-1; i++){
-			point = philipp_latlng[i];
-			if (distance(point,[e.latlng.lat, e.latlng.lng])<dist){
-				dist = distance(point,[e.latlng.lat, e.latlng.lng]);
-				idx = i;
-			}
-		}
-		console.log(dist)
-		philipp_window =  philipp_latlng.slice(idx);
-
+		idx_set = [];
+		for (let i = 0; i < all_data.length; i++){
+			full_json = all_data[i];
+			idx_temp = findClosestIndex(full_json.latlng.data,[e.latlng.lat, e.latlng.lng]);
+			idx_set.push(idx_temp);
+		} 
 
 		for (seqGroup of seqGroups){
 			seqGroup.motionStop();
 			seqGroup.removeFrom(map);
 		}
-		seqGroups = draw(felix_window,philipp_window)
+		seqGroups = draw(idx_set)
 	} 
 
 	map.on('click', onMapClick);
