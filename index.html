@@ -25,7 +25,6 @@
 			width: 10000px;
 			max-width: 70%;
 			max-height: 99%;
-			border: solid black;
 		}
 		.rightdivision {
 			float: right;
@@ -35,7 +34,6 @@
 			width: 10000px;
 			max-width: 26%;
 			max-height: 99%;
-			border: solid red;
 		}
 		
 	</style>
@@ -148,8 +146,10 @@
 <div class = "rightdivision" id="stats">
 	<canvas id="myChart"></canvas>
 	<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+	<script src="./frontend/data/stats.js"></script>
 
 	<script>
+	  const medalz = (JSON.parse(medals));
 	  const ctx = document.getElementById('myChart');
 	
 	  new Chart(ctx, {
@@ -159,21 +159,21 @@
 		  datasets: [
 			{
 			label: 'Gold',
-			data: [0, 5, 21],
+			data: [medalz.Philipp[0], medalz.Felix[0], medalz.Flo[0]],
 			borderWidth: 1,
 			backgroundColor: "rgb(255,215,0)",
 			stack: 'Stack 0',
 			},
 			{
 			label: 'Silver',
-			data: [1, 19, 3],
+			data: [medalz.Philipp[1], medalz.Felix[1], medalz.Flo[1]],
 			borderWidth: 1,
 			backgroundColor: "rgb(208,208,208)",
 			stack: 'Stack 1',
 			},
 			{
 			label: 'Bronze',
-			data: [23, 0, 0],
+			data: [medalz.Philipp[2], medalz.Felix[2], medalz.Flo[2]],
 			borderWidth: 1,
 			backgroundColor: "rgb(205,127,50)",
 			stack: 'Stack 2',
