@@ -5,22 +5,14 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 import numpy as np
 import matplotlib.pyplot as plt
 import json
-import rettich_encrypt
+
+from etc import rettich_encrypt
 
 auth_url = "https://www.strava.com/oauth/token"
 
-encoded_client_secret = b'pJSopdSZ2NmkkqnUocampNHDq6fUlayjp8Sj16nDp6mml6ejp5qlpA'
-encoded_refresh_tokens_Felix = b'0ZPV1KDCo9WkxdTU1pjX1amSqaSpxdXWo5nX1aCXqKPTk9nY1ZnZpQ'
-encoded_refresh_tokens_Philipp = b'08em16GT2dapltaqoZKno6nHo6zWl9mq1JGjqabDo6fVltjUpZmorA'
-encoded_refresh_tokens_Flo = b'oJXU2NbEqqbVwtfZpsfZ16fGqabTkdejpZWno6SUp6fRxqympMWnqw'
-
-password = input("Enter password: ")
-while rettich_encrypt.decode(password, b'4sbn59nE2w') != "rettich":
-    password = input("Wrong password, enter password again: ")
-
 payload = {
     'client_id': "114307",
-    'client_secret': rettich_encrypt.decode(password, encoded_client_secret),
+    'client_secret': rettich_encrypt.decode(rettich_encrypt.password, rettich_encrypt.encoded_client_secret),
     'refresh_token': '',
     'grant_type': "refresh_token",
     'f': 'json'
@@ -29,9 +21,9 @@ payload = {
 # =============================================================================
 # Insert refresh tokens here
 # =============================================================================
-refresh_tokens = [rettich_encrypt.decode(password, encoded_refresh_tokens_Felix),
-                  rettich_encrypt.decode(password, encoded_refresh_tokens_Philipp),
-                  rettich_encrypt.decode(password, encoded_refresh_tokens_Flo)]
+refresh_tokens = [rettich_encrypt.decode(rettich_encrypt.password, rettich_encrypt.encoded_refresh_tokens_Felix),
+                  rettich_encrypt.decode(rettich_encrypt.password, rettich_encrypt.encoded_refresh_tokens_Philipp),
+                  rettich_encrypt.decode(rettich_encrypt.password, rettich_encrypt.encoded_refresh_tokens_Flo)]
 
 names = ['Felix', 'Philipp', 'Flo']
 
