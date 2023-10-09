@@ -12,8 +12,8 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
-	<script src="../frontend/dependencies/leaflet-motion/dist/leaflet.motion.js"></script>
-	<script src="./data/data.js"></script>
+	<script src="./frontend/dependencies/leaflet-motion/dist/leaflet.motion.js"></script>
+	<script src=".frontend/data/data.js"></script>
 	<style>
 		html, body {
 			height: 100%;
@@ -62,7 +62,7 @@
 
 	const all_data = [philipp_all,felix_all,flo_all];
 
-	const icon_urls = ['./piqs/philipp.png', './piqs/felix.png', './piqs/flo.png']
+	const icon_urls = ['./frontend/piqs/philipp.png', './frontend/piqs/felix.png', './frontend/piqs/flo.png']
 	function draw(idx_set){
 		// draws all data in all_all starting with the corresponding index. So index_set should be an array of indices with the same size as all_data
 		let lat_lngs = [];
