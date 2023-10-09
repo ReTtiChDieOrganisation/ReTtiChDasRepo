@@ -134,6 +134,7 @@ for segment_name in segment_list:
     ranks = sstat.rankdata(times,).astype(int)-1 
     segment_info = {'start_latlng':seg_eff['segment']['start_latlng'], 'end_latlng':seg_eff['segment']['end_latlng']}
     segment_name_clean = segment_name.replace("'","")
+    segment_name_clean = segment_name_clean.replace(',','')
     segment_efforts[segment_name_clean] = {'Felix':felix_se, 'Philipp':philipp_se, 'Flo':flo_se, 'Segment':segment_info}
     felix[ranks[0]] = felix[ranks[0]]+1
     philipp[ranks[1]] = philipp[ranks[1]]+1
