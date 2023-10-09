@@ -157,6 +157,13 @@
 			seqGroup.motionStop();
 			seqGroup.removeFrom(map);
 		}
+		if (typeof marker_start !== 'undefined'){
+			map.removeLayer(marker_start);
+		}
+
+		if (typeof marker_finish !== 'undefined'){
+			map.removeLayer(marker_finish);
+		}
 		seqGroups = draw(idx_set)
 	} 
 
