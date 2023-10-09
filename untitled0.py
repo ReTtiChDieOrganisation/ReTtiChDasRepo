@@ -89,15 +89,52 @@ flo = [0,0,0]
 
 segment_efforts = {}
 
-for i, segment_name in enumerate(segment_list):
-    felix_time = [a['elapsed_time'] for a in segments[0]['segment_efforts'] if a['name']==segment_name][0]
-    flo_time = [a['elapsed_time'] for a in segments[2]['segment_efforts'] if a['name']==segment_name][0]
-    philipp_time = [a['elapsed_time'] for a in segments[1]['segment_efforts'] if a['name']==segment_name][0]
+
+for segment_name in segment_list:
+    felix_se = {}
+    philipp_se = {}
+    flo_se = {}
+    for i in range(len(segments[0]['segment_efforts'])):
+        if segments[0]['segment_efforts'][i]['name']==segment_name:
+            seg_eff = segments[0]['segment_efforts'][i]
+            felix_se['time'] = seg_eff['elapsed_time']
+            felix_se['speed'] = seg_eff['distance']*60*60/(1000*seg_eff['elapsed_time'])
+            felix_se['start_index'] = seg_eff['start_index']
+            felix_se['end_index'] = seg_eff['end_index']
+            
+            if 'average_watts' in seg_eff.keys():
+                felix_se['power'] = seg_eff['average_watts']
+
+    for i in range(len(segments[1]['segment_efforts'])):
+        if segments[1]['segment_efforts'][i]['name']==segment_name:
+            seg_eff = segments[1]['segment_efforts'][i]
+            philipp_se['time'] = seg_eff['elapsed_time']
+            philipp_se['speed'] = seg_eff['distance']*60*60/(1000*seg_eff['elapsed_time'])
+            philipp_se['start_index'] = seg_eff['start_index']
+            philipp_se['end_index'] = seg_eff['end_index']
+            
+            if 'average_watts' in seg_eff.keys():
+                philipp_se['power'] = seg_eff['average_watts']
+
+    for i in range(len(segments[2]['segment_efforts'])):
+        if segments[2]['segment_efforts'][i]['name']==segment_name:
+            seg_eff = segments[2]['segment_efforts'][i]
+            flo_se['time'] = seg_eff['elapsed_time']
+            flo_se['speed'] = seg_eff['distance']*60*60/(1000*seg_eff['elapsed_time'])
+            flo_se['start_index'] = seg_eff['start_index']
+            flo_se['end_index'] = seg_eff['end_index']
+            
+            if 'average_watts' in seg_eff.keys():
+                flo_se['power'] = seg_eff['average_watts']
+            
+
+
     
-    times = [felix_time, philipp_time, flo_time]
+    times = [felix_se['time'], philipp_se['time'], flo_se['time']]
     ranks = sstat.rankdata(times,).astype(int)-1 
+    segment_info = {'start_latlng':seg_eff['segment']['start_latlng'], 'end_latlng':seg_eff['segment']['end_latlng']}
     segment_name_clean = segment_name.replace("'","")
-    segment_efforts[segment_name_clean] = {'Felix':felix_time, 'Philipp':philipp_time, 'Flo':flo_time}
+    segment_efforts[segment_name_clean] = {'Felix':felix_se, 'Philipp':philipp_se, 'Flo':flo_se, 'Segment':segment_info}
     felix[ranks[0]] = felix[ranks[0]]+1
     philipp[ranks[1]] = philipp[ranks[1]]+1
     flo[ranks[2]] = flo[ranks[2]]+1
