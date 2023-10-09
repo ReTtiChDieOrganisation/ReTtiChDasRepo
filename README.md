@@ -2,3 +2,5 @@
 Sommute Insight Genius (ReTtiCh)
 
 Strava in depth analysis of our way to work.
+
+![Alt text](pics/ReTtiChDasBild.png?raw=true "Title")
