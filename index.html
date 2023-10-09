@@ -81,12 +81,14 @@
 		var color;
 	
 		trackPolyLs = []	
-		seqGroups = []	
+		seqGroups = []
+		colors = []	
 		for (let i=0; i < all_data.length; i++){
 			var r = Math.floor(Math.random() * 255);
 			var g = Math.floor(Math.random() * 255);
 			var b = Math.floor(Math.random() * 255);
 			color= "rgba("+r+" ,"+g+","+ b+")"; 
+			colors.push(color)
 			seqGroups.push(L.motion.seq([
 				L.motion.polyline(lat_lngs[i], {color: color},{duration:durations[i]},{icon: L.icon({iconUrl: icon_urls[i],	iconAnchor: [17, 17], iconSize: [35, 35]}) , showMarker:true, iconSize: L.point(27.5, 24)})
 				]).addTo(map));
@@ -153,16 +155,36 @@
 	  new Chart(ctx, {
 		type: 'bar',
 		data: {
-		  labels: ['Red', 'Flo', 'Yellow', 'Green', 'Purple', 'Orange'],
-		  datasets: [{
-			label: '# of Votes',
-			data: [12, 190, 3, 5, 2, 3],
-			borderWidth: 1
-		  }]
+		  labels: ['Filipp', 'Felix', 'Flo'],
+		  datasets: [
+			{
+			label: 'Gold',
+			data: [2, 19, 3],
+			borderWidth: 1,
+			backgroundColor: "rgb(255,215,0)",
+			stack: 'Stack 0',
+			},
+			{
+			label: 'Silver',
+			data: [1, 0, 2],
+			borderWidth: 1,
+			backgroundColor: "rgb(208,208,208)",
+			stack: 'Stack 1',
+			},
+			{
+			label: 'Bronze',
+			data: [24, 1, 1],
+			borderWidth: 1,
+			backgroundColor: "rgb(205,127,50)",
+			stack: 'Stack 2',
+			},
+
+		]
 		},
 		options: {
 		  scales: {
 			y: {
+			  stacked: true,
 			  beginAtZero: true
 			}
 		  }
