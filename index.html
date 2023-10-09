@@ -5,7 +5,7 @@
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	
-	<title>Sommute Insight Genius (ReTtiCh)</title>
+	<title>ReTtiCh</title>
 	
 	<link rel="shortcut icon" type="image/x-icon" href="https://raw.githubusercontent.com/ReTtiChDieOrganisation/ReTtiChDasRepo/main/pics/ReTtiChDasBild.png" />
 
@@ -33,9 +33,17 @@
 			height: 9000px;
 			width: 10000px;
 			max-width: 26%;
-			max-height: 99%;
+			max-height: 30%;
 		}
-		
+		.rightdivision2 {
+			float: right;
+			padding-right: 3%;
+			padding-top: 0%;
+			height: 900px;
+			width: 10000px;
+			max-width: 26%;
+			max-height: 48%;
+					}		
 	</style>
 
 	
@@ -191,6 +199,92 @@
 		}
 	  });
 	</script>
+</div>
+<div class = "rightdivision2" id="stats">
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+	<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.css" />
+	<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.js"></script>	
+
+	<select id="sel" onchange="getComboA(this)">
+		<option value="">--Please choose a segment--</option>
+	</select>
+	<table id="stats_table" class="display" style="width:100%">
+        <thead>
+            <tr>
+                <th>Rider</th>
+                <th>Time [min:s]</th>
+                <th>Speed [km/h]</th>
+				<th>Power [W]</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Philipp</td>
+                <td align="center"></td>
+                <td align="center"></td>
+				<td align="center"></td>
+
+            </tr>
+            <tr>
+                <td>Felix</td>
+                <td align="center"></td>
+                <td align="center"></td>
+				<td align="center"></td>
+            </tr>
+			<tr>
+                <td>Flo</td>
+                <td align="center"></td>
+                <td align="center"></td>
+				<td align="center"></td>
+            </tr>
+		</tbody>
+	</table>
+	<script>
+		const segments = (JSON.parse(segment_efforts));
+		let value = 0
+		let myTable = document.getElementById("stats_table");
+		$(function() {
+		$.each(segments, function(i, option) {
+			$('#sel').append($('<option/>').attr("value", [i, option.Philipp, option.Felix, option.Flo]).text(i));
+		});
+		})
+		function fancyTimeFormat(duration) {
+			// Hours, minutes and seconds
+			const hrs = ~~(duration / 3600);
+			const mins = ~~((duration % 3600) / 60);
+			const secs = ~~duration % 60;
+
+			// Output like "1:01" or "4:03:59" or "123:03:59"
+			let ret = "";
+
+			if (hrs > 0) {
+				ret += "" + hrs + ":" + (mins < 10 ? "0" : "");
+			}
+
+			ret += "" + mins + ":" + (secs < 10 ? "0" : "");
+			ret += "" + secs;
+
+			return ret;
+		}
+		function getComboA(selectObject) {
+			value = selectObject.value; 
+			key = selectObject;
+			console.log(key) 
+			seperated_values = value.split(',');
+			for (let i = 1; i < 4; i++) {
+				myTable.rows[i].cells[1].textContent = fancyTimeFormat(seperated_values[i]);
+			}
+
+			
+		}		
+		
+			
+		</script>
+
+	<script>
+
+	</script>
+	
 </div>
 </body>
 </html>
