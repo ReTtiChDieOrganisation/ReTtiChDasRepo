@@ -89,15 +89,15 @@ flo = [0,0,0]
 
 segment_efforts = {}
 
-for segment_name in segment_list:
+for i, segment_name in enumerate(segment_list):
     felix_time = [a['elapsed_time'] for a in segments[0]['segment_efforts'] if a['name']==segment_name][0]
     flo_time = [a['elapsed_time'] for a in segments[2]['segment_efforts'] if a['name']==segment_name][0]
     philipp_time = [a['elapsed_time'] for a in segments[1]['segment_efforts'] if a['name']==segment_name][0]
     
     times = [felix_time, philipp_time, flo_time]
     ranks = sstat.rankdata(times,).astype(int)-1 
-    
-    segment_efforts[segment_name] = {'Felix':felix_time, 'Philipp':philipp_time, 'Flo':flo_time}
+    segment_name_clean = segment_name.replace("'","")
+    segment_efforts[segment_name_clean] = {'Felix':felix_time, 'Philipp':philipp_time, 'Flo':flo_time}
     felix[ranks[0]] = felix[ranks[0]]+1
     philipp[ranks[1]] = philipp[ranks[1]]+1
     flo[ranks[2]] = flo[ranks[2]]+1
