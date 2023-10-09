@@ -74,7 +74,7 @@ with open('./frontend/data/data.js', 'w') as f:
     f.write("'\n")
     f.write("philipp_json = '")
     json.dump(streams[1],f)
-    f.write("'\n")
+    f.write("'")
 
 def intersection(lst1, lst2):
     lst3 = [value for value in lst1 if value in lst2]
@@ -87,6 +87,8 @@ felix = [0,0,0]
 philipp = [0,0,0]
 flo = [0,0,0]
 
+segment_efforts = {}
+
 for segment_name in segment_list:
     felix_time = [a['elapsed_time'] for a in segments[0]['segment_efforts'] if a['name']==segment_name][0]
     flo_time = [a['elapsed_time'] for a in segments[2]['segment_efforts'] if a['name']==segment_name][0]
@@ -95,15 +97,22 @@ for segment_name in segment_list:
     times = [felix_time, philipp_time, flo_time]
     ranks = sstat.rankdata(times,).astype(int)-1 
     
+    segment_efforts[segment_name] = {'Felix':felix_time, 'Philipp':philipp_time, 'Flo':flo_time}
     felix[ranks[0]] = felix[ranks[0]]+1
     philipp[ranks[1]] = philipp[ranks[1]]+1
     flo[ranks[2]] = flo[ranks[2]]+1
     
-medals = {"Felix": felix, "Philipp:":philipp, "Flo":flo} 
+medals = {"Felix": felix, "Philipp":philipp, "Flo":flo} 
+
+
+
+
 
 
 with open('./frontend/data/stats.js', 'w') as f:
     f.write("medals = '")
     json.dump(medals,f)
+    f.write("'\n")
+    f.write("segment_efforts = '")
+    json.dump(segment_efforts,f)
     f.write("'")
-    
