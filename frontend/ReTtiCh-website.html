@@ -20,12 +20,25 @@
 			margin: 0;
 		}
 		.leaflet-container {
-			height: 900px;
-			width: 1000px;
-			max-width: 100%;
-			max-height: 100%;
+			float: left;
+			height: 9000px;
+			width: 10000px;
+			max-width: 70%;
+			max-height: 99%;
+			border: solid black;
 		}
-	</style
+		.rightdivision {
+			float: right;
+			padding-right: 3%;
+			padding-top: 0%;
+			height: 9000px;
+			width: 10000px;
+			max-width: 26%;
+			max-height: 99%;
+			border: solid red;
+		}
+		
+	</style>
 
 	
 </head>
@@ -33,7 +46,7 @@
 
 
 
-<div id="map" style="width: 4000px; height: 900px;"></div>
+<div id="map">
 <script>
 
 	const map = L.map('map').setView([50.896537, 7.025585], 12);
@@ -49,17 +62,7 @@
 
 	const all_data = [philipp_all,felix_all,flo_all];
 
-
-
- 	const felix_latlng = felix_all.latlng.data
-	const philipp_latlng = philipp_all.latlng.data
-	console.log(felix_latlng) 
-
-
-    let felixIcon = L.icon({
-		iconUrl: './piqs/felix.png',
-		iconAnchor: [17, 17]
-	}); 
+	const icon_urls = ['./piqs/philipp.png', './piqs/felix.png', './piqs/flo.png']
 	function draw(idx_set){
 		// draws all data in all_all starting with the corresponding index. So index_set should be an array of indices with the same size as all_data
 		let lat_lngs = [];
@@ -73,7 +76,7 @@
 			elapsed_times.push(et);
 		}
 		let duration_f =10000 / Math.max(...elapsed_times);
-		let durations = elapsed_times.map(x => x * duration_f)
+		let durations = elapsed_times.map(x => x * duration_f);
 
 		var color;
 	
@@ -83,9 +86,9 @@
 			var r = Math.floor(Math.random() * 255);
 			var g = Math.floor(Math.random() * 255);
 			var b = Math.floor(Math.random() * 255);
-			color= "rgb("+r+" ,"+g+","+ b+")"; 
+			color= "rgba("+r+" ,"+g+","+ b+")"; 
 			seqGroups.push(L.motion.seq([
-				L.motion.polyline(lat_lngs[i], {color: color},{duration:durations[i]})
+				L.motion.polyline(lat_lngs[i], {color: color},{duration:durations[i]},{icon: L.icon({iconUrl: icon_urls[i],	iconAnchor: [17, 17], iconSize: [35, 35]}) , showMarker:true, iconSize: L.point(27.5, 24)})
 				]).addTo(map));
 		}
 		console.log(durations)
@@ -139,8 +142,33 @@
 	map.on('click', onMapClick);
 
 </script>
+</div>
+<div class = "rightdivision" id="stats">
+	<canvas id="myChart"></canvas>
+	<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-
-
+	<script>
+	  const ctx = document.getElementById('myChart');
+	
+	  new Chart(ctx, {
+		type: 'bar',
+		data: {
+		  labels: ['Red', 'Flo', 'Yellow', 'Green', 'Purple', 'Orange'],
+		  datasets: [{
+			label: '# of Votes',
+			data: [12, 190, 3, 5, 2, 3],
+			borderWidth: 1
+		  }]
+		},
+		options: {
+		  scales: {
+			y: {
+			  beginAtZero: true
+			}
+		  }
+		}
+	  });
+	</script>
+</div>
 </body>
 </html>
