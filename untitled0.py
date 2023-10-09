@@ -4,7 +4,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 import numpy as np
 import matplotlib.pyplot as plt
-
+import json
 import rettich_encrypt
 
 auth_url = "https://www.strava.com/oauth/token"
@@ -70,38 +70,15 @@ for refresh_token in refresh_tokens:
     
     streams.append(all_stream)
     segments.append(my_segments)
-    
-lat_lngs = [a['latlng']['data'] for a in streams]
 
 
-max_length= max([len(a) for a in lat_lngs])
-
-lat_lngs_arr = np.empty((max_length,2,len(lat_lngs)))
-lat_lngs_arr.fill(np.nan)
-
-
-for i,ll in enumerate(lat_lngs):
-    ll_arr = np.array(ll)
-    lat_lngs_arr[-len(ll):,:,i]=ll_arr
-
-
-
-max_lat = np.nanmax(lat_lngs_arr[:,0,:])
-min_lat = np.nanmin(lat_lngs_arr[:,0,:])
-
-max_lng = np.nanmax(lat_lngs_arr[:,1,:])
-min_lng = np.nanmin(lat_lngs_arr[:,1,:])
-
-
-for i in range(65):
-    for rider in range(len(names)):
-        plt.scatter(lat_lngs_arr[i*60,0,rider],lat_lngs_arr[i*60,1,rider],label=names[rider])
-    plt.xlim([min_lat,max_lat])
-    plt.ylim([min_lng,max_lng])
-    plt.legend()
-    plt.show()
-
-segment_name = 'Ab nach Porz'
-for seg_eff in my_segments['segment_efforts']:
-    if seg_eff['name']==segment_name:
-        break
+with open('./frontend/data/data.js', 'w') as f:
+    f.write("felix_json = '")
+    json.dump(streams[0],f)
+    f.write("'\n")
+    f.write("flo_json = '")
+    json.dump(streams[2],f)
+    f.write("'\n")
+    f.write("philipp_json = '")
+    json.dump(streams[1],f)
+    f.write("'\n")
