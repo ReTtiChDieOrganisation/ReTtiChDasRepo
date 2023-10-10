@@ -65,7 +65,7 @@
 
 			const all_data = [philipp_all,felix_all,flo_all];
 			console.log(all_data);
-			const icon_urls = ['./frontend/piqs/philipp.png', './frontend/piqs/felix.png', './frontend/piqs/flo.png']
+			const icon_urls = ['./frontend/piqs/philipp_icon.png', './frontend/piqs/felix_icon.png', './frontend/piqs/flo_icon.png']
 
 			let marker_start
 			let marker_finish
@@ -104,7 +104,7 @@
 					color= "rgba("+r+" ,"+g+","+ b+")"; 
 					colors.push(color)
 					seqGroups.push(L.motion.seq([
-						L.motion.polyline(lat_lngs[i], {color: color},{duration:durations[i]},{icon: L.icon({iconUrl: icon_urls[i],	iconAnchor: [17, 17], iconSize: [35, 35]}) , showMarker:true, iconSize: L.point(27.5, 24)})
+						L.motion.polyline(lat_lngs[i], {color: color},{duration:durations[i]},{icon: L.icon({iconUrl: icon_urls[i],	iconAnchor: [21, 50], iconSize: [41, 50]}) , showMarker:true, iconSize: L.point(27.5, 24)})
 						]).addTo(map));
 				}
 				console.log(durations)
