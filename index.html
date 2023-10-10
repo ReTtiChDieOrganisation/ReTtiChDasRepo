@@ -65,10 +65,9 @@
 	const philipp_all = (JSON.parse(philipp_json));
 	const flo_all = (JSON.parse(flo_json));
 
-
 	const all_data = [philipp_all,felix_all,flo_all];
-
 	const icon_urls = ['./frontend/piqs/philipp.png', './frontend/piqs/felix.png', './frontend/piqs/flo.png']
+
 	function draw(idx_set){
 		// draws all data in all_all starting with the corresponding index. So index_set should be an array of indices with the same size as all_data
 		let lat_lngs = [];
@@ -84,15 +83,15 @@
 		let duration_f =10000 / Math.max(...elapsed_times);
 		let durations = elapsed_times.map(x => x * duration_f);
 
-		var color;
+		let color;
 	
 		trackPolyLs = []	
 		seqGroups = []
 		colors = []	
 		for (let i=0; i < all_data.length; i++){
-			var r = Math.floor(Math.random() * 255);
-			var g = Math.floor(Math.random() * 255);
-			var b = Math.floor(Math.random() * 255);
+			let r = Math.floor(Math.random() * 255);
+			let g = Math.floor(Math.random() * 255);
+			let b = Math.floor(Math.random() * 255);
 			color= "rgba("+r+" ,"+g+","+ b+")"; 
 			colors.push(color)
 			seqGroups.push(L.motion.seq([
@@ -105,7 +104,6 @@
 		}
 		//let trackPolyline = L.motion.polyline(conv_felix, {color: color},{duration:10000} ,{icon: felixIcon, showMarker:true, iconSize: L.point(27.5, 24)});
 		return seqGroups
-
 	}
 
 	seqGroups = draw([1,1,1])
