@@ -61,23 +61,34 @@
                 attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
             }).addTo(map);
 	const felix_all = (JSON.parse(felix_json));
-	console.log(felix_all);
+	
 	const philipp_all = (JSON.parse(philipp_json));
 	const flo_all = (JSON.parse(flo_json));
 
 	const all_data = [philipp_all,felix_all,flo_all];
+	console.log(all_data);
 	const icon_urls = ['./frontend/piqs/philipp.png', './frontend/piqs/felix.png', './frontend/piqs/flo.png']
 
-	function draw(idx_set){
+	let marker_start
+	let marker_finish
+
+	function draw(idx_set,idx_set_end=-1){
 		// draws all data in all_all starting with the corresponding index. So index_set should be an array of indices with the same size as all_data
 		let lat_lngs = [];
 		let elapsed_times = [];
+		
 		for (let i=0; i < all_data.length; i++){
 			full_json = all_data[i];
-			sliced_latlng = full_json.latlng.data.slice(idx_set[i]);
+			if (idx_set_end==-1){
+				sliced_latlng = full_json.latlng.data.slice(idx_set[i]);
+				et = full_json.time.data.at(-1)-full_json.time.data[idx_set[i]];
+			}else{
+				sliced_latlng = full_json.latlng.data.slice(idx_set[i], idx_set_end[i]);
+				et = full_json.time.data[idx_set_end[i]]-full_json.time.data[idx_set[i]];
+			}
 			lat_lngs.push(sliced_latlng.map(([lat, lng]) => ({ lat, lng })));
 
-			et = full_json.time.data.at(-1)-full_json.time.data[idx_set[i]];
+			
 			elapsed_times.push(et);
 		}
 		let duration_f =10000 / Math.max(...elapsed_times);
@@ -141,6 +152,13 @@
 		for (seqGroup of seqGroups){
 			seqGroup.motionStop();
 			seqGroup.removeFrom(map);
+		}
+		if (typeof marker_start !== 'undefined'){
+			map.removeLayer(marker_start);
+		}
+
+		if (typeof marker_finish !== 'undefined'){
+			map.removeLayer(marker_finish);
 		}
 		seqGroups = draw(idx_set)
 	} 
@@ -243,7 +261,7 @@
 		let myTable = document.getElementById("stats_table");
 		$(function() {
 		$.each(segments, function(i, option) {
-			$('#sel').append($('<option/>').attr("value", [i, option.Philipp, option.Felix, option.Flo]).text(i));
+			$('#sel').append($('<option/>').attr("value", [i, option.Philipp.time, option.Felix.time, option.Flo.time]).text(i));
 		});
 		})
 		function fancyTimeFormat(duration) {
@@ -267,13 +285,45 @@
 		function getComboA(selectObject) {
 			value = selectObject.value; 
 			key = selectObject;
-			console.log(key) 
 			seperated_values = value.split(',');
-			for (let i = 1; i < 4; i++) {
+			for (let i = 1; i < seperated_values.length; i++) {
 				myTable.rows[i].cells[1].textContent = fancyTimeFormat(seperated_values[i]);
 			}
+			for (seqGroup of seqGroups){
+			seqGroup.motionStop();
+			seqGroup.removeFrom(map);
+			}
+			let seg_name = seperated_values[0]
+		
+			start_idx_set = [segments[seg_name].Philipp.start_index,segments[seg_name].Felix.start_index,segments[seg_name].Flo.start_index]
+			end_idx_set = [segments[seg_name].Philipp.end_index,segments[seg_name].Felix.end_index,segments[seg_name].Flo.end_index]
+			console.log(segments[seg_name])
+			let start_icon = L.icon({
+				iconUrl: './frontend/piqs/start.png',
+				iconSize:     [38, 38], // size of the icon
 
-			
+				iconAnchor:   [19,19], // point of the icon which will correspond to marker's location
+
+			});
+
+			let finish_icon = L.icon({
+				iconUrl: './frontend/piqs/finish.png',
+				iconSize:     [38, 38], // size of the icon
+				iconAnchor:   [0, 0], // point of the icon which will correspond to marker's location
+			});
+			draw(start_idx_set,end_idx_set)
+			if (typeof marker_start !== 'undefined'){
+				map.removeLayer(marker_start);
+			}
+
+			if (typeof marker_finish !== 'undefined'){
+				map.removeLayer(marker_finish);
+			}
+
+			marker_start = L.marker(segments[seg_name].Segment.start_latlng, {icon: start_icon}).addTo(map);
+			marker_finish = L.marker(segments[seg_name].Segment.end_latlng, {icon: finish_icon}).addTo(map);
+
+
 		}		
 		
 			
