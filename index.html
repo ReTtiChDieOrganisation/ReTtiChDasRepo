@@ -107,7 +107,6 @@
 						L.motion.polyline(lat_lngs[i], {color: color},{duration:durations[i]},{icon: L.icon({iconUrl: icon_urls[i],	iconAnchor: [24, 60], iconSize: [47, 60]}) , showMarker:true, iconSize: L.point(27.5, 24)})
 						]).addTo(map));
 				}
-				console.log(durations)
 				for (seqGroup of seqGroups){
 					seqGroup.motionStart();
 				}
@@ -287,30 +286,9 @@
 				value = selectObject.value; 
 				key = selectObject;
 				seperated_values = value.split(',');
-				for (let i = 1; i < seperated_values.length; i++) {
-					myTable.rows[i].cells[1].textContent = fancyTimeFormat(seperated_values[i]);
-				}
 				for (seqGroup of seqGroups){
 				seqGroup.motionStop();
 				seqGroup.removeFrom(map);
-				}
-				let seg_name = seperated_values[0]
-			
-				start_idx_set = [segments[seg_name].Philipp.start_index,segments[seg_name].Felix.start_index,segments[seg_name].Flo.start_index]
-				end_idx_set = [segments[seg_name].Philipp.end_index,segments[seg_name].Felix.end_index,segments[seg_name].Flo.end_index]
-				console.log(segments[seg_name])
-				let start_icon = L.icon({
-					iconUrl: './frontend/piqs/start.png',
-					iconSize:     [21, 21], // size of the icon
-					iconAnchor:   [11,11], // point of the icon which will correspond to marker's location
-				});
-
-				let finish_icon = L.icon({
-					iconUrl: './frontend/piqs/finish.png',
-					iconSize:     [21, 21], // size of the icon
-					iconAnchor:   [11, 11], // point of the icon which will correspond to marker's location
-				});
-				draw(start_idx_set,end_idx_set)
 				if (typeof marker_start !== 'undefined'){
 					map.removeLayer(marker_start);
 				}
@@ -318,9 +296,35 @@
 				if (typeof marker_finish !== 'undefined'){
 					map.removeLayer(marker_finish);
 				}
+				}
+				if (seperated_values==""){
+					seqGroups = draw([1,1,1])
+				} else {
+					for (let i = 1; i < seperated_values.length; i++) {
+						myTable.rows[i].cells[1].textContent = fancyTimeFormat(seperated_values[i]);
+					}
 
-				marker_start = L.marker(segments[seg_name].Segment.start_latlng, {icon: start_icon}).addTo(map);
-				marker_finish = L.marker(segments[seg_name].Segment.end_latlng, {icon: finish_icon}).addTo(map);
+					let seg_name = seperated_values[0]
+				
+					start_idx_set = [segments[seg_name].Philipp.start_index,segments[seg_name].Felix.start_index,segments[seg_name].Flo.start_index]
+					end_idx_set = [segments[seg_name].Philipp.end_index,segments[seg_name].Felix.end_index,segments[seg_name].Flo.end_index]
+					let start_icon = L.icon({
+						iconUrl: './frontend/piqs/start.png',
+						iconSize:     [21, 21], // size of the icon
+						iconAnchor:   [11,11], // point of the icon which will correspond to marker's location
+					});
+
+					let finish_icon = L.icon({
+						iconUrl: './frontend/piqs/finish.png',
+						iconSize:     [21, 21], // size of the icon
+						iconAnchor:   [11, 11], // point of the icon which will correspond to marker's location
+					});
+					draw(start_idx_set,end_idx_set)
+
+
+					marker_start = L.marker(segments[seg_name].Segment.start_latlng, {icon: start_icon}).addTo(map);
+					marker_finish = L.marker(segments[seg_name].Segment.end_latlng, {icon: finish_icon}).addTo(map);
+				}
 			}
 		</script>
 	</div>
