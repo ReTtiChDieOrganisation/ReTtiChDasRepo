@@ -200,7 +200,7 @@
 					idx_temp = findClosestIndex(full_json.latlng.data,[e.latlng.lat, e.latlng.lng]);
 					idx_set.push(idx_temp);
 				}
-				refresh(idx_set)
+				remove_all_riders(idx_set)
 				seqGroups = draw(idx_set)
 			}
 
@@ -231,7 +231,12 @@
 						seqGroup.motionToggle();
 					}else if (key == "restart"){
 						remove_all_riders()
-						draw_segment($("#sel").val().split(','))
+						current_segment = $("#sel").val().split(',')
+						if (current_segment == ""){
+							draw([1,1,1])
+						}else{
+							draw_segment(current_segment)
+						}
 					}
 				}
 			}
