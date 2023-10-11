@@ -1,5 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
+
+<!-- head -->
 <head>
 	<base target="_top">
 	<meta charset="utf-8">
@@ -45,298 +47,306 @@
 			max-height: 48%;
 					}		
 	</style>
-
-	
 </head>
+
+<!-- body -->
 <body>
+	<div id="map">
+		<script>
+			const map = L.map('map').setView([50.896537, 7.025585], 12);
 
-
-
-<div id="map">
-<script>
-
-	const map = L.map('map').setView([50.896537, 7.025585], 12);
-
-	const tiles = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-                attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
-            }).addTo(map);
-	const felix_all = (JSON.parse(felix_json));
-	
-	const philipp_all = (JSON.parse(philipp_json));
-	const flo_all = (JSON.parse(flo_json));
-
-
-	const all_data = [philipp_all,felix_all,flo_all];
-	console.log(all_data);
-	const icon_urls = ['./frontend/piqs/philipp.png', './frontend/piqs/felix.png', './frontend/piqs/flo.png']
-
-	let marker_start
-	let marker_finish
-
-
-
-	function draw(idx_set,idx_set_end=-1){
-		// draws all data in all_all starting with the corresponding index. So index_set should be an array of indices with the same size as all_data
-		let lat_lngs = [];
-		let elapsed_times = [];
-		
-		for (let i=0; i < all_data.length; i++){
-			full_json = all_data[i];
-			if (idx_set_end==-1){
-				sliced_latlng = full_json.latlng.data.slice(idx_set[i]);
-				et = full_json.time.data.at(-1)-full_json.time.data[idx_set[i]];
-			}else{
-				sliced_latlng = full_json.latlng.data.slice(idx_set[i], idx_set_end[i]);
-				et = full_json.time.data[idx_set_end[i]]-full_json.time.data[idx_set[i]];
-			}
-			lat_lngs.push(sliced_latlng.map(([lat, lng]) => ({ lat, lng })));
-
+			const tiles = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+						attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+					}).addTo(map);
+			const felix_all = (JSON.parse(felix_json));
 			
-			elapsed_times.push(et);
-		}
-		let duration_f =10000 / Math.max(...elapsed_times);
-		let durations = elapsed_times.map(x => x * duration_f);
+			const philipp_all = (JSON.parse(philipp_json));
+			const flo_all = (JSON.parse(flo_json));
 
-		var color;
-	
-		trackPolyLs = []	
-		seqGroups = []
-		colors = []	
-		for (let i=0; i < all_data.length; i++){
-			var r = Math.floor(Math.random() * 255);
-			var g = Math.floor(Math.random() * 255);
-			var b = Math.floor(Math.random() * 255);
-			color= "rgba("+r+" ,"+g+","+ b+")"; 
-			colors.push(color)
-			seqGroups.push(L.motion.seq([
-				L.motion.polyline(lat_lngs[i], {color: color},{duration:durations[i]},{icon: L.icon({iconUrl: icon_urls[i],	iconAnchor: [17, 17], iconSize: [35, 35]}) , showMarker:true, iconSize: L.point(27.5, 24)})
-				]).addTo(map));
-		}
-		console.log(durations)
-		for (seqGroup of seqGroups){
-			seqGroup.motionStart();
-		}
-		//let trackPolyline = L.motion.polyline(conv_felix, {color: color},{duration:10000} ,{icon: felixIcon, showMarker:true, iconSize: L.point(27.5, 24)});
-		return seqGroups
-
-	}
-
-	seqGroups = draw([1,1,1])
-
-	function distance(p,q) {
-    	return Math.sqrt(Math.pow(p[0] - q[0], 2) + Math.pow(p[1] - q[1], 2))
-	}
-
-	function findClosestIndex(arrayOP, point){
-		// Claculates the index of the array of points for the closest to point
-		// does not check the last index
-		let dist = 99999999.0;
-		let idx = -1;
-
-		for (i = 0; i < arrayOP.length-1; i++){
-			point_i = arrayOP[i];
-			dist_i = distance(point_i,point)
-			if (dist_i<dist){
-				dist = dist_i;
-				idx = i;
-			}
-		}
-		return idx
-	}
-
-	function onMapClick(e) {
-
-		idx_set = [];
-		for (let i = 0; i < all_data.length; i++){
-			full_json = all_data[i];
-			idx_temp = findClosestIndex(full_json.latlng.data,[e.latlng.lat, e.latlng.lng]);
-			idx_set.push(idx_temp);
-		} 
-
-		for (seqGroup of seqGroups){
-			seqGroup.motionStop();
-			seqGroup.removeFrom(map);
-		}
-		if (typeof marker_start !== 'undefined'){
-			map.removeLayer(marker_start);
-		}
-
-		if (typeof marker_finish !== 'undefined'){
-			map.removeLayer(marker_finish);
-		}
-		seqGroups = draw(idx_set)
-	} 
-
-	map.on('click', onMapClick);
-
-</script>
-</div>
-<div class = "rightdivision" id="stats">
-	<canvas id="myChart"></canvas>
-	<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-	<script src="./frontend/data/stats.js"></script>
-
-	<script>
-	  const medalz = (JSON.parse(medals));
-	  const ctx = document.getElementById('myChart');
-	
-	  new Chart(ctx, {
-		type: 'bar',
-		data: {
-		  labels: ['Filipp', 'Felix', 'Flo'],
-		  datasets: [
-			{
-			label: 'Gold',
-			data: [medalz.Philipp[0], medalz.Felix[0], medalz.Flo[0]],
-			borderWidth: 1,
-			backgroundColor: "rgb(255,215,0)",
-			stack: 'Stack 0',
-			},
-			{
-			label: 'Silver',
-			data: [medalz.Philipp[1], medalz.Felix[1], medalz.Flo[1]],
-			borderWidth: 1,
-			backgroundColor: "rgb(208,208,208)",
-			stack: 'Stack 1',
-			},
-			{
-			label: 'Bronze',
-			data: [medalz.Philipp[2], medalz.Felix[2], medalz.Flo[2]],
-			borderWidth: 1,
-			backgroundColor: "rgb(205,127,50)",
-			stack: 'Stack 2',
-			},
-
-		]
-		},
-		options: {
-		  scales: {
-			y: {
-			  stacked: true,
-			  beginAtZero: true
-			}
-		  }
-		}
-	  });
-	</script>
-</div>
-<div class = "rightdivision2" id="stats">
-	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
-	<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.css" />
-	<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.js"></script>	
-
-	<select id="sel" onchange="getComboA(this)">
-		<option value="">--Please choose a segment--</option>
-	</select>
-	<table id="stats_table" class="display" style="width:100%">
-        <thead>
-            <tr>
-                <th>Rider</th>
-                <th>Time [min:s]</th>
-                <th>Speed [km/h]</th>
-				<th>Power [W]</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td>Philipp</td>
-                <td align="center"></td>
-                <td align="center"></td>
-				<td align="center"></td>
-
-            </tr>
-            <tr>
-                <td>Felix</td>
-                <td align="center"></td>
-                <td align="center"></td>
-				<td align="center"></td>
-            </tr>
-			<tr>
-                <td>Flo</td>
-                <td align="center"></td>
-                <td align="center"></td>
-				<td align="center"></td>
-            </tr>
-		</tbody>
-	</table>
-	<script>
-		const segments = (JSON.parse(segment_efforts));
-		let value = 0
-		let myTable = document.getElementById("stats_table");
-		$(function() {
-		$.each(segments, function(i, option) {
-			$('#sel').append($('<option/>').attr("value", [i, option.Philipp.time, option.Felix.time, option.Flo.time]).text(i));
-		});
-		})
-		function fancyTimeFormat(duration) {
-			// Hours, minutes and seconds
-			const hrs = ~~(duration / 3600);
-			const mins = ~~((duration % 3600) / 60);
-			const secs = ~~duration % 60;
-
-			// Output like "1:01" or "4:03:59" or "123:03:59"
-			let ret = "";
-
-			if (hrs > 0) {
-				ret += "" + hrs + ":" + (mins < 10 ? "0" : "");
-			}
-
-			ret += "" + mins + ":" + (secs < 10 ? "0" : "");
-			ret += "" + secs;
-
-			return ret;
-		}
-		function getComboA(selectObject) {
-			value = selectObject.value; 
-			key = selectObject;
-			seperated_values = value.split(',');
-			for (let i = 1; i < seperated_values.length; i++) {
-				myTable.rows[i].cells[1].textContent = fancyTimeFormat(seperated_values[i]);
-			}
-			for (seqGroup of seqGroups){
-			seqGroup.motionStop();
-			seqGroup.removeFrom(map);
-			}
-			let seg_name = seperated_values[0]
-		
-			start_idx_set = [segments[seg_name].Philipp.start_index,segments[seg_name].Felix.start_index,segments[seg_name].Flo.start_index]
-			end_idx_set = [segments[seg_name].Philipp.end_index,segments[seg_name].Felix.end_index,segments[seg_name].Flo.end_index]
-			console.log(segments[seg_name])
-			let start_icon = L.icon({
-				iconUrl: './frontend/piqs/start.png',
-				iconSize:     [38, 38], // size of the icon
-
-				iconAnchor:   [19,19], // point of the icon which will correspond to marker's location
-
-			});
-
-			let finish_icon = L.icon({
-				iconUrl: './frontend/piqs/finish.png',
-				iconSize:     [38, 38], // size of the icon
-				iconAnchor:   [0, 0], // point of the icon which will correspond to marker's location
-			});
-			draw(start_idx_set,end_idx_set)
-			if (typeof marker_start !== 'undefined'){
-				map.removeLayer(marker_start);
-			}
-
-			if (typeof marker_finish !== 'undefined'){
-				map.removeLayer(marker_finish);
-			}
-
-			marker_start = L.marker(segments[seg_name].Segment.start_latlng, {icon: start_icon}).addTo(map);
-			marker_finish = L.marker(segments[seg_name].Segment.end_latlng, {icon: finish_icon}).addTo(map);
-
-
-		}		
-		
+			// at the momoent the enumeration here matters, 1 philipp (green), 2 felix (red), 3 flo (blue)
+			const all_data = [philipp_all,felix_all,flo_all];
+			const icon_urls = ['./frontend/piqs/philipp_icon.png', './frontend/piqs/felix_icon.png', './frontend/piqs/flo_icon.png']
 			
+			console.log(all_data);
+			
+			let marker_start
+			let marker_finish
+
+			function draw(idx_set,idx_set_end=-1){
+				// draws all data in all_all starting with the corresponding index. So index_set should be an array of indices with the same size as all_data
+				let lat_lngs = [];
+				let elapsed_times = [];
+				
+				for (let i=0; i < all_data.length; i++){
+					full_json = all_data[i];
+					if (idx_set_end==-1){
+						sliced_latlng = full_json.latlng.data.slice(idx_set[i]);
+						et = full_json.time.data.at(-1)-full_json.time.data[idx_set[i]];
+					}else{
+						sliced_latlng = full_json.latlng.data.slice(idx_set[i], idx_set_end[i]);
+						et = full_json.time.data[idx_set_end[i]]-full_json.time.data[idx_set[i]];
+					}
+					lat_lngs.push(sliced_latlng.map(([lat, lng]) => ({ lat, lng })));
+
+					elapsed_times.push(et);
+				}
+				let duration_f =10000 / Math.max(...elapsed_times);
+				let durations = elapsed_times.map(x => x * duration_f);
+
+				let color;
+			
+				trackPolyLs = []	
+				seqGroups = []
+				colors = [
+					"rgba("+84+" ,"+130+","+53+")", // philipp (green)
+					"rgba("+197+" ,"+90+","+17+")", // felix (blue)
+					"rgba("+47+" ,"+85+","+151+")" // flo (red)
+				]
+
+				let iconsize_x = 47
+				let iconsize_y = 60
+				let iconanchor_x = 24
+				let iconanchor_y = iconsize_y
+				
+				for (let i=0; i < all_data.length; i++) {
+					seqGroups.push(L.motion.seq([
+						L.motion.polyline(
+							lat_lngs[i], 
+							{color: colors[i]},
+							{duration:durations[i]},
+							{icon: L.icon({iconUrl: icon_urls[i], iconAnchor: [iconanchor_x, iconanchor_y], iconSize: [iconsize_x, iconsize_y]}) , showMarker:true, iconSize: L.point(27.5, 24)}
+							)]).addTo(map));
+				}
+				for (seqGroup of seqGroups){
+					seqGroup.motionStart();
+				}
+				//let trackPolyline = L.motion.polyline(conv_felix, {color: color},{duration:10000} ,{icon: felixIcon, showMarker:true, iconSize: L.point(27.5, 24)});
+				return seqGroups
+			}
+
+			seqGroups = draw([1,1,1])
+
+			function distance(p,q) {
+				return Math.sqrt(Math.pow(p[0] - q[0], 2) + Math.pow(p[1] - q[1], 2))
+			}
+
+			function findClosestIndex(arrayOP, point){
+				// Claculates the index of the array of points for the closest to point
+				// does not check the last index
+				let dist = 99999999.0;
+				let idx = -1;
+
+				for (i = 0; i < arrayOP.length-1; i++){
+					point_i = arrayOP[i];
+					dist_i = distance(point_i,point)
+					if (dist_i<dist){
+						dist = dist_i;
+						idx = i;
+					}
+				}
+				return idx
+			}
+
+			function onMapClick(e) {
+
+				idx_set = [];
+				for (let i = 0; i < all_data.length; i++){
+					full_json = all_data[i];
+					idx_temp = findClosestIndex(full_json.latlng.data,[e.latlng.lat, e.latlng.lng]);
+					idx_set.push(idx_temp);
+				} 
+
+				for (seqGroup of seqGroups){
+					seqGroup.motionStop();
+					seqGroup.removeFrom(map);
+				}
+
+				if (typeof marker_start !== 'undefined'){
+					map.removeLayer(marker_start);
+				}
+
+				if (typeof marker_finish !== 'undefined'){
+					map.removeLayer(marker_finish);
+				}
+
+				seqGroups = draw(idx_set)
+			}
+
+			map.on('click', onMapClick);
 		</script>
+	</div>
 
-	<script>
+	<div class = "rightdivision" id="stats">
+		<canvas id="myChart"></canvas>
+		<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+		<script src="./frontend/data/stats.js"></script>
 
-	</script>
-	
-</div>
+		<script>
+			const medalz = (JSON.parse(medals));
+			const ctx = document.getElementById('myChart');
+			
+			new Chart(ctx,
+			{
+				type: 'bar',
+				data:
+				{
+					labels: ['Filipp', 'Felix', 'Flo'],
+					datasets: [
+					{
+						label: 'Gold',
+						data: [medalz.Philipp[0], medalz.Felix[0], medalz.Flo[0]],
+						borderWidth: 1,
+						backgroundColor: "rgb(255,215,0)",
+						stack: 'Stack 0',
+					},
+					{
+						label: 'Silver',
+						data: [medalz.Philipp[1], medalz.Felix[1], medalz.Flo[1]],
+						borderWidth: 1,
+						backgroundColor: "rgb(208,208,208)",
+						stack: 'Stack 1',
+					},
+					{
+						label: 'Bronze',
+						data: [medalz.Philipp[2], medalz.Felix[2], medalz.Flo[2]],
+						borderWidth: 1,
+						backgroundColor: "rgb(205,127,50)",
+						stack: 'Stack 2',
+					},]
+				},
+				options:
+				{
+					scales:
+					{
+						y: 
+						{
+							stacked: true,
+							beginAtZero: true
+						}
+					}
+				}
+			});
+		</script>
+	</div>
+
+	<div class = "rightdivision2" id="stats">
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+		<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.css" />
+		<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.js"></script>	
+
+		<select id="sel" onchange="getComboA(this)">
+			<option value="">--Please choose a segment--</option>
+		</select>
+		
+		<table id="stats_table" class="display" style="width:100%">
+			<thead>
+				<tr>
+					<th>Rider</th>
+					<th>Time [min:s]</th>
+					<th>Speed [km/h]</th>
+					<th>Power [W]</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td>Philipp</td>
+					<td align="center"></td>
+					<td align="center"></td>
+					<td align="center"></td>
+
+				</tr>
+				<tr>
+					<td>Felix</td>
+					<td align="center"></td>
+					<td align="center"></td>
+					<td align="center"></td>
+				</tr>
+				<tr>
+					<td>Flo</td>
+					<td align="center"></td>
+					<td align="center"></td>
+					<td align="center"></td>
+				</tr>
+			</tbody>
+		</table>
+		
+		<script>
+			const segments = (JSON.parse(segment_efforts));
+			let value = 0
+			let myTable = document.getElementById("stats_table");
+			$(function() {
+				$.each(segments, function(i, option) {
+					$('#sel').append($('<option/>').attr("value", [i, option.Philipp.time, option.Felix.time, option.Flo.time]).text(i));
+				});
+			})
+			
+			function fancyTimeFormat(duration) {
+				// Hours, minutes and seconds
+				const hrs = ~~(duration / 3600);
+				const mins = ~~((duration % 3600) / 60);
+				const secs = ~~duration % 60;
+
+				// Output like "1:01" or "4:03:59" or "123:03:59"
+				let ret = "";
+
+				if (hrs > 0) {
+					ret += "" + hrs + ":" + (mins < 10 ? "0" : "");
+				}
+
+				ret += "" + mins + ":" + (secs < 10 ? "0" : "");
+				ret += "" + secs;
+
+				return ret;
+			}
+			
+			function getComboA(selectObject) {
+				value = selectObject.value; 
+				key = selectObject;
+				seperated_values = value.split(',');
+				for (seqGroup of seqGroups){
+					seqGroup.motionStop();
+					seqGroup.removeFrom(map);
+				
+					if (typeof marker_start !== 'undefined'){
+						map.removeLayer(marker_start);
+					}
+
+					if (typeof marker_finish !== 'undefined'){
+						map.removeLayer(marker_finish);
+					}
+				}
+				
+				if (seperated_values==""){
+					seqGroups = draw([1,1,1])
+				} 
+				else {
+					for (let i = 1; i < seperated_values.length; i++) {
+						myTable.rows[i].cells[1].textContent = fancyTimeFormat(seperated_values[i]);
+					}
+
+					let seg_name = seperated_values[0]
+				
+					start_idx_set = [segments[seg_name].Philipp.start_index,segments[seg_name].Felix.start_index,segments[seg_name].Flo.start_index]
+					end_idx_set = [segments[seg_name].Philipp.end_index,segments[seg_name].Felix.end_index,segments[seg_name].Flo.end_index]
+					let start_icon = L.icon({
+						iconUrl: './frontend/piqs/start.png',
+						iconSize:     [21, 21], // size of the icon
+						iconAnchor:   [11,11], // point of the icon which will correspond to marker's location
+					});
+
+					let finish_icon = L.icon({
+						iconUrl: './frontend/piqs/finish.png',
+						iconSize:     [21, 21], // size of the icon
+						iconAnchor:   [11, 11], // point of the icon which will correspond to marker's location
+					});
+					
+					draw(start_idx_set,end_idx_set)
+
+					marker_start = L.marker(segments[seg_name].Segment.start_latlng, {icon: start_icon}).addTo(map);
+					marker_finish = L.marker(segments[seg_name].Segment.end_latlng, {icon: finish_icon}).addTo(map);
+				}
+			}
+		</script>
+	</div>
 </body>
 </html>
