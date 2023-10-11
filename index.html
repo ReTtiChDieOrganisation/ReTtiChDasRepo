@@ -102,13 +102,13 @@
 					"rgba("+197+" ,"+90+","+17+")", // felix (blue)
 					"rgba("+47+" ,"+85+","+151+")" // flo (red)
 				]
+
+				let iconsize_x = 47
+				let iconsize_y = 60
+				let iconanchor_x = 24
+				let iconanchor_y = iconsize_y
 				
 				for (let i=0; i < all_data.length; i++) {
-					let iconsize_x = 47
-					let iconsize_y = 60
-					let iconanchor_x = 24
-					let iconanchor_y = iconsize_y
-
 					seqGroups.push(L.motion.seq([
 						L.motion.polyline(
 							lat_lngs[i], 
