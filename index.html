@@ -16,6 +16,18 @@
 
 	<script src="./frontend/dependencies/leaflet-motion/dist/leaflet.motion.js"></script>
 	<script src="./frontend/data/data.js"></script>
+	<script>
+		const start_icon = L.icon({
+			iconUrl: './frontend/piqs/start.png',
+			iconSize:     [21, 21], // size of the icon
+			iconAnchor:   [11,11], // point of the icon which will correspond to marker's location
+		});
+		const finish_icon = L.icon({
+			iconUrl: './frontend/piqs/finish.png',
+			iconSize:     [21, 21], // size of the icon
+			iconAnchor:   [11, 11], // point of the icon which will correspond to marker's location
+		});
+	</script>
 	<style>
 		html, body {
 			height: 100%;
@@ -45,7 +57,40 @@
 			width: 10000px;
 			max-width: 26%;
 			max-height: 48%;
-					}		
+		}
+		#pauseButton {
+			position: relative;
+			top: 2%;
+			right: 5%;
+			padding: 10px;
+			z-index: 400;
+		}
+		#pauseButton:hover{
+			opacity: 0.8;
+			cursor: pointer;
+		}	
+		#resumeButton {
+			position: relative;
+			top: 2%;
+			right: 15%;
+			padding: 10px;
+			z-index: 400;
+		}
+		#resumeButton:hover{
+			opacity: 0.8;
+			cursor: pointer;
+		}	
+		#restartButton {
+			position: relative;
+			top: 2%;
+			right: 25%;
+			padding: 10px;
+			z-index: 400;
+		}
+		#restartButton:hover{
+			opacity: 0.8;
+			cursor: pointer;
+		}		
 	</style>
 </head>
 
@@ -154,8 +199,12 @@
 					full_json = all_data[i];
 					idx_temp = findClosestIndex(full_json.latlng.data,[e.latlng.lat, e.latlng.lng]);
 					idx_set.push(idx_temp);
-				} 
+				}
+				refresh(idx_set)
+				seqGroups = draw(idx_set)
+			}
 
+			function remove_all_riders() { 
 				for (seqGroup of seqGroups){
 					seqGroup.motionStop();
 					seqGroup.removeFrom(map);
@@ -168,14 +217,31 @@
 				if (typeof marker_finish !== 'undefined'){
 					map.removeLayer(marker_finish);
 				}
+			}
 
-				seqGroups = draw(idx_set)
+			function motion(key) {
+				for (seqGroup of seqGroups){
+					if (key == "stop"){
+						seqGroup.motionStop();
+					}else if (key == "pause"){
+						seqGroup.motionPause();
+					}else if (key == "resume"){
+						seqGroup.motionResume();
+					}else if (key == "toggle"){
+						seqGroup.motionToggle();
+					}else if (key == "restart"){
+						remove_all_riders()
+						draw_segment($("#sel").val().split(','))
+					}
+				}
 			}
 
 			map.on('click', onMapClick);
 		</script>
 	</div>
-
+	<button id="pauseButton" onClick="motion('pause')">Pause</button>
+	<button id="resumeButton" onClick="motion('resume')">Resume</button>
+	<button id="restartButton" onClick="motion('restart')">Restart</button>
 	<div class = "rightdivision" id="stats">
 		<canvas id="myChart"></canvas>
 		<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -323,28 +389,20 @@
 					for (let i = 1; i < seperated_values.length; i++) {
 						myTable.rows[i].cells[1].textContent = fancyTimeFormat(seperated_values[i]);
 					}
+					draw_segment(seperated_values)
+				}
+			}
 
+			function draw_segment(seperated_values){
 					let seg_name = seperated_values[0]
 				
 					start_idx_set = [segments[seg_name].Philipp.start_index,segments[seg_name].Felix.start_index,segments[seg_name].Flo.start_index]
 					end_idx_set = [segments[seg_name].Philipp.end_index,segments[seg_name].Felix.end_index,segments[seg_name].Flo.end_index]
-					let start_icon = L.icon({
-						iconUrl: './frontend/piqs/start.png',
-						iconSize:     [21, 21], // size of the icon
-						iconAnchor:   [11,11], // point of the icon which will correspond to marker's location
-					});
-
-					let finish_icon = L.icon({
-						iconUrl: './frontend/piqs/finish.png',
-						iconSize:     [21, 21], // size of the icon
-						iconAnchor:   [11, 11], // point of the icon which will correspond to marker's location
-					});
 					
 					draw(start_idx_set,end_idx_set)
 
 					marker_start = L.marker(segments[seg_name].Segment.start_latlng, {icon: start_icon}).addTo(map);
 					marker_finish = L.marker(segments[seg_name].Segment.end_latlng, {icon: finish_icon}).addTo(map);
-				}
 			}
 		</script>
 	</div>
