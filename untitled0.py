@@ -22,11 +22,12 @@ payload = {
 # =============================================================================
 # Insert refresh tokens here
 # =============================================================================
-refresh_tokens = [rettich_encrypt.decode(rettich_encrypt.password, rettich_encrypt.encoded_refresh_tokens_Felix),
-                  rettich_encrypt.decode(rettich_encrypt.password, rettich_encrypt.encoded_refresh_tokens_Philipp),
-                  rettich_encrypt.decode(rettich_encrypt.password, rettich_encrypt.encoded_refresh_tokens_Flo)]
 
-names = ['Felix', 'Philipp', 'Flo']
+with open('./data/unique_identifier.json','r') as f:
+    unique_identifier = json.load(f)
+names = list(unique_identifier.keys())    
+refresh_tokens = [rettich_encrypt.decode(rettich_encrypt.password, bytes(unique_identifier[name],  'utf-8'))for name in names]
+
 
 streams = []
 segments = []
@@ -66,15 +67,12 @@ for refresh_token in refresh_tokens:
 
 
 with open('./frontend/data/data.js', 'w') as f:
-    f.write("felix_json = '")
-    json.dump(streams[0],f)
-    f.write("'\n")
-    f.write("flo_json = '")
-    json.dump(streams[2],f)
-    f.write("'\n")
-    f.write("philipp_json = '")
-    json.dump(streams[1],f)
-    f.write("'")
+    for i, name in enumerate(names):
+        
+        f.write(name.lower()+"_json = '")
+        json.dump(streams[i],f)
+        f.write("'\n")
+
 
 def intersection(lst1, lst2):
     lst3 = [value for value in lst1 if value in lst2]
@@ -82,68 +80,41 @@ def intersection(lst1, lst2):
 
 segment_list = intersection([a['name'] for a in segments[2]['segment_efforts']],intersection([a['name'] for a in segments[0]['segment_efforts']],[a['name'] for a in segments[1]['segment_efforts']]))
 
-
-felix = [0,0,0]
-philipp = [0,0,0]
-flo = [0,0,0]
-
 segment_efforts = {}
-
+medal_arr = np.zeros((len(names),3))
 
 for segment_name in segment_list:
-    felix_se = {}
-    philipp_se = {}
-    flo_se = {}
-    for i in range(len(segments[0]['segment_efforts'])):
-        if segments[0]['segment_efforts'][i]['name']==segment_name:
-            seg_eff = segments[0]['segment_efforts'][i]
-            felix_se['time'] = seg_eff['elapsed_time']
-            felix_se['speed'] = seg_eff['distance']*60*60/(1000*seg_eff['elapsed_time'])
-            felix_se['start_index'] = seg_eff['start_index']
-            felix_se['end_index'] = seg_eff['end_index']
-            
-            if 'average_watts' in seg_eff.keys():
-                felix_se['power'] = seg_eff['average_watts']
 
-    for i in range(len(segments[1]['segment_efforts'])):
-        if segments[1]['segment_efforts'][i]['name']==segment_name:
-            seg_eff = segments[1]['segment_efforts'][i]
-            philipp_se['time'] = seg_eff['elapsed_time']
-            philipp_se['speed'] = seg_eff['distance']*60*60/(1000*seg_eff['elapsed_time'])
-            philipp_se['start_index'] = seg_eff['start_index']
-            philipp_se['end_index'] = seg_eff['end_index']
-            
-            if 'average_watts' in seg_eff.keys():
-                philipp_se['power'] = seg_eff['average_watts']
-
-    for i in range(len(segments[2]['segment_efforts'])):
-        if segments[2]['segment_efforts'][i]['name']==segment_name:
-            seg_eff = segments[2]['segment_efforts'][i]
-            flo_se['time'] = seg_eff['elapsed_time']
-            flo_se['speed'] = seg_eff['distance']*60*60/(1000*seg_eff['elapsed_time'])
-            flo_se['start_index'] = seg_eff['start_index']
-            flo_se['end_index'] = seg_eff['end_index']
-            
-            if 'average_watts' in seg_eff.keys():
-                flo_se['power'] = seg_eff['average_watts']
-            
+    for idx_rider, seg_stream in enumerate(segments):
+        personal_se = {}
+        for i in range(len(seg_stream['segment_efforts'])):
+            if seg_stream['segment_efforts'][i]['name']==segment_name:
+                seg_eff = seg_stream['segment_efforts'][i]
+                personal_se['time'] = seg_eff['elapsed_time']
+                personal_se['speed'] = seg_eff['distance']*60*60/(1000*seg_eff['elapsed_time'])
+                personal_se['start_index'] = seg_eff['start_index']
+                personal_se['end_index'] = seg_eff['end_index']
+                
+                if 'average_watts' in seg_eff.keys():
+                    personal_se['power'] = seg_eff['average_watts']
+        segment_name_clean = segment_name.replace("'","")
+        segment_name_clean = segment_name_clean.replace(',','')
+        if not idx_rider:
+            segment_info = {'start_latlng':seg_eff['segment']['start_latlng'], 'end_latlng':seg_eff['segment']['end_latlng']}
+            segment_efforts[segment_name_clean] = {names[idx_rider]:personal_se, 'Segment':segment_info}
+        else:
+            segment_efforts[segment_name_clean][names[idx_rider]] = personal_se
 
 
-    
-    times = [felix_se['time'], philipp_se['time'], flo_se['time']]
+
+    times = [segment_efforts[segment_name_clean][name]['time'] for name in names]
     ranks = sstat.rankdata(times,).astype(int)-1 
-    segment_info = {'start_latlng':seg_eff['segment']['start_latlng'], 'end_latlng':seg_eff['segment']['end_latlng']}
-    segment_name_clean = segment_name.replace("'","")
-    segment_name_clean = segment_name_clean.replace(',','')
-    segment_efforts[segment_name_clean] = {'Felix':felix_se, 'Philipp':philipp_se, 'Flo':flo_se, 'Segment':segment_info}
-    felix[ranks[0]] = felix[ranks[0]]+1
-    philipp[ranks[1]] = philipp[ranks[1]]+1
-    flo[ranks[2]] = flo[ranks[2]]+1
     
-medals = {"Felix": felix, "Philipp":philipp, "Flo":flo} 
+    for idx_rider in range(len(names)):
+        medal_arr[idx_rider,ranks[idx_rider]] +=1
 
-
-
+    
+medals = {names[i]: list(medal_arr[i,:]) for i in range(len(names))} 
 
 
 
