@@ -1,1 +1,3 @@
 iso8601
+requests
+scipy
