@@ -1,6 +1,8 @@
 # [ReTtiCh](https://rettichdieorganisation.github.io/ReTtiChDasRepo/)
-Sommute Insight Genius (ReTtiCh)
+ReTtiCh
 
 Strava in depth analysis of our way to work.
+
+and much more
 
 ![Alt text](pics/ReTtiChDasBild.png?raw=true "Title")
