@@ -1,6 +1,6 @@
 # vigenere cipher
 # https://stackoverflow.com/a/2490718/1675586
-import six, base64
+import six, base64, sys
 
 # use to generate new passwords or encode new access tokens
 def encode(key, string):
@@ -24,9 +24,18 @@ def decode(key, string):
     encoded_string = ''.join(encoded_chars)
     return encoded_string
 
-encoded_client_secret = b'pJSopdSZ2NmkkqnUocampNHDq6fUlayjp8Sj16nDp6mml6ejp5qlpA'
+def get_access():
+    password = input("Enter password: ")
+    i = 0
+    while decode(password, b'4sbn59nE2w') != "rettich":
+        print ("Try ", i+1, "of 3")
+        password = input("Wrong password, enter password again: ")
+        if i == 2:
+            print("Wrong password. Exit.")
+            sys.exit()
+        i += 1
+    return password
 
-
-password = input("Enter password: ")
-while decode(password, b'4sbn59nE2w') != "rettich":
-    password = input("Wrong password, enter password again: ")
+def get_client_secret():
+    encoded_client_secret = b'pJSopdSZ2NmkkqnUocampNHDq6fUlayjp8Sj16nDp6mml6ejp5qlpA'
+    return encoded_client_secret

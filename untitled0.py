@@ -11,9 +11,11 @@ from etc import rettich_encrypt
 
 auth_url = "https://www.strava.com/oauth/token"
 
+password = rettich_encrypt.get_access()
+
 payload = {
     'client_id': "114307",
-    'client_secret': rettich_encrypt.decode(rettich_encrypt.password, rettich_encrypt.encoded_client_secret),
+    'client_secret': rettich_encrypt.decode(password, rettich_encrypt.get_client_secret()),
     'refresh_token': '',
     'grant_type': "refresh_token",
     'f': 'json'
@@ -25,14 +27,16 @@ payload = {
 
 with open('./data/unique_identifier.json','r') as f:
     unique_identifier = json.load(f)
-names = list(unique_identifier.keys())    
-refresh_tokens = [rettich_encrypt.decode(rettich_encrypt.password, bytes(unique_identifier[name],  'utf-8'))for name in names]
+names = list(unique_identifier.keys())
 
+# TODO: remove magic number 3 and make more general
+names = [names[i] for i in range(3)]
+
+refresh_tokens = [rettich_encrypt.decode(password, bytes(unique_identifier[name],  'utf-8'))for name in names]
 
 streams = []
 segments = []
 for refresh_token in refresh_tokens:
-
 
     payload['refresh_token']=refresh_token
     print("Requesting Token...\n")
