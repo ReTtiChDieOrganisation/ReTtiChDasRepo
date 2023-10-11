@@ -5,4 +5,4 @@ Strava in depth analysis of our way to work.
 
 and much more
 
-![Alt text](pics/ReTtiChDasBild.png?raw=true "Title")
+![Icon von einem winkenden Rettich mit Wasserzeichen](pics/ReTtiChDasBild.png?raw=true "Title")
