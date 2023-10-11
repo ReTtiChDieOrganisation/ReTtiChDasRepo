@@ -394,6 +394,13 @@
 					for (let i = 1; i < seperated_values.length; i++) {
 						myTable.rows[i].cells[1].textContent = fancyTimeFormat(seperated_values[i]);
 					}
+					myTable.rows[1].cells[2].textContent = Math.round(segments[seperated_values[0]].Philipp.speed*100)/100;
+					myTable.rows[2].cells[2].textContent = Math.round(segments[seperated_values[0]].Felix.speed*100)/100;
+					myTable.rows[3].cells[2].textContent = Math.round(segments[seperated_values[0]].Flo.speed*100)/100;
+
+					myTable.rows[1].cells[3].textContent = Math.round(segments[seperated_values[0]].Philipp.power*100)/100;
+					myTable.rows[2].cells[3].textContent = Math.round(segments[seperated_values[0]].Felix.power*100)/100;
+					myTable.rows[3].cells[3].textContent = Math.round(segments[seperated_values[0]].Flo.power*100)/100;
 					draw_segment(seperated_values)
 				}
 			}
