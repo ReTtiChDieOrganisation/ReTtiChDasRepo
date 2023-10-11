@@ -399,15 +399,53 @@
 			}
 
 			function draw_segment(seperated_values){
-					let seg_name = seperated_values[0]
+				let seg_name = seperated_values[0]
+			
+				start_idx_set = [segments[seg_name].Philipp.start_index,segments[seg_name].Felix.start_index,segments[seg_name].Flo.start_index]
+				end_idx_set = [segments[seg_name].Philipp.end_index,segments[seg_name].Felix.end_index,segments[seg_name].Flo.end_index]
 				
-					start_idx_set = [segments[seg_name].Philipp.start_index,segments[seg_name].Felix.start_index,segments[seg_name].Flo.start_index]
-					end_idx_set = [segments[seg_name].Philipp.end_index,segments[seg_name].Felix.end_index,segments[seg_name].Flo.end_index]
-					
-					draw(start_idx_set,end_idx_set)
+				draw(start_idx_set,end_idx_set)
 
-					marker_start = L.marker(segments[seg_name].Segment.start_latlng, {icon: start_icon}).addTo(map);
-					marker_finish = L.marker(segments[seg_name].Segment.end_latlng, {icon: finish_icon}).addTo(map);
+				marker_start = L.marker(segments[seg_name].Segment.start_latlng, {icon: start_icon}).addTo(map);
+				marker_finish = L.marker(segments[seg_name].Segment.end_latlng, {icon: finish_icon}).addTo(map);
+				
+				center = get_segment_center(marker_start, marker_finish)
+				bounds = L.latLngBounds(marker_start.getLatLng(), marker_finish.getLatLng())
+
+				map.setView(center);
+				map.fitBounds(bounds)
+
+			}
+
+			function get_segment_center(start, finish){
+
+				coefficient = 1;
+
+				if ((start.getLatLng().lat > 90 && finish.getLatLng().lat < -90) || (finish.getLatLng().lat > 90 && start.getLatLng().lat < -90)) {
+				midLat = 180 - ((start.getLatLng().lat - finish.getLatLng().lat) / 2).abs();
+				// If output will be in the 1st quartile then co-ef will remain 1, if in 4th then it will be -1
+				if ((start.getLatLng().lat < 0 && start.getLatLng().lat.abs() < finish.getLatLng().lat.abs()) ||
+					(finish.getLatLng().lat < 0 && finish.getLatLng().lat.abs() < start.getLatLng().lat.abs())) coefficient = -1;
+				// Applying coefficient
+				midLat *= coefficient;
+				} else
+				midLat = (finish.getLatLng().lat + start.getLatLng().lat) / 2;
+
+				// Calculating midLong
+				coefficient = 1;
+
+				if ((start.getLatLng().lng > 90 && finish.getLatLng().lng < -90) || (finish.getLatLng().lng > 90 && start.getLatLng().lng < -90)) {
+				midLong = 180 - ((start.getLatLng().lng.abs() - finish.getLatLng().lng.abs()) / 2).abs();
+				// If output will be in the 1st quartile then co-ef will remain 1, if in 4th then it will be -1
+				if ((start.getLatLng().lng < 0 && start.getLatLng().lng.abs() < finish.getLatLng().lng.abs()) ||
+					(finish.getLatLng().lng < 0 && finish.getLatLng().lng.abs() < start.getLatLng().lng.abs())) coefficient = -1;
+
+				// Applying coefficient
+				midLong *= coefficient;
+				} else
+				midLong = (finish.getLatLng().lng + start.getLatLng().lng) / 2;
+
+				return [midLat, midLong]
 			}
 		</script>
 	</div>
