@@ -140,29 +140,27 @@
 			let marker_start
 			let marker_finish
 
-			function draw(idx_set,idx_set_end=-1, speed_set=-1){
+			function draw(idx_set,idx_set_end=-1){
 				// draws all data in all_all starting with the corresponding index. So index_set should be an array of indices with the same size as all_data
 				let lat_lngs = [];
-				let elapsed_times = [];
-				
+				let speed_set = Array(all_data.length).fill(0)
 				for (let i=0; i < all_data.length; i++){
 					full_json = all_data[i];
 					if (idx_set_end==-1){
 						sliced_latlng = full_json.latlng.data.slice(idx_set[i]);
 						et = full_json.time.data.at(-1)-full_json.time.data[idx_set[i]];
+						dist = full_json.distance.data.at(-1)-full_json.distance.data[idx_set[i]];
+						speed_set[i] = 3.6*dist/et;
 					}else{
 						sliced_latlng = full_json.latlng.data.slice(idx_set[i], idx_set_end[i]);
 						et = full_json.time.data[idx_set_end[i]]-full_json.time.data[idx_set[i]];
+						dist = full_json.distance.data[idx_set_end[i]]-full_json.distance.data[idx_set[i]];
+						speed_set[i] = 3.6*dist/et;
 					}
 					lat_lngs.push(sliced_latlng.map(([lat, lng]) => ({ lat, lng })));
 
-					elapsed_times.push(et);
 				}
-				let duration_f =10000 / Math.max(...elapsed_times);
-				let durations = elapsed_times.map(x => x * duration_f);
-				if(speed_set!=-1){
-					durations = [0]
-				}
+
 				let color;
 			
 				trackPolyLs = []	
@@ -183,7 +181,7 @@
 					let poly = L.motion.polyline(
 						lat_lngs[i], 
 						{color: colors[i]},
-						{duration: durations[i]},
+						{},
 						{icon: L.icon({iconUrl: icon_urls[i], iconAnchor: [iconanchor_x, iconanchor_y], iconSize: [iconsize_x, iconsize_y]}) , showMarker:true, iconSize: L.point(27.5, 24)}
 						)
 					if(speed_set!=-1){
@@ -446,9 +444,8 @@
 			
 				start_idx_set = [segments[seg_name].Philipp.start_index,segments[seg_name].Felix.start_index,segments[seg_name].Flo.start_index]
 				end_idx_set = [segments[seg_name].Philipp.end_index,segments[seg_name].Felix.end_index,segments[seg_name].Flo.end_index]				
-				speed_set = [Math.round(segments[seg_name].Philipp.speed*100)/100, Math.round(segments[seg_name].Felix.speed*100)/100, Math.round(segments[seg_name].Flo.speed*100)/100]
 
-				draw(start_idx_set,end_idx_set, speed_set)
+				draw(start_idx_set,end_idx_set)
 
 				marker_start = L.marker(segments[seg_name].Segment.start_latlng, {icon: start_icon}).addTo(map);
 				marker_finish = L.marker(segments[seg_name].Segment.end_latlng, {icon: finish_icon}).addTo(map);
