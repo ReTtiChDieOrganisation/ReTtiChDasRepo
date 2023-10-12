@@ -9,6 +9,7 @@ import numpy as np
 
 import scipy.stats as sstat
 import json
+import os
 
 from etc import rettich_encrypt
 
@@ -24,44 +25,74 @@ payload = {
     'f': 'json'
 }
 
-# =============================================================================
-# Insert refresh tokens here
-# =============================================================================
+activity_path = './frontend/data/raw_data/'
 
-with open('./data/unique_identifier.json','r') as f:
-    unique_identifier = json.load(f)
-names = list(unique_identifier.keys())
+with open('./data/riders.json','r') as f:
+    riders = json.load(f)
+names = list(riders.keys())
 
-# TODO: remove magic number 3 and make more general
-names = [names[i] for i in range(3)]
+refresh_tokens = [rettich_encrypt.decode(password, bytes(riders[name]['refresh_token'],  'utf-8'))for name in names]
 
-refresh_tokens = [rettich_encrypt.decode(password, bytes(unique_identifier[name],  'utf-8'))for name in names]
+no_days = 3 # number of days which are saved and displayed
 
 streams = []
 segments = []
-for refresh_token in refresh_tokens:
+for rider_idx, refresh_token in enumerate(refresh_tokens):
 
     payload['refresh_token']=refresh_token
     print("Requesting Token...\n")
     res = requests.post(auth_url, data=payload, verify=False)
     access_token = res.json()['access_token']
-    print("Access Token = {}\n".format(access_token))
-    
     header = {'Authorization': 'Bearer ' + access_token}
-    param = {'per_page': 20, 'page': 1}
+    param = {'per_page': 50, 'page': 1}
     
     
     # =============================================================================
     # activity information
     # =============================================================================
-    
+    # retrieve last 50 activities
     activites_url = "https://www.strava.com/api/v3/athlete/activities"
-    my_dataset = requests.get(activites_url, headers=header, params=param).json()
+    last_activities = requests.get(activites_url, headers=header, params=param).json() 
+    
+    for activity in last_activities:
+        today = datetime.date.today()
+        act_date = datetime.datetime.date(iso8601.parse_date(activity['start_date']))
+        if today-act_date>datetime.timedelta(days=no_days):
+            break
+        
+        
+        act_id = activity['id']
+        if not os.path.exists(activity_path):
+            os.mkdir(activity_path)
+            
+
+        if not os.path.exists(activity_path+str(act_id)+'.json') and (activity['sport_type'] in ['Ride','Run']):
+            detailed_url = 'https://www.strava.com/api/v3/activities/'+str(id_last_tour)+'?include_all_efforts=True'
+            detailed_act = requests.get(detailed_url, headers=header, params=param).json()
+            # and save to activity_path+str(act_id)+'.json'
+            
+        
+# TODO clean up older files from activity path
+# probably means open the json files look at the date and if today-act_date>datetime.timedelta(days=no_days):
+# delete file     
+       
+
+# TODO load all files in activity path
+# TODO saving accumulated activities in one file in frontend/data/ (replacing data.json)
+# TODO calculate groups
+# TODO save group stats with group id in frontend/data/stats.json
+#       - groups should be colection of ids and it is probably easiest if ids correspond to idcs in the data.json
+#       - there should also be one group for each rider consisting of all activities from this rider we have to figure out 
+#           what to show in the stats then first use dummys
+        
+
+    
+    
     
     id_last_tour = my_dataset[0]['id']
     print(iso8601.parse_date(my_dataset[0]['start_date']))
-    segments_url = 'https://www.strava.com/api/v3/activities/'+str(id_last_tour)+'?include_all_efforts=True'
-    my_segments = requests.get(segments_url, headers=header, params=param).json()
+
+    my_segments = 
     
     # stream_url = 'https://www.strava.com/api/v3/activities/'+str(id_last_tour)+'/streams'
     # my_stream =  requests.get(stream_url, headers=header, params=param).json()
@@ -74,12 +105,12 @@ for refresh_token in refresh_tokens:
     segments.append(my_segments)
 
 
-with open('./frontend/data/data.js', 'w') as f:
-    for i, name in enumerate(names):
+# with open('./frontend/data/data.js', 'w') as f:
+#     for i, name in enumerate(names):
         
-        f.write(name.lower()+"_json = '")
-        json.dump(streams[i],f)
-        f.write("'\n")
+#         f.write(name.lower()+"_json = '")
+#         json.dump(streams[i],f)
+#         f.write("'\n")
 
 
 def intersection(lst1, lst2):
@@ -126,10 +157,10 @@ medals = {names[i]: list(medal_arr[i,:]) for i in range(len(names))}
 
 
 
-with open('./frontend/data/stats.js', 'w') as f:
-    f.write("medals = '")
-    json.dump(medals,f)
-    f.write("'\n")
-    f.write("segment_efforts = '")
-    json.dump(segment_efforts,f)
-    f.write("'")
+# with open('./frontend/data/stats.js', 'w') as f:
+#     f.write("medals = '")
+#     json.dump(medals,f)
+#     f.write("'\n")
+#     f.write("segment_efforts = '")
+#     json.dump(segment_efforts,f)
+#     f.write("'")
