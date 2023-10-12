@@ -2,9 +2,11 @@ import requests
 import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-import numpy as np
+
 import datetime
 import iso8601
+import numpy as np
+
 import scipy.stats as sstat
 import json
 

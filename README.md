@@ -1,6 +1,9 @@
+[![.github/workflows/python-package-conda.yml](https://github.com/ReTtiChDieOrganisation/ReTtiChDasRepo/actions/workflows/python-package-conda.yml/badge.svg)](https://github.com/ReTtiChDieOrganisation/ReTtiChDasRepo/actions/workflows/python-package-conda.yml)
 # [ReTtiCh](https://rettichdieorganisation.github.io/ReTtiChDasRepo/)
-Sommute Insight Genius (ReTtiCh)
+ReTtiCh
 
 Strava in depth analysis of our way to work.
 
-![Alt text](pics/ReTtiChDasBild.png?raw=true "Title")
+and much more
+
+![Icon von einem winkenden Rettich mit Wasserzeichen](pics/ReTtiChDasBild.png?raw=true "Title")

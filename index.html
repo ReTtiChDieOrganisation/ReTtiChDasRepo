@@ -61,7 +61,7 @@
 		#pauseButton {
 			position: relative;
 			top: 2%;
-			right: 5%;
+			right: 11%;
 			padding: 10px;
 			z-index: 400;
 		}
@@ -72,7 +72,7 @@
 		#resumeButton {
 			position: relative;
 			top: 2%;
-			right: 15%;
+			right: 11%;
 			padding: 10px;
 			z-index: 400;
 		}
@@ -83,14 +83,36 @@
 		#restartButton {
 			position: relative;
 			top: 2%;
-			right: 25%;
+			right: 11%;
 			padding: 10px;
 			z-index: 400;
 		}
 		#restartButton:hover{
 			opacity: 0.8;
 			cursor: pointer;
-		}		
+		}	
+		#speedupButton {
+			position: relative;
+			top: 7%;
+			right: 16%;
+			padding: 10px;
+			z-index: 400;
+		}
+		#speedupButton:hover{
+			opacity: 0.8;
+			cursor: pointer;
+		}	
+		#slowdownButton {
+			position: relative;
+			top: 7%;
+			right: 16%;
+			padding: 10px;
+			z-index: 400;
+		}
+		#slowdownButton:hover{
+			opacity: 0.8;
+			cursor: pointer;
+		}
 	</style>
 </head>
 
@@ -109,9 +131,26 @@
 			const philipp_all = (JSON.parse(philipp_json));
 			const flo_all = (JSON.parse(flo_json));
 
-			// at the momoent the enumeration here matters, 1 philipp (green), 2 felix (red), 3 flo (blue)
+			// at the moment the enumeration here matters, 1 philipp (green), 2 felix (red), 3 flo (blue)
 			const all_data = [philipp_all,felix_all,flo_all];
-			const icon_urls = ['./frontend/piqs/philipp_icon.png', './frontend/piqs/felix_icon.png', './frontend/piqs/flo_icon.png']
+
+			// rider_icon  struct with png's and colors
+			var all_rider_icons = {
+				icon_urls : [
+					'./frontend/piqs/philipp_icon.png',
+					'./frontend/piqs/felix_icon.png',
+					'./frontend/piqs/flo_icon.png'
+				],
+				icon_colors : [
+					"rgba("+84+" ,"+130+","+53+")", // philipp (green)
+					"rgba("+197+" ,"+90+","+17+")", // felix (blue)
+					"rgba("+47+" ,"+85+","+151+")" // flo (red)
+				],
+				iconsize_x : 47,
+				iconsize_y : 60,
+				iconanchor_x : 24,
+				iconanchor_y : 60
+			}
 			
 			console.log(all_data);
 			
@@ -121,52 +160,44 @@
 			function draw(idx_set,idx_set_end=-1){
 				// draws all data in all_all starting with the corresponding index. So index_set should be an array of indices with the same size as all_data
 				let lat_lngs = [];
-				let elapsed_times = [];
-				
+				let speed_set = Array(all_data.length).fill(0)
 				for (let i=0; i < all_data.length; i++){
 					full_json = all_data[i];
 					if (idx_set_end==-1){
 						sliced_latlng = full_json.latlng.data.slice(idx_set[i]);
 						et = full_json.time.data.at(-1)-full_json.time.data[idx_set[i]];
+						dist = full_json.distance.data.at(-1)-full_json.distance.data[idx_set[i]];
+						speed_set[i] = 3.6*dist/et;
 					}else{
 						sliced_latlng = full_json.latlng.data.slice(idx_set[i], idx_set_end[i]);
 						et = full_json.time.data[idx_set_end[i]]-full_json.time.data[idx_set[i]];
+						dist = full_json.distance.data[idx_set_end[i]]-full_json.distance.data[idx_set[i]];
+						speed_set[i] = 3.6*dist/et;
 					}
 					lat_lngs.push(sliced_latlng.map(([lat, lng]) => ({ lat, lng })));
 
-					elapsed_times.push(et);
 				}
-				let duration_f =10000 / Math.max(...elapsed_times);
-				let durations = elapsed_times.map(x => x * duration_f);
 
-				let color;
-			
-				trackPolyLs = []	
+				trackPolyLs = []
 				seqGroups = []
-				colors = [
-					"rgba("+84+" ,"+130+","+53+")", // philipp (green)
-					"rgba("+197+" ,"+90+","+17+")", // felix (blue)
-					"rgba("+47+" ,"+85+","+151+")" // flo (red)
-				]
 
-				let iconsize_x = 47
-				let iconsize_y = 60
-				let iconanchor_x = 24
-				let iconanchor_y = iconsize_y
+				let n = 1
 				
 				for (let i=0; i < all_data.length; i++) {
-					seqGroups.push(L.motion.seq([
-						L.motion.polyline(
-							lat_lngs[i], 
-							{color: colors[i]},
-							{duration:durations[i]},
-							{icon: L.icon({iconUrl: icon_urls[i], iconAnchor: [iconanchor_x, iconanchor_y], iconSize: [iconsize_x, iconsize_y]}) , showMarker:true, iconSize: L.point(27.5, 24)}
-							)]).addTo(map));
+					let poly = L.motion.polyline(
+						lat_lngs[i], 
+						{color: all_rider_icons.icon_colors[i]},
+						{},
+						{icon: L.icon({iconUrl: all_rider_icons.icon_urls[i], iconAnchor: [all_rider_icons.iconanchor_x, all_rider_icons.iconanchor_y], iconSize: [all_rider_icons.iconsize_x, all_rider_icons.iconsize_y]}) , showMarker:true, iconSize: L.point(27.5, 24)}
+						)
+					if(speed_set!=-1){
+						poly.motionSpeed(speed_set[i]*n);
+					}
+					seqGroups.push(L.motion.seq([poly]).addTo(map));
 				}
 				for (seqGroup of seqGroups){
 					seqGroup.motionStart();
 				}
-				//let trackPolyline = L.motion.polyline(conv_felix, {color: color},{duration:10000} ,{icon: felixIcon, showMarker:true, iconSize: L.point(27.5, 24)});
 				return seqGroups
 			}
 
@@ -238,6 +269,10 @@
 						}else{
 							draw_segment(current_segment)
 						}
+					}else if (key == "speedup"){
+						seqGroup.getFirstLayer().motionSpeed(seqGroup.getFirstLayer().motionOptions.speed*2);
+					}else if (key == "slowdown"){
+						seqGroup.getFirstLayer().motionSpeed(seqGroup.getFirstLayer().motionOptions.speed*0.5);
 					}
 				}
 			}
@@ -248,6 +283,8 @@
 	<button id="pauseButton" onClick="motion('pause')">Pause</button>
 	<button id="resumeButton" onClick="motion('resume')">Resume</button>
 	<button id="restartButton" onClick="motion('restart')">Restart</button>
+	<button id="speedupButton" onClick="motion('speedup')">2x</button>
+	<button id="slowdownButton" onClick="motion('slowdown')">0.5x</button>
 	<div class = "rightdivision" id="stats">
 		<canvas id="myChart"></canvas>
 		<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -411,8 +448,8 @@
 				let seg_name = seperated_values[0]
 			
 				start_idx_set = [segments[seg_name].Philipp.start_index,segments[seg_name].Felix.start_index,segments[seg_name].Flo.start_index]
-				end_idx_set = [segments[seg_name].Philipp.end_index,segments[seg_name].Felix.end_index,segments[seg_name].Flo.end_index]
-				
+				end_idx_set = [segments[seg_name].Philipp.end_index,segments[seg_name].Felix.end_index,segments[seg_name].Flo.end_index]				
+
 				draw(start_idx_set,end_idx_set)
 
 				marker_start = L.marker(segments[seg_name].Segment.start_latlng, {icon: start_icon}).addTo(map);
