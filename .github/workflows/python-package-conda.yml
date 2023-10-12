@@ -20,7 +20,7 @@ jobs:
         echo $CONDA/bin >> $GITHUB_PATH
     - name: Install dependencies
       run: |
-        conda install requests
+        conda install requests numpy scipy
     - name: Run untitled0.py
       run: |
         python untitled0.py
