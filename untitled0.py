@@ -2,7 +2,11 @@ import requests
 import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
+
+import datetime
+import iso8601
 import numpy as np
+
 import scipy.stats as sstat
 import json
 
@@ -55,6 +59,7 @@ for refresh_token in refresh_tokens:
     my_dataset = requests.get(activites_url, headers=header, params=param).json()
     
     id_last_tour = my_dataset[0]['id']
+    print(iso8601.parse_date(my_dataset[0]['start_date']))
     segments_url = 'https://www.strava.com/api/v3/activities/'+str(id_last_tour)+'?include_all_efforts=True'
     my_segments = requests.get(segments_url, headers=header, params=param).json()
     
