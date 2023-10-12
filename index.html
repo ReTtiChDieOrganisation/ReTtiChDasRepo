@@ -143,7 +143,6 @@
 			function draw(idx_set,idx_set_end=-1){
 				// draws all data in all_all starting with the corresponding index. So index_set should be an array of indices with the same size as all_data
 				let lat_lngs = [];
-				let elapsed_times = [];
 				let speed_set = Array(all_data.length).fill(0)
 				for (let i=0; i < all_data.length; i++){
 					full_json = all_data[i];
@@ -160,11 +159,8 @@
 					}
 					lat_lngs.push(sliced_latlng.map(([lat, lng]) => ({ lat, lng })));
 
-					elapsed_times.push(et);
 				}
-				console.log(speed_set)
-				let duration_f =10000 / Math.max(...elapsed_times);
-				let durations = elapsed_times.map(x => x * duration_f);
+
 				let color;
 			
 				trackPolyLs = []	
@@ -185,7 +181,7 @@
 					let poly = L.motion.polyline(
 						lat_lngs[i], 
 						{color: colors[i]},
-						{duration: durations[i]},
+						{},
 						{icon: L.icon({iconUrl: icon_urls[i], iconAnchor: [iconanchor_x, iconanchor_y], iconSize: [iconsize_x, iconsize_y]}) , showMarker:true, iconSize: L.point(27.5, 24)}
 						)
 					if(speed_set!=-1){
