@@ -3,7 +3,6 @@ import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 import numpy as np
-import matplotlib.pyplot as plt
 import scipy.stats as sstat
 import json
 
