@@ -1,0 +1,59 @@
+{
+    "polyline_colors": [
+      {
+        "color": "black",
+        "code": {
+          "rgba": [0,0,0,1]
+        }
+      },
+      {
+        "color": "white",
+        "code": {
+          "rgba": [255,255,255,1]
+        }
+      },
+      {
+        "color": "red",
+        "code": {
+          "rgba": [84,130,53,1]
+        }
+      },
+      {
+        "color": "blue",
+        "code": {
+          "rgba": [47,85,151,1]
+        }
+      },
+      {
+        "color": "navyblue",
+        "code": {
+          "rgba": [32,56,100,1]
+        }
+      },
+      {
+        "color": "yellow",
+        "code": {
+          "rgba": [255,238,21,1]
+        }
+      },
+      {
+        "color": "purple",
+        "code": {
+          "rgba": [112,48,160,1]
+        }
+      },
+      {
+        "color": "green",
+        "code": {
+          "rgba": [56,87,35,1]
+        }
+      },
+      {
+        "color": "neutral",
+        "code": {
+          "rgba": [208,206,206,1]
+        }
+      }
+    ]
+  }
+  
