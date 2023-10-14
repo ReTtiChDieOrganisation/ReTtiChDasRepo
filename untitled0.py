@@ -140,7 +140,9 @@ for day_del in range(NO_DAYS):
                 
             
 # TODO alle subsets rausschmeißen
-# also wenn (1,2,3) und (1,2) und (1,3) und (2,3) dann nur (1,2,3) nehmen sonst nicht
+# also wenn (1,2,3) dann (1,2) und (1,3) und (2,3) rausschmeißen
+# Sort bei length longest first and then use itertools.combinations und groups.remove to remove subsets
+
 
 # one group for each rider consisting of all of their rides
 
