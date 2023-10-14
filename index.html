@@ -19,13 +19,13 @@
 	<script>
 		const start_icon = L.icon({
 			iconUrl: './frontend/icons/other/start.png',
-			iconSize:     [21, 21], // size of the icon
-			iconAnchor:   [11,11], // point of the icon which will correspond to marker's location
+			iconSize:     [15, 15], // size of the icon
+			iconAnchor:   [8,8], // point of the icon which will correspond to marker's location
 		});
 		const finish_icon = L.icon({
 			iconUrl: './frontend/icons/other/finish.png',
-			iconSize:     [21, 21], // size of the icon
-			iconAnchor:   [11, 11], // point of the icon which will correspond to marker's location
+			iconSize:     [15, 15], // size of the icon
+			iconAnchor:   [8, 8], // point of the icon which will correspond to marker's location
 		});
 	</script>
 	<style>
@@ -118,24 +118,20 @@
 
 <!-- body -->
 <body>
+	<!-- map -->
 	<div id="map">
 		<script>
-			const map = L.map('map').setView([50.896537, 7.025585], 12);
-
+			const map = L.map('map').setView([50.896537, 7.025585], 12);		
 			const tiles = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
 						attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community', 
 						maxZoom:21
 					}).addTo(map);
 			const felix_all = (JSON.parse(felix_json));
-			
 			const philipp_all = (JSON.parse(philipp_json));
 			const flo_all = (JSON.parse(flo_json));
-
-			// at the moment the enumeration here matters, 1 philipp (green), 2 felix (red), 3 flo (blue)
 			const all_data = [philipp_all,felix_all,flo_all];
-
-			// rider_icon struct storing profile pictures, polyline colors and frames (e.g. gold, silver etc.)
-			var all_rider_icons = {
+			const num_riders = all_data.length;
+			const all_rider_icons = {
 				pictures : [
 					'./frontend/icons/profile_pictures/flo.png',
 					'./frontend/icons/profile_pictures/flo.png',
@@ -171,104 +167,106 @@
 				frame_anchor_y : 72 // frame_size_y
 			}
 			
+			console.log("all_data:");
 			console.log(all_data);
-			
-			let marker_start
-			let marker_finish
 
+			seqGroups = draw([1,1,1])
+			map.on('click', onMapClick);	
+
+			//--------------- only script function definition below ---------------//
 			function draw(idx_set,idx_set_end=-1){
-				// draws all data in all_all starting with the corresponding index. So index_set should be an array of indices with the same size as all_data
+				// draw all_all starting with the corresponding index. So index_set should be an array of indices with the same size as all_data
 				let lat_lngs = [];
-				let speed_set = Array(all_data.length).fill(0)
-				for (let i=0; i < all_data.length; i++){
-					full_json = all_data[i];
-					if (idx_set_end==-1){
-						sliced_latlng = full_json.latlng.data.slice(idx_set[i]);
-						et = full_json.time.data.at(-1)-full_json.time.data[idx_set[i]];
-						dist = full_json.distance.data.at(-1)-full_json.distance.data[idx_set[i]];
-						speed_set[i] = 3.6*dist/et;
-					}else{
-						sliced_latlng = full_json.latlng.data.slice(idx_set[i], idx_set_end[i]);
-						et = full_json.time.data[idx_set_end[i]]-full_json.time.data[idx_set[i]];
-						dist = full_json.distance.data[idx_set_end[i]]-full_json.distance.data[idx_set[i]];
-						speed_set[i] = 3.6*dist/et;
+				let speed_set = Array(num_riders).fill(0)
+
+				for (let riders_iterator=0; riders_iterator<num_riders; riders_iterator++){
+					full_json = all_data[riders_iterator];
+
+					if (idx_set_end==-1) {
+						sliced_latlng = full_json.latlng.data.slice(idx_set[riders_iterator]);
+						et = full_json.time.data.at(-1)-full_json.time.data[idx_set[riders_iterator]];
+						dist = full_json.distance.data.at(-1)-full_json.distance.data[idx_set[riders_iterator]];
+						speed_set[riders_iterator] = 3.6*dist/et;
 					}
+					else {
+						sliced_latlng = full_json.latlng.data.slice(idx_set[riders_iterator], idx_set_end[riders_iterator]);
+						et = full_json.time.data[idx_set_end[riders_iterator]]-full_json.time.data[idx_set[riders_iterator]];
+						dist = full_json.distance.data[idx_set_end[riders_iterator]]-full_json.distance.data[idx_set[riders_iterator]];
+						speed_set[riders_iterator] = 3.6*dist/et;
+					}
+
 					lat_lngs.push(sliced_latlng.map(([lat, lng]) => ({ lat, lng })));
-
 				}
-
-				trackPolyLs = []
+			
 				seqGroups = []
+			
+				for (let riders_iterator=0; riders_iterator < num_riders; riders_iterator++) {
 
-				for (let i=0; i < all_data.length; i++) {
-
-					// frame foreground
-					let poly_frame_bg = L.motion.polyline(lat_lngs[i], {
-						color: all_rider_icons.line_colors[i]
-					}, {}, {
-						icon: L.icon({
-							iconUrl: all_rider_icons.frame_bg[i], 
-							iconAnchor: [all_rider_icons.frame_anchor_x, all_rider_icons.frame_anchor_y], 
-							iconSize: [all_rider_icons.frame_size_x, all_rider_icons.frame_size_y]
-						}), 
-						showMarker:true, 
-						iconSize: L.point(27.5, 24)
-					})
-
-					// frame rider picture
-					let poly = L.motion.polyline(lat_lngs[i], {
-						color: all_rider_icons.line_colors[i]
-					}, {}, {
-						icon: L.icon({
-							iconUrl: all_rider_icons.pictures[i], 
-							iconAnchor: [all_rider_icons.picture_anchor_x, all_rider_icons.picture_anchor_y], 
-							iconSize: [all_rider_icons.picture_size_x, all_rider_icons.picture_size_y]
-						}), 
-						showMarker:true, 
-						iconSize: L.point(27.5, 24)
-					})
+					// TODO remove start and finish after click
+					marker_start = L.marker(lat_lngs[riders_iterator][0], {icon: start_icon}).addTo(map);
+					marker_finish = L.marker(lat_lngs[riders_iterator][lat_lngs[riders_iterator].length-1], {icon: finish_icon}).addTo(map);
 
 					// frame background
-					let poly_frame_fg = L.motion.polyline(lat_lngs[i], {
-						color: all_rider_icons.line_colors[i]
-					}, {}, {
-						icon: L.icon(
-							{
-								iconUrl: all_rider_icons.frame_fg[i], 
-								iconAnchor: [all_rider_icons.frame_anchor_x, all_rider_icons.frame_anchor_y], 
-								iconSize: [all_rider_icons.frame_size_x, all_rider_icons.frame_size_y]
-							}),
-						showMarker:false, 
-						iconSize: L.point(27.5, 24)
-				    })
+					let poly_frame_fg = L.motion.polyline(
+						lat_lngs[riders_iterator], {
+						color: all_rider_icons.line_colors[riders_iterator]}, {}, {
+						icon: L.icon({
+							iconUrl: all_rider_icons.frame_fg[riders_iterator], 
+							iconAnchor: [all_rider_icons.frame_anchor_x, all_rider_icons.frame_anchor_y], 
+							iconSize: [all_rider_icons.frame_size_x, all_rider_icons.frame_size_y]}
+						)}
+					)
+			
+					// profile picture
+					let poly_pp = L.motion.polyline(
+						lat_lngs[riders_iterator], {
+						color: all_rider_icons.line_colors[riders_iterator]}, {}, {
+						icon: L.icon({
+							iconUrl: all_rider_icons.pictures[riders_iterator], 
+							iconAnchor: [all_rider_icons.picture_anchor_x, all_rider_icons.picture_anchor_y], 
+							iconSize: [all_rider_icons.picture_size_x, all_rider_icons.picture_size_y]}
+						)}
+					)
 
-					if(speed_set!=-1){
-						poly_frame_bg.motionSpeed(speed_set[i]);
-						poly.motionSpeed(speed_set[i]);
-						poly_frame_fg.motionSpeed(speed_set[i]);
+					// frame foreground
+					let poly_frame_bg = L.motion.polyline(
+						lat_lngs[riders_iterator], {
+						color: all_rider_icons.line_colors[riders_iterator]}, {}, {
+						icon: L.icon({
+							iconUrl: all_rider_icons.frame_bg[riders_iterator], 
+							iconAnchor: [all_rider_icons.frame_anchor_x, all_rider_icons.frame_anchor_y], 
+							iconSize: [all_rider_icons.frame_size_x, all_rider_icons.frame_size_y]}
+						)}
+					)
+			
+					if (speed_set!=-1) {
+						poly_frame_bg.motionSpeed(speed_set[riders_iterator]);
+						poly_pp.motionSpeed(speed_set[riders_iterator]);
+						poly_frame_fg.motionSpeed(speed_set[riders_iterator]);
 					}
+
 					seqGroups.push(L.motion.seq([poly_frame_bg]).addTo(map));
-					seqGroups.push(L.motion.seq([poly]).addTo(map));
+					seqGroups.push(L.motion.seq([poly_pp]).addTo(map));
 					seqGroups.push(L.motion.seq([poly_frame_fg]).addTo(map));
 				}
+
 				for (seqGroup of seqGroups){
 					seqGroup.motionStart();
 				}
+
 				return seqGroups
 			}
-
-			seqGroups = draw([1,1,1])
-
+			
 			function distance(p,q) {
 				return Math.sqrt(Math.pow(p[0] - q[0], 2) + Math.pow(p[1] - q[1], 2))
 			}
-
+			
 			function findClosestIndex(arrayOP, point){
 				// Claculates the index of the array of points for the closest to point
 				// does not check the last index
 				let dist = 99999999.0;
 				let idx = -1;
-
+			
 				for (i = 0; i < arrayOP.length-1; i++){
 					point_i = arrayOP[i];
 					dist_i = distance(point_i,point)
@@ -279,34 +277,33 @@
 				}
 				return idx
 			}
-
+			
 			function onMapClick(e) {
-
 				idx_set = [];
-				for (let i = 0; i < all_data.length; i++){
-					full_json = all_data[i];
+				for (let riders_iterator = 0; riders_iterator < num_riders; riders_iterator++){
+					full_json = all_data[riders_iterator];
 					idx_temp = findClosestIndex(full_json.latlng.data,[e.latlng.lat, e.latlng.lng]);
 					idx_set.push(idx_temp);
 				}
 				remove_all_riders(idx_set)
 				seqGroups = draw(idx_set)
 			}
-
+			
 			function remove_all_riders() { 
 				for (seqGroup of seqGroups){
 					seqGroup.motionStop();
 					seqGroup.removeFrom(map);
 				}
-
+			
 				if (typeof marker_start !== 'undefined'){
 					map.removeLayer(marker_start);
 				}
-
+			
 				if (typeof marker_finish !== 'undefined'){
 					map.removeLayer(marker_finish);
 				}
 			}
-
+			
 			function motion(key) {
 				for (seqGroup of seqGroups){
 					if (key == "stop"){
@@ -331,25 +328,26 @@
 						seqGroup.getFirstLayer().motionSpeed(seqGroup.getFirstLayer().motionOptions.speed*0.5);
 					}
 				}
-			}
-
-			map.on('click', onMapClick);
+			}		
 		</script>
 	</div>
+
+	<!-- buttons auf map -->
 	<button id="pauseButton" onClick="motion('pause')">Pause</button>
 	<button id="resumeButton" onClick="motion('resume')">Resume</button>
 	<button id="restartButton" onClick="motion('restart')">Restart</button>
 	<button id="speedupButton" onClick="motion('speedup')">2x</button>
 	<button id="slowdownButton" onClick="motion('slowdown')">0.5x</button>
+	
+	<!-- medals table -->
 	<div class = "rightdivision" id="stats">
 		<canvas id="myChart"></canvas>
 		<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 		<script src="./frontend/data/stats.js"></script>
-
 		<script>
 			const medalz = (JSON.parse(medals));
 			const ctx = document.getElementById('myChart');
-			
+
 			new Chart(ctx,
 			{
 				type: 'bar',
@@ -394,6 +392,7 @@
 		</script>
 	</div>
 
+	<!-- choose segment table and adjust map to segment -->
 	<div class = "rightdivision2" id="stats">
 		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 		<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.css" />
@@ -437,7 +436,6 @@
 		
 		<script>
 			const segments = (JSON.parse(segment_efforts));
-			let value = 0
 			let myTable = document.getElementById("stats_table");
 			$(function() {
 				$.each(segments, function(i, option) {
@@ -445,25 +443,7 @@
 				});
 			})
 			
-			function fancyTimeFormat(duration) {
-				// Hours, minutes and seconds
-				const hrs = ~~(duration / 3600);
-				const mins = ~~((duration % 3600) / 60);
-				const secs = ~~duration % 60;
-
-				// Output like "1:01" or "4:03:59" or "123:03:59"
-				let ret = "";
-
-				if (hrs > 0) {
-					ret += "" + hrs + ":" + (mins < 10 ? "0" : "");
-				}
-
-				ret += "" + mins + ":" + (secs < 10 ? "0" : "");
-				ret += "" + secs;
-
-				return ret;
-			}
-			
+			//--------------- only script function definition below ---------------//
 			function getComboA(selectObject) {
 				value = selectObject.value; 
 				key = selectObject;
@@ -500,6 +480,25 @@
 				}
 			}
 
+			function fancyTimeFormat(duration) {
+				// Hours, minutes and seconds
+				const hrs = ~~(duration / 3600);
+				const mins = ~~((duration % 3600) / 60);
+				const secs = ~~duration % 60;
+
+				// Output like "1:01" or "4:03:59" or "123:03:59"
+				let ret = "";
+
+				if (hrs > 0) {
+					ret += "" + hrs + ":" + (mins < 10 ? "0" : "");
+				}
+
+				ret += "" + mins + ":" + (secs < 10 ? "0" : "");
+				ret += "" + secs;
+
+				return ret;
+			}
+
 			function draw_segment(seperated_values){
 				let seg_name = seperated_values[0]
 			
@@ -516,11 +515,9 @@
 
 				map.setView(center);
 				map.fitBounds(bounds)
-
 			}
 
 			function get_segment_center(start, finish){
-
 				coefficient = 1;
 
 				if ((start.getLatLng().lat > 90 && finish.getLatLng().lat < -90) || (finish.getLatLng().lat > 90 && start.getLatLng().lat < -90)) {
