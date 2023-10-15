@@ -68,11 +68,11 @@
 
 			class rettich_rider {
 				// constructor
-				constructor(name, strava_data, profile_picture, frame=rettich_frames.neutral) {
-					// all data members
+				constructor(name, strava_data, profile_picture=rettich_profile_pictures.default, frame=rettich_frames.default) {
+					// all data members of rettich riders
 					this.name = name;
 					this.strava_data = strava_data;
-					this.profile_pic = profile_picture;
+					this.profile_picture = profile_picture;
 					this.frame = frame;
 				}
 
@@ -89,141 +89,94 @@
 				set_frame (new_frame) {this.frame = new_frame;}
 			}
 
-			// initialize all riders and collect them in one all_riders array
-			felix = new rettich_rider("felix", (JSON.parse(felix_json)), rettich_profile_pictures.felix);
-			flo = new rettich_rider("flo", (JSON.parse(flo_json)), rettich_profile_pictures.flo);
-			philipp = new rettich_rider("philipp", (JSON.parse(philipp_json)), rettich_profile_pictures.philipp);
-			var rettich_all_riders_arr = [felix, flo, philipp];
-			const num_riders = rettich_all_riders_arr.length;
-
-			// initializa all riders
-			const felix_strava_data = (JSON.parse(felix_json));
-			const philipp_strava_data = (JSON.parse(philipp_json));
-			const flo_strava_data = (JSON.parse(flo_json));
-			const all_riders_strava_data = [philipp_strava_data,felix_strava_data,flo_strava_data];
-
-			const all_rider_icons = {
-				pictures : [
-					'./frontend/icons/profile_pictures/flo.png',
-					'./frontend/icons/profile_pictures/flo.png',
-					'./frontend/icons/profile_pictures/flo.png'
-				],
-				picture_size_x : 33, // 3:4 ratio
-				picture_size_y : 44, // 3:4 ratio
-				picture_anchor_x : 33/2, // picture_size_x/2
-				picture_anchor_y : 44+22, // picture_size_y + adjust (adjust to center picture in frame)
-				frame_fg : [
-					'./frontend/icons/frames/fg_neutral.png',
-					'./frontend/icons/frames/fg_ukraine.png',
-					'./frontend/icons/frames/fg_purple.png'
-				],
-				frame_bg : [
-					'./frontend/icons/frames/bg_pride.png',
-					'./frontend/icons/frames/bg_white.png',
-					'./frontend/icons/frames/bg_white.png'
-				],
-				// line_colors : [
-				// 	"rgba("+84+" ,"+130+","+53+")", // philipp (green)
-				// 	"rgba("+197+" ,"+90+","+17+")", // felix (red)
-				// 	"rgba("+47+" ,"+85+","+151+")" // flo (blue)
-				// ],
-				line_colors : [ // all black
-					"rgba("+0+" ,"+0+","+0+")",
-					"rgba("+0+" ,"+0+","+0+")",
-					"rgba("+0+" ,"+0+","+0+")" 
-				],
-				frame_size_x : 54, // 3:4 ratio
-				frame_size_y : 72, // 3:4 ratio
-				frame_anchor_x : 54/2, // frame_size_x/2
-				frame_anchor_y : 72 // frame_size_y
-			}
-			// end claass
-
-			a = rettich_frames.green.line_color;
-			console.log("a:", a);
-			
-			console.log("all_riders_strava_data:", all_riders_strava_data);
+			// ############################################################################################################################
+			// initialize all riders data and collect them in one array - this is all the data we need 
+			var felix = new rettich_rider("felix", (JSON.parse(felix_json)), rettich_profile_pictures.felix, rettich_frames.red);
+			var flo = new rettich_rider("flo", (JSON.parse(flo_json)), rettich_profile_pictures.flo, rettich_frames.blue);
+			var philipp = new rettich_rider("philipp", (JSON.parse(philipp_json)), rettich_profile_pictures.philipp, rettich_frames.green);
+			var rettich_all_riders_arr = [philipp, felix, flo]; // TODO: the order here matters in draw_segment. make it more general
+			var num_riders = rettich_all_riders_arr.length;
+			// ############################################################################################################################
 
 			seqGroups = rettich_motion_draw_riders([1,1,1])
-			
-			// TODO remove start and finish after click
-			// for (let riders_iterator=0; riders_iterator<num_riders; riders_iterator++) {
-			// 	marker_start = L.marker(lat_lngs[riders_iterator][0], {icon: start_icon}).addTo(map);
-			// 	marker_finish = L.marker(lat_lngs[riders_iterator][lat_lngs[riders_iterator].length-1], {icon: finish_icon}).addTo(map);
-			// }
-			
 			map.on('click', rettich_onMapClick);
 
 			//--------------- only script function definition below ---------------//
-			function rettich_motion_draw_riders(lat_lng_startidx,lat_lng_endidx=-1) {
+			function rettich_motion_draw_riders(lat_lng_startidx_arr,lat_lng_endidx=-1) {
 				// draw all_all starting with the corresponding index. So index_set should be an array of indices with the same size as all_riders_strava_data
-				let lat_lngs = [];
+				let lat_lngs_riders_arr = [];
 				let speed_set = Array(num_riders).fill(0)
 
 				for (let riders_iterator=0; riders_iterator<num_riders; riders_iterator++) {
-					full_json = all_riders_strava_data[riders_iterator];
+					current_rider_strava_data = rettich_all_riders_arr[riders_iterator].get_strava_data();
 
 					if (lat_lng_endidx==-1) {
-						sliced_latlng = full_json.latlng.data.slice(lat_lng_startidx[riders_iterator]);
-						et = full_json.time.data.at(-1)-full_json.time.data[lat_lng_startidx[riders_iterator]];
-						dist = full_json.distance.data.at(-1)-full_json.distance.data[lat_lng_startidx[riders_iterator]];
+						sliced_latlng = current_rider_strava_data.latlng.data.slice(lat_lng_startidx_arr[riders_iterator]);
+						et = current_rider_strava_data.time.data.at(-1)-current_rider_strava_data.time.data[lat_lng_startidx_arr[riders_iterator]];
+						dist = current_rider_strava_data.distance.data.at(-1)-current_rider_strava_data.distance.data[lat_lng_startidx_arr[riders_iterator]];
 						speed_set[riders_iterator] = 3.6*dist/et;
 					}
 					else {
-						sliced_latlng = full_json.latlng.data.slice(lat_lng_startidx[riders_iterator], lat_lng_endidx[riders_iterator]);
-						et = full_json.time.data[lat_lng_endidx[riders_iterator]]-full_json.time.data[lat_lng_startidx[riders_iterator]];
-						dist = full_json.distance.data[lat_lng_endidx[riders_iterator]]-full_json.distance.data[lat_lng_startidx[riders_iterator]];
+						sliced_latlng = current_rider_strava_data.latlng.data.slice(lat_lng_startidx_arr[riders_iterator], lat_lng_endidx[riders_iterator]);
+						et = current_rider_strava_data.time.data[lat_lng_endidx[riders_iterator]]-current_rider_strava_data.time.data[lat_lng_startidx_arr[riders_iterator]];
+						dist = current_rider_strava_data.distance.data[lat_lng_endidx[riders_iterator]]-current_rider_strava_data.distance.data[lat_lng_startidx_arr[riders_iterator]];
 						speed_set[riders_iterator] = 3.6*dist/et;
 					}
 
-					lat_lngs.push(sliced_latlng.map(([lat, lng]) => ({ lat, lng })));
+					lat_lngs_riders_arr.push(sliced_latlng.map(([lat, lng]) => ({ lat, lng })));
 				}
 			
 				seqGroups = []
 			
 				for (let riders_iterator=0; riders_iterator < num_riders; riders_iterator++) {
 
+					current_rider = rettich_all_riders_arr[riders_iterator];
+					current_rider_lat_lngs = lat_lngs_riders_arr[riders_iterator];
+
+					console.log("current_rider.get_frame().line_color: ", current_rider.get_frame().line_color)
+					console.log("current_rider.get_frame().frame_fg: ", current_rider.get_frame().frame_fg)
+
 					// frame background
 					let poly_frame_fg = L.motion.polyline(
-						lat_lngs[riders_iterator], {
-						color: all_rider_icons.line_colors[riders_iterator]}, {}, {
+						current_rider_lat_lngs, {
+						color: current_rider.get_frame().line_color}, {}, {
 						icon: L.icon({
-							iconUrl: all_rider_icons.frame_fg[riders_iterator], 
-							iconAnchor: [all_rider_icons.frame_anchor_x, all_rider_icons.frame_anchor_y], 
-							iconSize: [all_rider_icons.frame_size_x, all_rider_icons.frame_size_y]}
+							iconUrl: current_rider.get_frame().frame_fg,
+							iconAnchor: [current_rider.get_frame().anchor_x, current_rider.get_frame().anchor_y], 
+							iconSize: [current_rider.get_frame().size_x, current_rider.get_frame().size_y]}
 						)}
 					)
 			
 					// profile picture
-					let poly_pp = L.motion.polyline(
-						lat_lngs[riders_iterator], {
-						color: all_rider_icons.line_colors[riders_iterator]}, {}, {
+					let poly_profile_pic = L.motion.polyline(
+						current_rider_lat_lngs, {
+						color: current_rider.get_frame().line_color}, {}, {
 						icon: L.icon({
-							iconUrl: all_rider_icons.pictures[riders_iterator], 
-							iconAnchor: [all_rider_icons.picture_anchor_x, all_rider_icons.picture_anchor_y], 
-							iconSize: [all_rider_icons.picture_size_x, all_rider_icons.picture_size_y]}
+							iconUrl: current_rider.get_profile_picture().picture,
+							iconAnchor: [current_rider.get_profile_picture().anchor_x, current_rider.get_profile_picture().anchor_y], 
+							iconSize: [current_rider.get_profile_picture().size_x, current_rider.get_profile_picture().size_y]}
 						)}
 					)
 
 					// frame foreground
 					let poly_frame_bg = L.motion.polyline(
-						lat_lngs[riders_iterator], {
-						color: all_rider_icons.line_colors[riders_iterator]}, {}, {
+						current_rider_lat_lngs, {
+						color: current_rider.get_frame().line_color}, {}, {
 						icon: L.icon({
-							iconUrl: all_rider_icons.frame_bg[riders_iterator], 
-							iconAnchor: [all_rider_icons.frame_anchor_x, all_rider_icons.frame_anchor_y], 
-							iconSize: [all_rider_icons.frame_size_x, all_rider_icons.frame_size_y]}
+							iconUrl: current_rider.get_frame().frame_bg,
+							iconAnchor: [current_rider.get_frame().anchor_x, current_rider.get_frame().anchor_y], 
+							iconSize: [current_rider.get_frame().size_x, current_rider.get_frame().size_y]}
 						)}
 					)
 			
 					if (speed_set!=-1) {
 						poly_frame_bg.motionSpeed(speed_set[riders_iterator]);
-						poly_pp.motionSpeed(speed_set[riders_iterator]);
+						poly_profile_pic.motionSpeed(speed_set[riders_iterator]);
 						poly_frame_fg.motionSpeed(speed_set[riders_iterator]);
 					}
 
 					seqGroups.push(L.motion.seq([poly_frame_bg]).addTo(map));
-					seqGroups.push(L.motion.seq([poly_pp]).addTo(map));
+					seqGroups.push(L.motion.seq([poly_profile_pic]).addTo(map));
 					seqGroups.push(L.motion.seq([poly_frame_fg]).addTo(map));
 				}
 
@@ -238,7 +191,7 @@
 				return Math.sqrt(Math.pow(p[0] - q[0], 2) + Math.pow(p[1] - q[1], 2))
 			}
 			
-			function rettich_find_Closest_Index(arrayOP, point){
+			function rettich_find_closest_index(arrayOP, point){
 				// Calculates the index of the array of points for the closest to point
 				// does not check the last index
 				let dist = 99999999.0;
@@ -256,14 +209,14 @@
 			}
 			
 			function rettich_onMapClick(e) {
-				lat_lng_startidx = [];
+				lat_lng_startidx_arr = [];
 				for (let riders_iterator = 0; riders_iterator < num_riders; riders_iterator++){
-					full_json = all_riders_strava_data[riders_iterator];
-					idx_temp = rettich_find_Closest_Index(full_json.latlng.data,[e.latlng.lat, e.latlng.lng]);
-					lat_lng_startidx.push(idx_temp);
+					current_rider_strava_data = rettich_all_riders_arr[riders_iterator].get_strava_data();
+					idx_temp = rettich_find_closest_index(current_rider_strava_data.latlng.data,[e.latlng.lat, e.latlng.lng]);
+					lat_lng_startidx_arr.push(idx_temp);
 				}
-				rettich_remove_all_riders_from_map(lat_lng_startidx)
-				seqGroups = rettich_motion_draw_riders(lat_lng_startidx)
+				rettich_remove_all_riders_from_map(lat_lng_startidx_arr)
+				seqGroups = rettich_motion_draw_riders(lat_lng_startidx_arr)
 			}
 			
 			function rettich_remove_all_riders_from_map() { 
@@ -322,7 +275,7 @@
 		<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 		<script src="./frontend/data/strava/stats.json"></script>
 		<script>
-			const all_riders_medalz = (JSON.parse(medals));
+			const rettich_all_riders_medalz = (JSON.parse(medals));
 			const ctx = document.getElementById('myChart');
 
 			new Chart(ctx,
@@ -334,21 +287,21 @@
 					datasets: [
 					{
 						label: 'Gold',
-						data: [all_riders_medalz.Philipp[0], all_riders_medalz.Felix[0], all_riders_medalz.Flo[0]],
+						data: [rettich_all_riders_medalz.Philipp[0], rettich_all_riders_medalz.Felix[0], rettich_all_riders_medalz.Flo[0]],
 						borderWidth: 1,
 						backgroundColor: "rgb(255,215,0)",
 						stack: 'Stack 0',
 					},
 					{
 						label: 'Silver',
-						data: [all_riders_medalz.Philipp[1], all_riders_medalz.Felix[1], all_riders_medalz.Flo[1]],
+						data: [rettich_all_riders_medalz.Philipp[1], rettich_all_riders_medalz.Felix[1], rettich_all_riders_medalz.Flo[1]],
 						borderWidth: 1,
 						backgroundColor: "rgb(208,208,208)",
 						stack: 'Stack 1',
 					},
 					{
 						label: 'Bronze',
-						data: [all_riders_medalz.Philipp[2], all_riders_medalz.Felix[2], all_riders_medalz.Flo[2]],
+						data: [rettich_all_riders_medalz.Philipp[2], rettich_all_riders_medalz.Felix[2], rettich_all_riders_medalz.Flo[2]],
 						borderWidth: 1,
 						backgroundColor: "rgb(205,127,50)",
 						stack: 'Stack 2',
@@ -487,6 +440,7 @@
 				start_idx_set = [all_riders_strava_segment_efforts[seg_name].Philipp.start_index,all_riders_strava_segment_efforts[seg_name].Felix.start_index,all_riders_strava_segment_efforts[seg_name].Flo.start_index]
 				end_idx_set = [all_riders_strava_segment_efforts[seg_name].Philipp.end_index,all_riders_strava_segment_efforts[seg_name].Felix.end_index,all_riders_strava_segment_efforts[seg_name].Flo.end_index]				
 
+
 				rettich_motion_draw_riders(start_idx_set,end_idx_set)
 
 				marker_start = rettich_static_draw_marker(all_riders_strava_segment_efforts[seg_name].Segment.start_latlng, start_icon)
@@ -503,7 +457,7 @@
 				return L.marker(latlng, {icon: icon}).addTo(map);
 			}
 
-			function rettich_get_segment_center(start, finish){
+			function rettich_get_segment_center(start, finish) {
 				coefficient = 1;
 
 				if ((start.getLatLng().lat > 90 && finish.getLatLng().lat < -90) || (finish.getLatLng().lat > 90 && start.getLatLng().lat < -90)) {
