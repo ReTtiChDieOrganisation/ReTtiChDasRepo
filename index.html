@@ -15,7 +15,10 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
 	<script src="./frontend/dependencies/leaflet-motion/dist/leaflet.motion.js"></script>
-	<script src="./frontend/data/data.js"></script>
+	<script src="./frontend/data/strava/data.json"></script>
+
+	<script type="text/javascript" src="./frontend/data/rettich/icons.js"></script>
+
 	<script>
 		const start_icon = L.icon({
 			iconUrl: './frontend/icons/other/start.png',
@@ -33,86 +36,19 @@
 			height: 100%;
 			margin: 0;
 		}
-		.leaflet-container {
-			float: left;
-			height: 9000px;
-			width: 10000px;
-			max-width: 70%;
-			max-height: 99%;
-		}
-		.rightdivision {
-			float: right;
-			padding-right: 3%;
-			padding-top: 0%;
-			height: 9000px;
-			width: 10000px;
-			max-width: 26%;
-			max-height: 30%;
-		}
-		.rightdivision2 {
-			float: right;
-			padding-right: 3%;
-			padding-top: 0%;
-			height: 900px;
-			width: 10000px;
-			max-width: 26%;
-			max-height: 48%;
-		}
-		#pauseButton {
-			position: relative;
-			top: 2%;
-			right: 11%;
-			padding: 10px;
-			z-index: 400;
-		}
-		#pauseButton:hover{
-			opacity: 0.8;
-			cursor: pointer;
-		}	
-		#resumeButton {
-			position: relative;
-			top: 2%;
-			right: 11%;
-			padding: 10px;
-			z-index: 400;
-		}
-		#resumeButton:hover{
-			opacity: 0.8;
-			cursor: pointer;
-		}	
-		#restartButton {
-			position: relative;
-			top: 2%;
-			right: 11%;
-			padding: 10px;
-			z-index: 400;
-		}
-		#restartButton:hover{
-			opacity: 0.8;
-			cursor: pointer;
-		}	
-		#speedupButton {
-			position: relative;
-			top: 7%;
-			right: 16%;
-			padding: 10px;
-			z-index: 400;
-		}
-		#speedupButton:hover{
-			opacity: 0.8;
-			cursor: pointer;
-		}	
-		#slowdownButton {
-			position: relative;
-			top: 7%;
-			right: 16%;
-			padding: 10px;
-			z-index: 400;
-		}
-		#slowdownButton:hover{
-			opacity: 0.8;
-			cursor: pointer;
-		}
+		.leaflet-container {float: left; height: 9000px; width: 10000px; max-width: 70%; max-height: 99%;}
+		.rightdivision {float: right; padding-right: 3%; padding-top: 0%; height: 9000px; width: 10000px; max-width: 26%; max-height: 30%;}
+		.rightdivision2 {float: right; padding-right: 3%; padding-top: 0%; height: 900px; width: 10000px; max-width: 26%; max-height: 48%;}
+		#pauseButton {position: relative; top: 2%; right: 11%; padding: 10px; z-index: 400;}
+		#pauseButton:hover {opacity: 0.8; cursor: pointer;}	
+		#resumeButton {position: relative; top: 2%; right: 11%; padding: 10px; z-index: 400;}
+		#resumeButton:hover {opacity: 0.8; cursor: pointer;}	
+		#restartButton {position: relative; top: 2%; right: 11%; padding: 10px; z-index: 400;}
+		#restartButton:hover {opacity: 0.8; cursor: pointer;}	
+		#speedupButton {position: relative; top: 7%; right: 16%; padding: 10px; z-index: 400;}
+		#speedupButton:hover { opacity: 0.8;	cursor: pointer;}
+		#slowdownButton {position: relative; top: 7%; right: 16%; padding: 10px; z-index: 400;}
+		#slowdownButton:hover {opacity: 0.8; cursor: pointer;}
 	</style>
 </head>
 
@@ -122,17 +58,50 @@
 	<div id="map">
 		<script>
 			const map = L.map('map').setView([50.896537, 7.025585], 12);		
-			const tiles = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-						attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community', 
-						maxZoom:21
-					}).addTo(map);
+			const tiles = L.tileLayer(
+				'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+				{
+					attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community', 
+					maxZoom:21
+				}
+			).addTo(map);
 
-			// TODO make class
-			const felix_all = (JSON.parse(felix_json));
-			const philipp_all = (JSON.parse(philipp_json));
-			const flo_all = (JSON.parse(flo_json));
-			const all_data = [philipp_all,felix_all,flo_all];
-			const num_riders = all_data.length;
+			// initializa all riders
+			const felix_strava_data = (JSON.parse(felix_json));
+			const philipp_strava_data = (JSON.parse(philipp_json));
+			const flo_strava_data = (JSON.parse(flo_json));
+			const all_riders_strava_data = [philipp_strava_data,felix_strava_data,flo_strava_data];
+
+			class rettich_rider {
+				// constructor
+				constructor(name, strava_data, profile_picture, frame=rettich_frames.neutral) {
+					// all data members
+					this.name = name;
+					this.strava_data = strava_data;
+					this.profile_pic = profile_picture;
+					this.frame = frame;
+				}
+
+				// getter functions
+				get_name () {return this.name;}
+				get_strava_data () {return this.strava_data;}
+				get_profile_picture () {return this.profile_picture;}
+				get_frame () {return this.frame;}
+				
+				// setter functions
+				set_name (new_name) {this.name = new_name;}
+				set_strava_data (new_strava_data) {this.strava_data = new_strava_data;}
+				set_profile_picture (new_profile_picture) {this.profile_picture = new_profile_picture;}
+				set_frame (new_frame) {this.frame = new_frame;}
+			}
+
+			felix = new rettich_rider("felix", felix_strava_data, rettich_profile_pictures.felix);
+			flo = new rettich_rider("flo", flo_strava_data, rettich_profile_pictures.flo);
+			philipp = new rettich_rider("philipp", philipp_strava_data, rettich_profile_pictures.philipp);
+
+			var rettich_riders = [felix, flo, philipp];
+			const num_riders = rettich_riders.length;
+
 			const all_rider_icons = {
 				pictures : [
 					'./frontend/icons/profile_pictures/flo.png',
@@ -150,8 +119,8 @@
 				],
 				frame_bg : [
 					'./frontend/icons/frames/bg_pride.png',
-					'./frontend/icons/frames/bg_neutral.png',
-					'./frontend/icons/frames/bg_neutral.png'
+					'./frontend/icons/frames/bg_white.png',
+					'./frontend/icons/frames/bg_white.png'
 				],
 				// line_colors : [
 				// 	"rgba("+84+" ,"+130+","+53+")", // philipp (green)
@@ -169,9 +138,11 @@
 				frame_anchor_y : 72 // frame_size_y
 			}
 			// end claass
+
+			a = rettich_frames.green.line_color;
+			console.log("a:", a);
 			
-			console.log("all_data:");
-			console.log(all_data);
+			console.log("all_riders_strava_data:", all_riders_strava_data);
 
 			seqGroups = rettich_motion_draw_riders([1,1,1])
 			
@@ -185,12 +156,12 @@
 
 			//--------------- only script function definition below ---------------//
 			function rettich_motion_draw_riders(lat_lng_startidx,lat_lng_endidx=-1) {
-				// draw all_all starting with the corresponding index. So index_set should be an array of indices with the same size as all_data
+				// draw all_all starting with the corresponding index. So index_set should be an array of indices with the same size as all_riders_strava_data
 				let lat_lngs = [];
 				let speed_set = Array(num_riders).fill(0)
 
 				for (let riders_iterator=0; riders_iterator<num_riders; riders_iterator++) {
-					full_json = all_data[riders_iterator];
+					full_json = all_riders_strava_data[riders_iterator];
 
 					if (lat_lng_endidx==-1) {
 						sliced_latlng = full_json.latlng.data.slice(lat_lng_startidx[riders_iterator]);
@@ -287,7 +258,7 @@
 			function rettich_onMapClick(e) {
 				lat_lng_startidx = [];
 				for (let riders_iterator = 0; riders_iterator < num_riders; riders_iterator++){
-					full_json = all_data[riders_iterator];
+					full_json = all_riders_strava_data[riders_iterator];
 					idx_temp = rettich_find_Closest_Index(full_json.latlng.data,[e.latlng.lat, e.latlng.lng]);
 					lat_lng_startidx.push(idx_temp);
 				}
@@ -349,9 +320,9 @@
 	<div class = "rightdivision" id="stats">
 		<canvas id="myChart"></canvas>
 		<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-		<script src="./frontend/data/stats.js"></script>
+		<script src="./frontend/data/strava/stats.json"></script>
 		<script>
-			const medalz = (JSON.parse(medals));
+			const all_riders_medalz = (JSON.parse(medals));
 			const ctx = document.getElementById('myChart');
 
 			new Chart(ctx,
@@ -363,21 +334,21 @@
 					datasets: [
 					{
 						label: 'Gold',
-						data: [medalz.Philipp[0], medalz.Felix[0], medalz.Flo[0]],
+						data: [all_riders_medalz.Philipp[0], all_riders_medalz.Felix[0], all_riders_medalz.Flo[0]],
 						borderWidth: 1,
 						backgroundColor: "rgb(255,215,0)",
 						stack: 'Stack 0',
 					},
 					{
 						label: 'Silver',
-						data: [medalz.Philipp[1], medalz.Felix[1], medalz.Flo[1]],
+						data: [all_riders_medalz.Philipp[1], all_riders_medalz.Felix[1], all_riders_medalz.Flo[1]],
 						borderWidth: 1,
 						backgroundColor: "rgb(208,208,208)",
 						stack: 'Stack 1',
 					},
 					{
 						label: 'Bronze',
-						data: [medalz.Philipp[2], medalz.Felix[2], medalz.Flo[2]],
+						data: [all_riders_medalz.Philipp[2], all_riders_medalz.Felix[2], all_riders_medalz.Flo[2]],
 						borderWidth: 1,
 						backgroundColor: "rgb(205,127,50)",
 						stack: 'Stack 2',
@@ -441,10 +412,10 @@
 		</table>
 		
 		<script>
-			const segments = (JSON.parse(segment_efforts));
+			const all_riders_strava_segment_efforts = (JSON.parse(segment_efforts));
 			let myTable = document.getElementById("stats_table");
 			$(function() {
-				$.each(segments, function(i, option) {
+				$.each(all_riders_strava_segment_efforts, function(i, option) {
 					$('#sel').append($('<option/>').attr("value", [i, option.Philipp.time, option.Felix.time, option.Flo.time]).text(i));
 				});
 			})
@@ -455,6 +426,7 @@
 				key = selectObject;
 				// seperated_values = [seg_name, num_coords_curr_segm_rider1, ... , num_coords_curr_segm_ridern]
 				seperated_values = value.split(',');
+				segment_name = seperated_values[0];
 				for (seqGroup of seqGroups){
 					seqGroup.motionStop();
 					seqGroup.removeFrom(map);
@@ -479,15 +451,15 @@
 						myTable.rows[riders_iterator].cells[1].textContent = rettich_fancyTimeFormat(seperated_values[riders_iterator]);
 					}
 
-					myTable.rows[1].cells[2].textContent = Math.round(segments[seperated_values[0]].Philipp.speed*100)/100;
-					myTable.rows[2].cells[2].textContent = Math.round(segments[seperated_values[0]].Felix.speed*100)/100;
-					myTable.rows[3].cells[2].textContent = Math.round(segments[seperated_values[0]].Flo.speed*100)/100;
+					myTable.rows[1].cells[2].textContent = Math.round(all_riders_strava_segment_efforts[segment_name].Philipp.speed*100)/100;
+					myTable.rows[2].cells[2].textContent = Math.round(all_riders_strava_segment_efforts[segment_name].Felix.speed*100)/100;
+					myTable.rows[3].cells[2].textContent = Math.round(all_riders_strava_segment_efforts[segment_name].Flo.speed*100)/100;
 
-					myTable.rows[1].cells[3].textContent = Math.round(segments[seperated_values[0]].Philipp.power*100)/100;
-					myTable.rows[2].cells[3].textContent = Math.round(segments[seperated_values[0]].Felix.power*100)/100;
-					myTable.rows[3].cells[3].textContent = Math.round(segments[seperated_values[0]].Flo.power*100)/100;
+					myTable.rows[1].cells[3].textContent = Math.round(all_riders_strava_segment_efforts[segment_name].Philipp.power*100)/100;
+					myTable.rows[2].cells[3].textContent = Math.round(all_riders_strava_segment_efforts[segment_name].Felix.power*100)/100;
+					myTable.rows[3].cells[3].textContent = Math.round(all_riders_strava_segment_efforts[segment_name].Flo.power*100)/100;
 					
-					rettich_motion_draw_segment(seperated_values[0])
+					rettich_motion_draw_segment(segment_name)
 				}
 			}
 
@@ -512,19 +484,23 @@
 
 			function rettich_motion_draw_segment(seg_name) {
 			
-				start_idx_set = [segments[seg_name].Philipp.start_index,segments[seg_name].Felix.start_index,segments[seg_name].Flo.start_index]
-				end_idx_set = [segments[seg_name].Philipp.end_index,segments[seg_name].Felix.end_index,segments[seg_name].Flo.end_index]				
+				start_idx_set = [all_riders_strava_segment_efforts[seg_name].Philipp.start_index,all_riders_strava_segment_efforts[seg_name].Felix.start_index,all_riders_strava_segment_efforts[seg_name].Flo.start_index]
+				end_idx_set = [all_riders_strava_segment_efforts[seg_name].Philipp.end_index,all_riders_strava_segment_efforts[seg_name].Felix.end_index,all_riders_strava_segment_efforts[seg_name].Flo.end_index]				
 
 				rettich_motion_draw_riders(start_idx_set,end_idx_set)
 
-				marker_start = L.marker(segments[seg_name].Segment.start_latlng, {icon: start_icon}).addTo(map);
-				marker_finish = L.marker(segments[seg_name].Segment.end_latlng, {icon: finish_icon}).addTo(map);
+				marker_start = rettich_static_draw_marker(all_riders_strava_segment_efforts[seg_name].Segment.start_latlng, start_icon)
+				marker_finish = rettich_static_draw_marker(all_riders_strava_segment_efforts[seg_name].Segment.end_latlng, finish_icon)
 				
 				center = rettich_get_segment_center(marker_start, marker_finish)
 				bounds = L.latLngBounds(marker_start.getLatLng(), marker_finish.getLatLng())
 
 				map.setView(center);
 				map.fitBounds(bounds)
+			}
+
+			function rettich_static_draw_marker(latlng, icon) {
+				return L.marker(latlng, {icon: icon}).addTo(map);
 			}
 
 			function rettich_get_segment_center(start, finish){
