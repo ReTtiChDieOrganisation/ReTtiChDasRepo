@@ -102,7 +102,7 @@ var rettich_frames = {
      * gold
      */
     size_x : 54, // 3:4 ratio
-	size_y : 72, // 3:4 ratio
-	anchor_x : 54/2, // frame_size_x/2
-	anchor_y : 72 // frame_size_y
+    size_y : 72, // 3:4 ratio
+    anchor_x : 54/2, // frame_size_x/2
+    anchor_y : 72 // frame_size_y
 };
