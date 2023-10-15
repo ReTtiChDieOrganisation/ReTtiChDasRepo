@@ -88,7 +88,7 @@
 				let lat_lngs_riders_arr = [];
 				let speed_set = Array(num_riders).fill(0)
 
-				for (let riders_iterator = 0; riders_iterator<num_riders; riders_iterator++) {
+				for (let riders_iterator = 0; riders_iterator < num_riders; riders_iterator++) {
 					current_rider_strava_data = rettich_all_riders_arr[riders_iterator].get_strava_data();
 
 					if (lat_lng_endidx==-1) {
@@ -113,9 +113,6 @@
 
 					current_rider = rettich_all_riders_arr[riders_iterator];
 					current_rider_lat_lngs = lat_lngs_riders_arr[riders_iterator];
-
-					console.log("current_rider.get_frame().line_color: ", current_rider.get_frame().line_color)
-					console.log("current_rider.get_frame().frame_fg: ", current_rider.get_frame().frame_fg)
 
 					// frame background
 					let poly_frame_fg = L.motion.polyline(
@@ -422,7 +419,6 @@
 				// TODO: here, the order of riders is hardcoded. make this more general
 				start_idx_set = [all_riders_strava_segment_efforts[seg_name].Philipp.start_index,all_riders_strava_segment_efforts[seg_name].Felix.start_index,all_riders_strava_segment_efforts[seg_name].Flo.start_index]
 				end_idx_set = [all_riders_strava_segment_efforts[seg_name].Philipp.end_index,all_riders_strava_segment_efforts[seg_name].Felix.end_index,all_riders_strava_segment_efforts[seg_name].Flo.end_index]				
-
 
 				rettich_motion_draw_riders(start_idx_set,end_idx_set)
 
