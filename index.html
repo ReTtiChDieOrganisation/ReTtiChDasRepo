@@ -66,12 +66,6 @@
 				}
 			).addTo(map);
 
-			// initializa all riders
-			const felix_strava_data = (JSON.parse(felix_json));
-			const philipp_strava_data = (JSON.parse(philipp_json));
-			const flo_strava_data = (JSON.parse(flo_json));
-			const all_riders_strava_data = [philipp_strava_data,felix_strava_data,flo_strava_data];
-
 			class rettich_rider {
 				// constructor
 				constructor(name, strava_data, profile_picture, frame=rettich_frames.neutral) {
@@ -95,12 +89,18 @@
 				set_frame (new_frame) {this.frame = new_frame;}
 			}
 
-			felix = new rettich_rider("felix", felix_strava_data, rettich_profile_pictures.felix);
-			flo = new rettich_rider("flo", flo_strava_data, rettich_profile_pictures.flo);
-			philipp = new rettich_rider("philipp", philipp_strava_data, rettich_profile_pictures.philipp);
+			// initialize all riders and collect them in one all_riders array
+			felix = new rettich_rider("felix", (JSON.parse(felix_json)), rettich_profile_pictures.felix);
+			flo = new rettich_rider("flo", (JSON.parse(flo_json)), rettich_profile_pictures.flo);
+			philipp = new rettich_rider("philipp", (JSON.parse(philipp_json)), rettich_profile_pictures.philipp);
+			var rettich_all_riders_arr = [felix, flo, philipp];
+			const num_riders = rettich_all_riders_arr.length;
 
-			var rettich_riders = [felix, flo, philipp];
-			const num_riders = rettich_riders.length;
+			// initializa all riders
+			const felix_strava_data = (JSON.parse(felix_json));
+			const philipp_strava_data = (JSON.parse(philipp_json));
+			const flo_strava_data = (JSON.parse(flo_json));
+			const all_riders_strava_data = [philipp_strava_data,felix_strava_data,flo_strava_data];
 
 			const all_rider_icons = {
 				pictures : [
