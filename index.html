@@ -20,10 +20,7 @@
 	<script type="text/javascript" src="./frontend/data/rettich/icons.js"></script>
 
 	<style>
-		html, body {
-			height: 100%;
-			margin: 0;
-		}
+		html, body {height: 100%; margin: 0;}
 		.leaflet-container {float: left; height: 9000px; width: 10000px; max-width: 70%; max-height: 99%;}
 		.rightdivision {float: right; padding-right: 3%; padding-top: 0%; height: 9000px; width: 10000px; max-width: 26%; max-height: 30%;}
 		.rightdivision2 {float: right; padding-right: 3%; padding-top: 0%; height: 900px; width: 10000px; max-width: 26%; max-height: 48%;}
@@ -46,12 +43,8 @@
 	<div id="map">
 		<script>
 			const map = L.map('map').setView([50.896537, 7.025585], 12);		
-			const tiles = L.tileLayer(
-				'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-				{
-					attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community', 
-					maxZoom:21
-				}
+			const tiles = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+				{attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community', maxZoom:21}
 			).addTo(map);
 
 			class rettich_rider {
@@ -82,7 +75,7 @@
 			var felix = new rettich_rider("felix", (JSON.parse(felix_json)), rettich_profile_pictures.felix, rettich_frames.red);
 			var flo = new rettich_rider("flo", (JSON.parse(flo_json)), rettich_profile_pictures.flo, rettich_frames.blue);
 			var philipp = new rettich_rider("philipp", (JSON.parse(philipp_json)), rettich_profile_pictures.philipp, rettich_frames.green);
-			var rettich_all_riders_arr = [philipp, felix, flo]; // TODO: the order here matters in draw_segment. make it more general
+			var rettich_all_riders_arr = [philipp, felix, flo];
 			var num_riders = rettich_all_riders_arr.length;
 			// ############################################################################################################################
 
@@ -95,7 +88,7 @@
 				let lat_lngs_riders_arr = [];
 				let speed_set = Array(num_riders).fill(0)
 
-				for (let riders_iterator=0; riders_iterator<num_riders; riders_iterator++) {
+				for (let riders_iterator = 0; riders_iterator<num_riders; riders_iterator++) {
 					current_rider_strava_data = rettich_all_riders_arr[riders_iterator].get_strava_data();
 
 					if (lat_lng_endidx==-1) {
@@ -116,7 +109,7 @@
 			
 				seqGroups = []
 			
-				for (let riders_iterator=0; riders_iterator < num_riders; riders_iterator++) {
+				for (let riders_iterator = 0; riders_iterator < num_riders; riders_iterator++) {
 
 					current_rider = rettich_all_riders_arr[riders_iterator];
 					current_rider_lat_lngs = lat_lngs_riders_arr[riders_iterator];
@@ -180,9 +173,8 @@
 			}
 			
 			function rettich_find_closest_index(arrayOP, point){
-				// Calculates the index of the array of points for the closest to point
-				// does not check the last index
-				let dist = 99999999.0;
+				// Calculates the index of the array of points for the closest to point, last index not checked
+				let dist = 99999999.0; // just some random - for planet earth - high enough value
 				let idx = -1;
 			
 				for (i = 0; i < arrayOP.length-1; i++){
@@ -365,9 +357,11 @@
 			function rettich_getComboA(selectObject) {
 				value = selectObject.value; 
 				key = selectObject;
+
 				// seperated_values = [seg_name, num_coords_curr_segm_rider1, ... , num_coords_curr_segm_ridern]
 				seperated_values = value.split(',');
 				segment_name = seperated_values[0];
+				
 				for (seqGroup of seqGroups){
 					seqGroup.motionStop();
 					seqGroup.removeFrom(map);
@@ -425,7 +419,7 @@
 
 			function rettich_motion_draw_segment(seg_name) {
 			
-				// TODO: do not hardcode the order of riders here
+				// TODO: here, the order of riders is hardcoded. make this more general
 				start_idx_set = [all_riders_strava_segment_efforts[seg_name].Philipp.start_index,all_riders_strava_segment_efforts[seg_name].Felix.start_index,all_riders_strava_segment_efforts[seg_name].Flo.start_index]
 				end_idx_set = [all_riders_strava_segment_efforts[seg_name].Philipp.end_index,all_riders_strava_segment_efforts[seg_name].Felix.end_index,all_riders_strava_segment_efforts[seg_name].Flo.end_index]				
 
