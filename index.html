@@ -19,18 +19,6 @@
 
 	<script type="text/javascript" src="./frontend/data/rettich/icons.js"></script>
 
-	<script>
-		const start_icon = L.icon({
-			iconUrl: './frontend/icons/other/start.png',
-			iconSize:     [15, 15], // size of the icon
-			iconAnchor:   [8,8], // point of the icon which will correspond to marker's location
-		});
-		const finish_icon = L.icon({
-			iconUrl: './frontend/icons/other/finish.png',
-			iconSize:     [15, 15], // size of the icon
-			iconAnchor:   [8, 8], // point of the icon which will correspond to marker's location
-		});
-	</script>
 	<style>
 		html, body {
 			height: 100%;
@@ -142,8 +130,8 @@
 						color: current_rider.get_frame().line_color}, {}, {
 						icon: L.icon({
 							iconUrl: current_rider.get_frame().frame_fg,
-							iconAnchor: [current_rider.get_frame().anchor_x, current_rider.get_frame().anchor_y], 
-							iconSize: [current_rider.get_frame().size_x, current_rider.get_frame().size_y]}
+							iconAnchor: current_rider.get_frame().anchor, 
+							iconSize: current_rider.get_frame().size}
 						)}
 					)
 			
@@ -153,8 +141,8 @@
 						color: current_rider.get_frame().line_color}, {}, {
 						icon: L.icon({
 							iconUrl: current_rider.get_profile_picture().picture,
-							iconAnchor: [current_rider.get_profile_picture().anchor_x, current_rider.get_profile_picture().anchor_y], 
-							iconSize: [current_rider.get_profile_picture().size_x, current_rider.get_profile_picture().size_y]}
+							iconAnchor: current_rider.get_profile_picture().anchor, 
+							iconSize: current_rider.get_profile_picture().size}
 						)}
 					)
 
@@ -164,8 +152,8 @@
 						color: current_rider.get_frame().line_color}, {}, {
 						icon: L.icon({
 							iconUrl: current_rider.get_frame().frame_bg,
-							iconAnchor: [current_rider.get_frame().anchor_x, current_rider.get_frame().anchor_y], 
-							iconSize: [current_rider.get_frame().size_x, current_rider.get_frame().size_y]}
+							iconAnchor: current_rider.get_frame().anchor, 
+							iconSize: current_rider.get_frame().size}
 						)}
 					)
 			
@@ -437,14 +425,15 @@
 
 			function rettich_motion_draw_segment(seg_name) {
 			
+				// TODO: do not hardcode the order of riders here
 				start_idx_set = [all_riders_strava_segment_efforts[seg_name].Philipp.start_index,all_riders_strava_segment_efforts[seg_name].Felix.start_index,all_riders_strava_segment_efforts[seg_name].Flo.start_index]
 				end_idx_set = [all_riders_strava_segment_efforts[seg_name].Philipp.end_index,all_riders_strava_segment_efforts[seg_name].Felix.end_index,all_riders_strava_segment_efforts[seg_name].Flo.end_index]				
 
 
 				rettich_motion_draw_riders(start_idx_set,end_idx_set)
 
-				marker_start = rettich_static_draw_marker(all_riders_strava_segment_efforts[seg_name].Segment.start_latlng, start_icon)
-				marker_finish = rettich_static_draw_marker(all_riders_strava_segment_efforts[seg_name].Segment.end_latlng, finish_icon)
+				marker_start = rettich_static_draw_marker(all_riders_strava_segment_efforts[seg_name].Segment.start_latlng, rettich_other_icons.start)
+				marker_finish = rettich_static_draw_marker(all_riders_strava_segment_efforts[seg_name].Segment.end_latlng, rettich_other_icons.finish)
 				
 				center = rettich_get_segment_center(marker_start, marker_finish)
 				bounds = L.latLngBounds(marker_start.getLatLng(), marker_finish.getLatLng())
@@ -453,8 +442,14 @@
 				map.fitBounds(bounds)
 			}
 
-			function rettich_static_draw_marker(latlng, icon) {
-				return L.marker(latlng, {icon: icon}).addTo(map);
+			function rettich_static_draw_marker(latlng, marker_icon) {
+				return L.marker(
+					latlng, {
+					icon: L.icon({
+						iconUrl: marker_icon.icon,
+						iconAnchor: marker_icon.anchor, 
+						iconSize: marker_icon.size})}
+				).addTo(map);
 			}
 
 			function rettich_get_segment_center(start, finish) {
