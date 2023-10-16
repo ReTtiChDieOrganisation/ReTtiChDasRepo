@@ -93,7 +93,7 @@ for file in remove_activities:
     os.remove(activity_path+file)
 
 
-with open('./frontend/data/data.js', 'w') as f:
+with open('./frontend/data/data.json', 'w') as f:
     json.dump(all_rides, f)
 
 
@@ -149,6 +149,7 @@ for name in names:
 
 # calculate stats for each group
 all_groups = {}
+group_id = 0
 for group in groups:
     shared_segments = [seg['name'] for seg in all_rides[group[0]]['segment_efforts']]
     for i in range(1, len(group)):
@@ -184,96 +185,13 @@ for group in groups:
         times = [segment_efforts[segment_name_clean][ride_idx]['time'] for ride_idx in group]
         ranks = sstat.rankdata(times,).astype(int)-1
         for i in range(len(group)):
-
-            # TODO Medals
-            # TODO Saving with group
-
-            # =============================================================================
-            # =============================================================================
-            # =============================================================================
-            # =============================================================================
-            # # # #
-            # =============================================================================
-            # =============================================================================
-            # =============================================================================
-            # =============================================================================
-
-        for idx_rider, seg_stream in enumerate(segments):
-            personal_se = {}
-            for i in range(len(seg_stream['segment_efforts'])):
-                if seg_stream['segment_efforts'][i]['name'] == segment_name:
-                    seg_eff = seg_stream['segment_efforts'][i]
-
-                    if 'average_watts' in seg_eff.keys():
-                        personal_se['power'] = seg_eff['average_watts']
-            segment_name_clean = segment_name.replace("'", "")
-            segment_name_clean = segment_name_clean.replace(',', '')
-            if not idx_rider:
-                segment_info = {'start_latlng': seg_eff['segment']
-                                ['start_latlng'], 'end_latlng': seg_eff['segment']['end_latlng']}
-                segment_efforts[segment_name_clean] = {names[idx_rider]: personal_se, 'Segment': segment_info}
-            else:
-                segment_efforts[segment_name_clean][names[idx_rider]] = personal_se
-
-        times = [segment_efforts[segment_name_clean][name]['time'] for name in names]
-        ranks = sstat.rankdata(times,).astype(int)-1
-
-        for idx_rider in range(len(names)):
-            medal_arr[idx_rider, ranks[idx_rider]] += 1
-
-    medals = {names[i]: list(medal_arr[i, :]) for i in range(len(names))}
+            if ranks[i]<3:
+                medal_arr[i, ranks[i]] += 1
+                
+        all_groups[group_id]={'segments':segment_efforts, 'ride_ids':group, 'medals':{group[i]: list(medal_arr[i,:]) for i in range(len(group))} ,'riders':[all_rides[i]['rider'] for i in group]}
+        group_id +=1
 
 
-# TODO save group stats with group id in frontend/data/stats.json
-#       - groups should be collection of ids and it is probably easiest if ids correspond to idcs in the data.json /all_reides
-#       - there should also be one group for each rider consisting of all activities from this rider we have to figure out
-#           what to show in the stats then first use dummys
+with open('./frontend/data/stats.json', 'w') as f:
+    json.dump(all_groups,f)
 # TODO make chapters into functions and then add a if __name__ == "__main__": which consecutively calls both functions
-
-
-if False:
-
-    segment_list = intersection([a['name'] for a in segments[2]['segment_efforts']], intersection(
-        [a['name'] for a in segments[0]['segment_efforts']], [a['name'] for a in segments[1]['segment_efforts']]))
-
-    segment_efforts = {}
-    medal_arr = np.zeros((len(names), 3))
-
-    for segment_name in segment_list:
-
-        for idx_rider, seg_stream in enumerate(segments):
-            personal_se = {}
-            for i in range(len(seg_stream['segment_efforts'])):
-                if seg_stream['segment_efforts'][i]['name'] == segment_name:
-                    seg_eff = seg_stream['segment_efforts'][i]
-                    personal_se['time'] = seg_eff['elapsed_time']
-                    personal_se['speed'] = seg_eff['distance']*60*60/(1000*seg_eff['elapsed_time'])
-                    personal_se['start_index'] = seg_eff['start_index']
-                    personal_se['end_index'] = seg_eff['end_index']
-
-                    if 'average_watts' in seg_eff.keys():
-                        personal_se['power'] = seg_eff['average_watts']
-            segment_name_clean = segment_name.replace("'", "")
-            segment_name_clean = segment_name_clean.replace(',', '')
-            if not idx_rider:
-                segment_info = {'start_latlng': seg_eff['segment']
-                                ['start_latlng'], 'end_latlng': seg_eff['segment']['end_latlng']}
-                segment_efforts[segment_name_clean] = {names[idx_rider]: personal_se, 'Segment': segment_info}
-            else:
-                segment_efforts[segment_name_clean][names[idx_rider]] = personal_se
-
-        times = [segment_efforts[segment_name_clean][name]['time'] for name in names]
-        ranks = sstat.rankdata(times,).astype(int)-1
-
-        for idx_rider in range(len(names)):
-            medal_arr[idx_rider, ranks[idx_rider]] += 1
-
-    medals = {names[i]: list(medal_arr[i, :]) for i in range(len(names))}
-
-    # with open('./frontend/data/stats.js', 'w') as f:
-    #     f.write("medals = '")
-    #     json.dump(medals,f)
-    #     f.write("'\n")
-    #     f.write("segment_efforts = '")
-    #     json.dump(segment_efforts,f)
-    #     f.write("'")
