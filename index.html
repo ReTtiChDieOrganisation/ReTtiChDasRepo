@@ -68,13 +68,16 @@
 				set_strava_data (new_strava_data) {this.strava_data = new_strava_data;}
 				set_profile_picture (new_profile_picture) {this.profile_picture = new_profile_picture;}
 				set_frame (new_frame) {this.frame = new_frame;}
+				set_frame_fg (new_foreground) {this.frame.frame_fg = new_foreground;}
+				set_frame_bg (new_background) {this.frame.frame_bg = new_background;}
+				set_frame_line_color (new_line_color) {this.frame.line_color = new_line_color;}
 			}
 
 			// ############################################################################################################################
 			// initialize all riders data and collect them in one array - this is all the data we need 
-			var felix = new rettich_rider("felix", (JSON.parse(felix_json)), rettich_profile_pictures.felix, rettich_frames.red);
+			var felix = new rettich_rider("felix", (JSON.parse(felix_json)), rettich_profile_pictures.felix, rettich_frames.orange);
 			var flo = new rettich_rider("flo", (JSON.parse(flo_json)), rettich_profile_pictures.flo, rettich_frames.blue);
-			var philipp = new rettich_rider("philipp", (JSON.parse(philipp_json)), rettich_profile_pictures.philipp, rettich_frames.green);
+			var philipp = new rettich_rider("philipp", (JSON.parse(philipp_json)), rettich_profile_pictures.philipp, rettich_frames.pride_bg);
 			var rettich_all_riders_arr = [philipp, felix, flo]; // TODO: order of riders matters, see rettich_motion_draw_segment()
 			var num_riders = rettich_all_riders_arr.length;
 			// ############################################################################################################################
