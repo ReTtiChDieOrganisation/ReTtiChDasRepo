@@ -86,7 +86,7 @@ def load_data():
                     segment_name_clean = segment_name.replace("'", "")
                     segment_name_clean = segment_name_clean.replace(',', '')
                     full_act['segment_efforts'][i]['name'] = segment_name_clean
-                    full_act['segment_efforts'][i]['segment']['name']  = segment_name_clean
+                    full_act['segment_efforts'][i]['segment']['name'] = segment_name_clean
 
                 with open(RAW_PATH+str(act_id)+'.json', 'w') as f:
                     json.dump(full_act, f)
@@ -169,6 +169,8 @@ def calculate_stats():
     all_groups = {}
     group_id = 0
     for group in groups:
+        # for some reason there are some int32 and not int and this does not work with json.dump
+        group = [int(g) for g in group]
         shared_segments = [seg['name'] for seg in all_rides[str(group[0])]['segment_efforts']]
         for i in range(1, len(group)):
             shared_segments = intersection(shared_segments, [seg['name']
@@ -207,9 +209,9 @@ def calculate_stats():
                 if ranks[i] < 3:
                     medal_arr[i, ranks[i]] += 1
 
-            all_groups[group_id] = {'segments': segment_efforts, 'ride_ids': group, 'medals': {group[i]: list(
-                medal_arr[i, :]) for i in range(len(group))}, 'riders': [all_rides[str(i)]['rider'] for i in group]}
-            group_id += 1
+        all_groups[str(group_id)] = {'segments': segment_efforts, 'ride_ids': group, 'medals': {group[i]: list(
+            medal_arr[i, :]) for i in range(len(group))}, 'riders': [all_rides[str(i)]['rider'] for i in group]}
+        group_id += 1
 
     with open(DATA_PATH+'stats.json', 'w') as f:
         f.write("ALL_STATS= '")
