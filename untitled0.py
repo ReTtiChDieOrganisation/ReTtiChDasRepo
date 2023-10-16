@@ -157,13 +157,13 @@ def calculate_stats():
             for subset in itertools.combinations(group, L):
                 groups.remove(list(subset))
 
-    # add group of all rides
-    groups.append(list(np.arange(len(all_rides))))
-
     # one group for each rider consisting of all of their rides
     for name in names:
         id_list_rider = [i for i in range(len(all_rides)) if all_rides[str(i)]['rider'] == name]
         groups.append(id_list_rider)
+
+    # add group of all rides
+    groups.append(list(np.arange(len(all_rides))))
 
     # calculate stats for each group
     all_groups = {}
