@@ -3,3 +3,5 @@
 .DS_Store
 frontend/.DS_Store
 frontend/icons/.DS_Store
+etc/etc.txt
+frontend/data/strava/raw_data

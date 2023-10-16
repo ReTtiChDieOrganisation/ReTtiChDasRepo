@@ -23,10 +23,13 @@ def load_data():
     Loads raw data of the last NO_DAYS days into RAW_PATH and clears all old and other files in this folder
     Saves accumulated data in DATA_PATH + 'data.json'
     '''
+
+    with open('./etc/etc.txt', 'r') as f:
+        client_sc = f.read()
     password = rettich_encrypt.get_access()
     payload = {
         'client_id': "114307",
-        'client_secret': rettich_encrypt.decode(password, rettich_encrypt.get_client_secret()),
+        'client_secret': client_sc,
         'refresh_token': '',
         'grant_type': "refresh_token",
         'f': 'json'
@@ -131,7 +134,8 @@ def calculate_stats():
                     if not i:
                         segments = [seg['name'] for seg in all_rides[str(subset[i])]['segment_efforts']]
                     else:
-                        segments = intersection(segments, [seg['name'] for seg in all_rides[str(subset[i])]['segment_efforts']])
+                        segments = intersection(segments, [seg['name']
+                                                for seg in all_rides[str(subset[i])]['segment_efforts']])
                     if len(segments) < SHARED_SEGS:
                         break
                 if len(segments) > SHARED_SEGS:
@@ -157,7 +161,8 @@ def calculate_stats():
     for group in groups:
         shared_segments = [seg['name'] for seg in all_rides[str(group[0])]['segment_efforts']]
         for i in range(1, len(group)):
-            shared_segments = intersection(shared_segments, [seg['name'] for seg in all_rides[str(group[i])]['segment_efforts']])
+            shared_segments = intersection(shared_segments, [seg['name']
+                                           for seg in all_rides[str(group[i])]['segment_efforts']])
 
         segment_efforts = {}
 
