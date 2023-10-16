@@ -15,7 +15,8 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
 	<script src="./frontend/dependencies/leaflet-motion/dist/leaflet.motion.js"></script>
-	<script src="./frontend/data/strava/data.json"></script>
+	<script src="./frontend/data/strava/data.js"></script>
+	<script src="./frontend/data/strava/stats.json"></script>
 
 	<script type="text/javascript" src="./frontend/data/rettich/icons.js"></script>
 
@@ -46,7 +47,10 @@
 			const tiles = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
 				{attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community', maxZoom:21}
 			).addTo(map);
-
+			ALL_STATS = JSON.parse(ALL_STATS)
+			console.log(ALL_STATS)
+			ALL_RIDES = JSON.parse(ALL_RIDES)
+			console.log(ALL_RIDES)
 			class rettich_rider {
 				// constructor
 				constructor(name, strava_data, profile_picture=rettich_profile_pictures.default, frame=rettich_frames.default) {

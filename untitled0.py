@@ -81,6 +81,12 @@ def load_data():
                 full_act['rider'] = names[rider_idx]
                 full_act['start_date'] = str(iso8601.parse_date(activity['start_date']))
                 full_act['segment_efforts'] = detailed_act['segment_efforts']
+                for i in range(len(full_act['segment_efforts'])):
+                    segment_name = full_act['segment_efforts'][i]['name']
+                    segment_name_clean = segment_name.replace("'", "")
+                    segment_name_clean = segment_name_clean.replace(',', '')
+                    full_act['segment_efforts'][i]['name'] = segment_name_clean
+                    full_act['segment_efforts'][i]['segment']['name']  = segment_name_clean
 
                 with open(RAW_PATH+str(act_id)+'.json', 'w') as f:
                     json.dump(full_act, f)
@@ -98,6 +104,10 @@ def load_data():
 
     with open(DATA_PATH + 'data.json', 'w') as f:
         json.dump(all_rides, f)
+    with open(DATA_PATH + 'data.js', 'w') as f:
+        f.write("ALL_RIDES = '")
+        json.dump(all_rides, f)
+        f.write("'")
 
 
 def calculate_stats():
@@ -202,7 +212,9 @@ def calculate_stats():
             group_id += 1
 
     with open(DATA_PATH+'stats.json', 'w') as f:
+        f.write("ALL_STATS= '")
         json.dump(all_groups, f)
+        f.write("'")
 
 
 if __name__ == "__main__":
