@@ -1,0 +1,180 @@
+// rettich icons consist of a profile picture and a frame. The frame consists of a .png and a corresponding polyline color
+var rettich_profile_pictures = {
+    flo :
+    {
+        picture : "./frontend/icons/profile_pictures/flo.png",
+        size : [33,44], // 3:4 ratio
+        anchor : [33/2,44+22] // picture_size_y + adjust (adjust to center picture in frame)
+    },
+    felix :
+    {
+        picture : "./frontend/icons/profile_pictures/felix.png",
+        size : [33,44], // 3:4 ratio
+        anchor : [33/2,44+22] // picture_size_y + adjust (adjust to center picture in frame)
+    },
+    philipp :
+    {
+        picture : "./frontend/icons/profile_pictures/philipp.png",
+        size : [33,44], // 3:4 ratio
+        anchor : [33/2,44+22] // picture_size_y + adjust (adjust to center picture in frame)
+    },
+    default :
+    {
+        picture : "./frontend/icons/profile_pictures/default.png",
+        size : [33,44], // 3:4 ratio
+        anchor : [33/2,44+22] // picture_size_y + adjust (adjust to center picture in frame)
+    }
+};
+
+var rettich_frames = {
+    blue :
+    {
+        frame_fg : "./frontend/icons/frames/fg_blue.png",
+        frame_bg : "./frontend/icons/frames/bg_white.png",
+        line_color : "rgba("+0+" ,"+56+","+123+")",
+        size : [54,72], // 3:4 ratio
+        anchor : [54/2,72] // frame_size_x/2
+    },
+    green :
+    {
+        frame_fg : "./frontend/icons/frames/fg_green.png",
+        frame_bg : "./frontend/icons/frames/bg_white.png",
+        line_color : "rgba("+6+" ,"+80+","+0+")",
+        size : [54,72], // 3:4 ratio
+        anchor : [54/2,72] // frame_size_x/2
+    },
+    navyblue :
+    {
+        frame_fg : "./frontend/icons/frames/fg_navyblue.png",
+        frame_bg : "./frontend/icons/frames/bg_white.png",
+        line_color : "rgba("+32+" ,"+56+","+100+")",
+        size : [54,72], // 3:4 ratio
+        anchor : [54/2,72] // frame_size_x/2
+    },
+    neutral :
+    {
+        frame_fg : "./frontend/icons/frames/fg_neutral.png",
+        frame_bg : "./frontend/icons/frames/bg_white.png",
+        line_color : "rgba("+208+" ,"+206+","+206+")",
+        size : [54,72], // 3:4 ratio
+        anchor : [54/2,72] // frame_size_x/2
+    },
+    pride_fg :
+    {
+        frame_fg : "./frontend/icons/frames/fg_pride.png",
+        frame_bg : "./frontend/icons/frames/bg_white.png",
+        line_color : "rgba("+208+" ,"+206+","+206+")",
+        size : [54,72], // 3:4 ratio
+        anchor : [54/2,72] // frame_size_x/2
+    },
+    pride_bg :
+    {
+        frame_fg : "./frontend/icons/frames/fg_neutral.png",
+        frame_bg : "./frontend/icons/frames/bg_pride.png",
+        line_color : "rgba("+208+" ,"+206+","+206+")",
+        size : [54,72], // 3:4 ratio
+        anchor : [54/2,72] // frame_size_x/2
+    },
+    purple :
+    {
+        frame_fg : "./frontend/icons/frames/fg_purple.png",
+        frame_bg : "./frontend/icons/frames/bg_white.png",
+        line_color : "rgba("+112+" ,"+48+","+160+")",
+        size : [54,72], // 3:4 ratio
+        anchor : [54/2,72] // frame_size_x/2
+    },
+    red :
+    {
+        frame_fg : "./frontend/icons/frames/fg_red.png",
+        frame_bg : "./frontend/icons/frames/bg_white.png",
+        line_color : "rgba("+139+" ,"+0+","+0+")",
+        size : [54,72], // 3:4 ratio
+        anchor : [54/2,72] // frame_size_x/2
+    },
+    ukraine :
+    {
+        frame_fg : "./frontend/icons/frames/fg_ukraine.png",
+        frame_bg : "./frontend/icons/frames/bg_white.png",
+        line_color : "rgba("+255+" ,"+238+","+21+")",
+        size : [54,72], // 3:4 ratio
+        anchor : [54/2,72] // frame_size_x/2
+    },
+    yellow :
+    {
+        frame_fg : "./frontend/icons/frames/fg_yellow.png",
+        frame_bg : "./frontend/icons/frames/bg_white.png",
+        line_color : "rgba("+255+" ,"+238+","+21+")",
+        size : [54,72], // 3:4 ratio
+        anchor : [54/2,72] // frame_size_x/2
+    },
+    gold :
+    {
+        frame_fg : "./frontend/icons/frames/fg_gold.png",
+        frame_bg : "./frontend/icons/frames/bg_white.png",
+        line_color : "rgba("+207+" ,"+181+","+59+")",
+        size : [54,72], // 3:4 ratio
+        anchor : [54/2,72] // frame_size_x/2
+    },
+    silver :
+    {
+        frame_fg : "./frontend/icons/frames/fg_silver.png",
+        frame_bg : "./frontend/icons/frames/bg_white.png",
+        line_color : "rgba("+170+" ,"+169+","+173+")",
+        size : [54,72], // 3:4 ratio
+        anchor : [54/2,72] // frame_size_x/2
+    },
+    bronze :
+    {
+        frame_fg : "./frontend/icons/frames/fg_bronze.png",
+        frame_bg : "./frontend/icons/frames/bg_white.png",
+        line_color : "rgba("+191+" ,"+137+","+112+")",
+        size : [54,72], // 3:4 ratio
+        anchor : [54/2,72] // frame_size_x/2
+    },
+    black :
+    {
+        frame_fg : "./frontend/icons/frames/fg_black.png",
+        frame_bg : "./frontend/icons/frames/bg_white.png",
+        line_color : "rgba("+0+" ,"+0+","+0+")",
+        size : [54,72], // 3:4 ratio
+        anchor : [54/2,72] // frame_size_x/2
+    },
+    white :
+    {
+        frame_fg : "./frontend/icons/frames/fg_white.png",
+        frame_bg : "./frontend/icons/frames/bg_white.png",
+        line_color : "rgba("+255+" ,"+255+","+255+")",
+        size : [54,72], // 3:4 ratio
+        anchor : [54/2,72] // frame_size_x/2
+    },
+    default :
+    {
+        frame_fg : "./frontend/icons/frames/fg_neutral.png",
+        frame_bg : "./frontend/icons/frames/bg_white.png",
+        line_color : "rgba("+0+" ,"+0+","+0+")",
+        size : [54,72], // 3:4 ratio
+        anchor : [54/2,72] // frame_size_x/2
+    },
+    /* TODO: 
+     * black
+     * white
+     * bronce
+     * silver
+     * gold
+     */
+};
+
+var rettich_other_icons = {
+    start :
+    {
+        icon : "./frontend/icons/other/start.png",
+        size : [15,15],
+        anchor : [8,8]
+    },
+    finish :
+    {
+        icon : "./frontend/icons/other/finish.png",
+        size : [15,15],
+        anchor : [8,8]
+    },
+};
