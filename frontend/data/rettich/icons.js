@@ -107,6 +107,46 @@ var rettich_frames = {
         size : [54,72], // 3:4 ratio
         anchor : [54/2,72] // frame_size_x/2
     },
+    gold :
+    {
+        frame_fg : "./frontend/icons/frames/fg_gold.png",
+        frame_bg : "./frontend/icons/frames/bg_white.png",
+        line_color : "rgba("+207+" ,"+181+","+59+")",
+        size : [54,72], // 3:4 ratio
+        anchor : [54/2,72] // frame_size_x/2
+    },
+    silver :
+    {
+        frame_fg : "./frontend/icons/frames/fg_silver.png",
+        frame_bg : "./frontend/icons/frames/bg_white.png",
+        line_color : "rgba("+170+" ,"+169+","+173+")",
+        size : [54,72], // 3:4 ratio
+        anchor : [54/2,72] // frame_size_x/2
+    },
+    bronze :
+    {
+        frame_fg : "./frontend/icons/frames/fg_bronze.png",
+        frame_bg : "./frontend/icons/frames/bg_white.png",
+        line_color : "rgba("+191+" ,"+137+","+112+")",
+        size : [54,72], // 3:4 ratio
+        anchor : [54/2,72] // frame_size_x/2
+    },
+    black :
+    {
+        frame_fg : "./frontend/icons/frames/fg_black.png",
+        frame_bg : "./frontend/icons/frames/bg_white.png",
+        line_color : "rgba("+0+" ,"+0+","+0+")",
+        size : [54,72], // 3:4 ratio
+        anchor : [54/2,72] // frame_size_x/2
+    },
+    white :
+    {
+        frame_fg : "./frontend/icons/frames/fg_white.png",
+        frame_bg : "./frontend/icons/frames/bg_white.png",
+        line_color : "rgba("+255+" ,"+255+","+255+")",
+        size : [54,72], // 3:4 ratio
+        anchor : [54/2,72] // frame_size_x/2
+    },
     default :
     {
         frame_fg : "./frontend/icons/frames/fg_neutral.png",
