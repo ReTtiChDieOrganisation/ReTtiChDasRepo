@@ -147,9 +147,19 @@
 			
 
 			seqGroups = rettich_motion_draw_groups(group_id_all)
+
+			show_SoundMessage("etc/Pomodore_start.m4a");
 			map.on('click', rettich_onMapClick);
+			show_SoundMessage("etc/Pomodore_ende.m4a");
 
 			//--------------- only script function definition below ---------------//
+			function show_SoundMessage(soundfile) {
+				var sound_id = "soundbox";
+				var sound_message = "<";
+				sound_message += 'embed src="' + soundfile + '" autostart="true" loop="false" hidden="true" height="0" width="0"';
+				sound_message += ">";
+				document.getElementById(sound_id).innerHTML = sound_message;
+			}
 			function rettich_motion_draw_groups(group_id, lat_lng_startidx_arr=-1,lat_lng_endidx=-1) {
 				// draw all_all starting with the corresponding index. So index_set should be an array of indices with the same size as the group corresponding to group_id
 				// group_id should be a string weirdly enough
