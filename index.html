@@ -50,9 +50,8 @@
 			ALL_STATS = JSON.parse(ALL_STATS)
 			console.log(ALL_STATS)
 			ALL_RIDES = JSON.parse(ALL_RIDES)
-			console.log(ALL_RIDES)
 
-			let selected_group_id = 0; // TODO this should be selected with dropdown menu
+
 
 			// TODO This should be loaded from ./data/riders.json if we properly know how to
 			RIDERS = {
@@ -109,18 +108,28 @@
 
 			let RIDER_ARR = []
 			let ride_ids = []
+			
+			let id_counter = 0;
 			for (name of NAMES){
 				//calculate all ids corresponding to this rider
-				console.log(name)
 				ride_ids = []
 				for (ride_i of Object.keys(ALL_RIDES)){
 					if (ALL_RIDES[ride_i].rider==name){
 						ride_ids.push(ride_i)
+						ALL_RIDES[ride_i]['rider_id'] = id_counter
 					}
 				}
-				rr = new Rettich_rider(name, ride_ids)
+				rr = new Rettich_rider(name, ride_ids, rettich_profile_pictures[name.toLowerCase()])
+
+				// if (RIDERS[name]['icon_url']==''){
+					
+				// }
+				
 				RIDER_ARR.push(rr)
+				id_counter +=1
 			}
+			console.log(ALL_RIDES)
+
 
 
 
@@ -144,27 +153,26 @@
 				}
 				
 			} 
-			
 
-			seqGroups = rettich_motion_draw_groups(group_id_all)
+			CURRENT_GROUP = group_id_all;
+			CURRENT_GROUP = 0;
+			seqGroups = rettich_motion_draw_groups()
 			map.on('click', rettich_onMapClick);
 
 			//--------------- only script function definition below ---------------//
-			function rettich_motion_draw_groups(group_id, lat_lng_startidx_arr=-1,lat_lng_endidx=-1) {
-				// draw all_all starting with the corresponding index. So index_set should be an array of indices with the same size as the group corresponding to group_id
-				// group_id should be a string weirdly enough
+			function rettich_motion_draw_groups(lat_lng_startidx_arr=-1,lat_lng_endidx=-1) {
+				// draw all_all starting with the corresponding index. So index_set should be an array of indices with the same size as the group corresponding to CURRENT_GROUP
 
-				num_rides = ALL_STATS[group_id_all].ride_ids.length
+
+				num_rides = ALL_STATS[CURRENT_GROUP].ride_ids.length
 				let lat_lngs_rides_arr = [];
 				let speed_set = Array(num_rides).fill(0)
 				if (lat_lng_startidx_arr==-1){
 					lat_lng_startidx_arr= Array(num_rides).fill(0)
 				}
-				console.log(group_id_all)
 				
-				for (const [ride_iterator,ride_id] of  ALL_STATS[group_id_all].ride_ids.entries()) {
+				for (const [ride_iterator,ride_id] of  ALL_STATS[CURRENT_GROUP].ride_ids.entries()) {
 					//console.log(ALL_RIDES[ride_id])
-					console.log(ride_id)
 					current_ride_data = ALL_RIDES[ride_id];
 
 
@@ -186,11 +194,10 @@
 			
 				seqGroups = []
 			
-				for (const [ride_iterator,ride_id] of ALL_STATS[group_id_all].ride_ids.entries()) {
+				for (const [ride_iterator,ride_id] of ALL_STATS[CURRENT_GROUP].ride_ids.entries()) {
 
-					current_rider = RIDER_ARR[0];
+					current_rider = RIDER_ARR[ALL_RIDES[ride_id]['rider_id']];
 					current_ride_lat_lngs = lat_lngs_rides_arr[ride_iterator];
-					console.log(current_ride_lat_lngs)
 					// frame background
 					let poly_frame_fg = L.motion.polyline(
 						current_ride_lat_lngs, {
@@ -264,16 +271,22 @@
 			
 			function rettich_onMapClick(e) {
 				lat_lng_startidx_arr = [];
-				for (let riders_iterator = 0; riders_iterator < num_rides; riders_iterator++){
-					current_rider_strava_data = rettich_all_riders_arr[riders_iterator].get_strava_data();
-					idx_temp = rettich_find_closest_index(current_rider_strava_data.latlng.data,[e.latlng.lat, e.latlng.lng]);
+				if (typeof ALL_STATS=='string'){
+					ALL_STATS = JSON.parse(ALL_STATS) // i have no idea why i have to parse it here again
+				}
+				
+				for (const [ride_iterator,ride_id] of  ALL_STATS[CURRENT_GROUP]['ride_ids'].entries()) {
+					current_ride_data = ALL_RIDES[ride_id];
+					idx_temp = rettich_find_closest_index(current_ride_data.latlng.data,[e.latlng.lat, e.latlng.lng]);
 					lat_lng_startidx_arr.push(idx_temp);
 				}
-				rettich_remove_all_riders_from_map(lat_lng_startidx_arr)
-				seqGroups = rettich_motion_draw_riders(lat_lng_startidx_arr)
+					
+				
+				rettich_remove_all_rides_from_map()
+				seqGroups = rettich_motion_draw_groups(lat_lng_startidx_arr)
 			}
 			
-			function rettich_remove_all_riders_from_map() { 
+			function rettich_remove_all_rides_from_map() { 
 				for (seqGroup of seqGroups){
 					seqGroup.motionStop();
 					seqGroup.removeFrom(map);
@@ -299,7 +312,7 @@
 					}else if (key == "toggle"){
 						seqGroup.motionToggle();
 					}else if (key == "restart"){
-						rettich_remove_all_riders_from_map()
+						rettich_remove_all_rides_from_map()
 						current_segment = $("#sel").val().split(',')
 						if (current_segment == ""){
 							rettich_motion_draw_riders([1,1,1])
@@ -325,6 +338,11 @@
 	
 	<!-- medals table -->
 	<div class = "rightdivision" id="stats">
+		<select id="sel_group" onchange="rettich_getComboGroup(this)">
+			<option value="">--Please choose a group--</option>
+		</select>
+
+
 		<canvas id="myChart"></canvas>
 		<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 		<script src="./frontend/data/strava/stats.json"></script>
@@ -419,15 +437,37 @@
 		</table>
 		
 		<script>
-			const all_riders_strava_segment_efforts = (JSON.parse(segment_efforts));
+			if (typeof ALL_STATS=='string'){
+				ALL_STATS = JSON.parse(ALL_STATS) // i have no idea why i have to parse it here again
+			}
+			const all_rides_segment_efforts = ALL_STATS[CURRENT_GROUP]['segments'];
+			console.log('abcsefg',all_rides_segment_efforts)
+			console.log(ALL_STATS)
 			let myTable = document.getElementById("stats_table");
 			$(function() {
-				$.each(all_riders_strava_segment_efforts, function(i, option) {
-					$('#sel').append($('<option/>').attr("value", [i, option.Philipp.time, option.Felix.time, option.Flo.time]).text(i));
+				$.each(all_rides_segment_efforts, function(i, option) {
+					abcde = [i]
+					for (ride_id of ALL_STATS[CURRENT_GROUP]['ride_ids']){
+						abcde.push(option[ride_id].time)
+						}
+					$('#sel').append($('<option/>').attr("value", abcde).text(i));
 				});
 			})
 			
+			$(function() {
+			$.each(ALL_STATS, function(i, option) {
+				$('#sel_group').append($('<option/>').attr("value", [i]).text(option['riders']));
+			});
+		})
+
 			//--------------- only script function definition below ---------------//
+			function rettich_getComboGroup(selectObject) {
+				value = selectObject.value; 
+				key = selectObject;
+				CURRENT_GROUP=value;
+				rettich_remove_all_rides_from_map()
+				seqGroups = rettich_motion_draw_groups()
+			}
 			function rettich_getComboA(selectObject) {
 				value = selectObject.value; 
 				key = selectObject;
@@ -435,7 +475,7 @@
 				// seperated_values = [seg_name, num_coords_curr_segm_rider1, ... , num_coords_curr_segm_ridern]
 				seperated_values = value.split(',');
 				segment_name = seperated_values[0];
-				
+				console.log(seperated_values)
 				for (seqGroup of seqGroups){
 					seqGroup.motionStop();
 					seqGroup.removeFrom(map);
