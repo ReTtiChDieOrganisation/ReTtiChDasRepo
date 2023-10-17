@@ -104,10 +104,6 @@ def load_data():
 
     with open(DATA_PATH + 'data.json', 'w') as f:
         json.dump(all_rides, f)
-    with open(DATA_PATH + 'data.js', 'w') as f:
-        f.write("ALL_RIDES = '")
-        json.dump(all_rides, f)
-        f.write("'")
 
 
 def calculate_stats():
@@ -214,9 +210,7 @@ def calculate_stats():
         group_id += 1
 
     with open(DATA_PATH+'stats.json', 'w') as f:
-        f.write("ALL_STATS= '")
         json.dump(all_groups, f)
-        f.write("'")
 
 
 if __name__ == "__main__":
