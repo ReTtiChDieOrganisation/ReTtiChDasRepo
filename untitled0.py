@@ -24,9 +24,10 @@ def load_data():
     Saves accumulated data in DATA_PATH + 'data.json'
     '''
 
-    with open('./etc/etc.txt', 'r') as f:
-        client_sc = f.read()
-    password = rettich_encrypt.get_access()
+    #with open('./etc/etc.txt', 'r') as f:
+    #    client_sc = f.read()
+    client_sc = '290331dcc0fb07054618452f7fc4dde505c77345'
+    password = 'pass'
     payload = {
         'client_id': "114307",
         'client_secret': client_sc,
