@@ -155,6 +155,7 @@
 			} 
 
 			CURRENT_GROUP = group_id_all;
+			CURRENT_GROUP = 8;
 			seqGroups = rettich_motion_draw_groups()
 			map.on('click', rettich_onMapClick);
 
@@ -345,33 +346,46 @@
 		<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 		<script src="./frontend/data/strava/stats.json"></script>
 		<script>
-			const rettich_all_riders_medalz = (JSON.parse(medals));
+			if (typeof ALL_STATS=='string'){
+				ALL_STATS = JSON.parse(ALL_STATS) // i still have no idea why i have to parse it here again
+			}
+			console.log(ALL_STATS)
+
 			const ctx = document.getElementById('myChart');
+			let medal_labels = ALL_STATS[CURRENT_GROUP]['riders']
+			let medal_data_gold = []
+			let medal_data_silver = []
+			let medal_data_bronze = []
+			for (const [ride_iterator, ride_id] of  ALL_STATS[CURRENT_GROUP].ride_ids.entries()) {
+					medal_data_gold.push(ALL_STATS[CURRENT_GROUP]['medals'][ride_id][0])
+					medal_data_silver.push(ALL_STATS[CURRENT_GROUP]['medals'][ride_id][1])
+					medal_data_bronze.push(ALL_STATS[CURRENT_GROUP]['medals'][ride_id][2])
+				}
 
 			new Chart(ctx,
 			{
 				type: 'bar',
 				data:
 				{
-					labels: ['Filipp', 'Felix', 'Flo'],
+					labels: medal_labels,
 					datasets: [
 					{
 						label: 'Gold',
-						data: [rettich_all_riders_medalz.Philipp[0], rettich_all_riders_medalz.Felix[0], rettich_all_riders_medalz.Flo[0]],
+						data: medal_data_gold,
 						borderWidth: 1,
 						backgroundColor: "rgb(255,215,0)",
 						stack: 'Stack 0',
 					},
 					{
 						label: 'Silver',
-						data: [rettich_all_riders_medalz.Philipp[1], rettich_all_riders_medalz.Felix[1], rettich_all_riders_medalz.Flo[1]],
+						data: medal_data_silver,
 						borderWidth: 1,
 						backgroundColor: "rgb(208,208,208)",
 						stack: 'Stack 1',
 					},
 					{
 						label: 'Bronze',
-						data: [rettich_all_riders_medalz.Philipp[2], rettich_all_riders_medalz.Felix[2], rettich_all_riders_medalz.Flo[2]],
+						data: medal_data_bronze,
 						borderWidth: 1,
 						backgroundColor: "rgb(205,127,50)",
 						stack: 'Stack 2',
