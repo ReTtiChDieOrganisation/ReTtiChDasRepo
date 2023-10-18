@@ -47,9 +47,7 @@
 			const tiles = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
 				{attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community', maxZoom:21}
 			).addTo(map);
-			console.log(ALL_STATS)
 			ALL_STATS = JSON.parse(ALL_STATS)
-			console.log(ALL_STATS)
 			ALL_RIDES = JSON.parse(ALL_RIDES)
 
 
@@ -129,7 +127,6 @@
 				RIDER_ARR.push(rr)
 				id_counter +=1
 			}
-			console.log(ALL_RIDES)
 
 
 
@@ -156,7 +153,6 @@
 			} 
 
 			CURRENT_GROUP = GROUP_ID_ALL;
-			CURRENT_GROUP = 8;
 			seqGroups = rettich_motion_draw_groups()
 			map.on('click', rettich_onMapClick);
 
@@ -419,7 +415,7 @@
 		<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.css" />
 		<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.js"></script>	
 
-		<select id="sel" onchange="rettich_getComboSegment(this)">
+		<select id="sel_segment" onchange="rettich_getComboSegment(this)">
 			<option value="">--Please choose a segment--</option>
 		</select>
 		
@@ -460,17 +456,36 @@
 				CURRENT_GROUP=value;
 				rettich_draw_medals()
 				rettich_remove_all_rides_from_map()
+				//clear rettich_getComboSegment
+				const group_select_segment = document.getElementById('sel_segment');
+				group_select_segment.innerHTML = ''; 
+				group_select_segment.add(new Option('--Please choose a segment--', ""));
 				seqGroups = rettich_motion_draw_groups()
+
 				const all_rides_segment_efforts = ALL_STATS[CURRENT_GROUP]['segments'];
 				$(function() {
-				$.each(all_rides_segment_efforts, function(i, option) {
-					abcde = [i]
-					for (ride_id of ALL_STATS[CURRENT_GROUP]['ride_ids']){
-						abcde.push(option[ride_id].time)
+					$.each(all_rides_segment_efforts, function(i, option) {
+						abcde = [i]
+						for (ride_id of ALL_STATS[CURRENT_GROUP]['ride_ids']){
+							abcde.push(option[ride_id].time)
 						}
-					$('#sel').append($('<option/>').attr("value", abcde).text(i));
-				});
-			})
+						$('#sel_segment').append($('<option/>').attr("value", abcde).text(i));
+					});
+				})
+				
+				//Clear table when selecting a new group
+				const myTable = document.getElementById('stats_table');
+				// Get a reference to the table body (tbody)
+				const tbody = myTable.querySelector('tbody');
+
+				// Clear the existing rows in the tbody
+				while (tbody.firstChild) {
+					tbody.removeChild(tbody.firstChild);
+				}
+
+				//reset the map view when selecting a new group TODO #86
+				map.setView([50.896537, 7.025585], 12);
+
 			}
 			function rettich_getComboSegment(selectObject) {
 				value = selectObject.value; 
