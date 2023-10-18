@@ -47,6 +47,7 @@
 			const tiles = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
 				{attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community', maxZoom:21}
 			).addTo(map);
+			console.log(ALL_STATS)
 			ALL_STATS = JSON.parse(ALL_STATS)
 			console.log(ALL_STATS)
 			ALL_RIDES = JSON.parse(ALL_RIDES)
@@ -144,17 +145,17 @@
 
 			
 			// find group of all rides
-			let group_id_all = -1
+			let GROUP_ID_ALL = -1
 			let largest_group = -1
 			for (group_id_i of Object.keys(ALL_STATS)){
 				if (ALL_STATS[group_id_i].ride_ids.length>largest_group){
 					largest_group = ALL_STATS[group_id_i].ride_ids.length
-					group_id_all = group_id_i
+					GROUP_ID_ALL = group_id_i
 				}
 				
 			} 
 
-			CURRENT_GROUP = group_id_all;
+			CURRENT_GROUP = GROUP_ID_ALL;
 			CURRENT_GROUP = 8;
 			seqGroups = rettich_motion_draw_groups()
 			map.on('click', rettich_onMapClick);
@@ -344,13 +345,13 @@
 
 		<canvas id="myChart"></canvas>
 		<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-		<script src="./frontend/data/strava/stats.json"></script>
+		
 		<script>
 			function rettich_draw_medals(){
 				if (typeof ALL_STATS=='string'){
 				ALL_STATS = JSON.parse(ALL_STATS) // i still have no idea why i have to parse it here again
 			}
-			console.log(ALL_STATS)
+
 
 			const ctx = document.getElementById('myChart');
 			
@@ -418,7 +419,7 @@
 		<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.css" />
 		<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.js"></script>	
 
-		<select id="sel" onchange="rettich_getComboA(this)">
+		<select id="sel" onchange="rettich_getComboSegment(this)">
 			<option value="">--Please choose a segment--</option>
 		</select>
 		
@@ -432,37 +433,19 @@
 				</tr>
 			</thead>
 			<tbody>
-				<tr>
-					<td>Philipp</td>
-					<td align="center"></td>
-					<td align="center"></td>
-					<td align="center"></td>
 
-				</tr>
-				<tr>
-					<td>Felix</td>
-					<td align="center"></td>
-					<td align="center"></td>
-					<td align="center"></td>
-				</tr>
-				<tr>
-					<td>Flo</td>
-					<td align="center"></td>
-					<td align="center"></td>
-					<td align="center"></td>
-				</tr>
 			</tbody>
 		</table>
 		
 		<script>
 			if (typeof ALL_STATS=='string'){
-				ALL_STATS = JSON.parse(ALL_STATS) // i have no idea why i have to parse it here again
+			 	ALL_STATS = JSON.parse(ALL_STATS) // i have no idea why i have to parse it here again
 			}
 			
 
 			let myTable = document.getElementById("stats_table");
-
 			
+
 			$(function() {
 			$.each(ALL_STATS, function(i, option) {
 				$('#sel_group').append($('<option/>').attr("value", [i]).text(option['riders']));
@@ -489,11 +472,11 @@
 				});
 			})
 			}
-			function rettich_getComboA(selectObject) {
+			function rettich_getComboSegment(selectObject) {
 				value = selectObject.value; 
 				key = selectObject;
 
-				// seperated_values = [seg_name, num_coords_curr_segm_rider1, ... , num_coords_curr_segm_ridern]
+				
 				seperated_values = value.split(',');
 				segment_name = seperated_values[0];
 				for (seqGroup of seqGroups){
@@ -514,20 +497,30 @@
 					map.setView([50.896537, 7.025585], 12);
 				} 
 				else {
+					const myTable = document.getElementById('stats_table');
 					let num_rides_at_current_segment = seperated_values.length-1;
+					// Get a reference to the table body (tbody)
+					const tbody = myTable.querySelector('tbody');
 
-					for (let riders_iterator = 1; riders_iterator <= num_rides_at_current_segment; riders_iterator++) {
-						myTable.rows[riders_iterator].cells[1].textContent = rettich_fancyTimeFormat(seperated_values[riders_iterator]);
+					// Clear the existing rows in the tbody
+					while (tbody.firstChild) {
+						tbody.removeChild(tbody.firstChild);
 					}
 
-					// myTable.rows[1].cells[2].textContent = Math.round(all_riders_strava_segment_efforts[segment_name].Philipp.speed*100)/100;
-					// myTable.rows[2].cells[2].textContent = Math.round(all_riders_strava_segment_efforts[segment_name].Felix.speed*100)/100;
-					// myTable.rows[3].cells[2].textContent = Math.round(all_riders_strava_segment_efforts[segment_name].Flo.speed*100)/100;
+					for (const [ride_iterator, ride_id] of  ALL_STATS[CURRENT_GROUP].ride_ids.entries()) {
+						const row = tbody.insertRow();
+						let cell = row.insertCell(0);
+						cell.textContent = ALL_STATS[CURRENT_GROUP]['riders'][ride_iterator];
+						cell = row.insertCell(1);
+						cell.textContent = rettich_fancyTimeFormat(seperated_values[ride_iterator+1]);
+						cell = row.insertCell(2);
+						cell.textContent = Math.round(ALL_STATS[CURRENT_GROUP]['segments'][segment_name][ride_id]['speed']*100)/100;
+						cell = row.insertCell(3);
 
-					// myTable.rows[1].cells[3].textContent = Math.round(all_riders_strava_segment_efforts[segment_name].Philipp.power*100)/100;
-					// myTable.rows[2].cells[3].textContent = Math.round(all_riders_strava_segment_efforts[segment_name].Felix.power*100)/100;
-					// myTable.rows[3].cells[3].textContent = Math.round(all_riders_strava_segment_efforts[segment_name].Flo.power*100)/100;
+						cell.textContent =  Math.round(ALL_STATS[CURRENT_GROUP]['segments'][segment_name][ride_id]['power']*100)/100;
+					}
 					
+	
 					rettich_motion_draw_segment(segment_name)
 				}
 			}

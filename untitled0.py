@@ -194,6 +194,7 @@ def calculate_stats():
                         ride_segment_efforts['end_index'] = seg_eff['end_index']
                         if 'average_watts' in seg_eff.keys():
                             ride_segment_efforts['power'] = seg_eff['average_watts']
+
                         segment_name_clean = segment_name.replace("'", "")
                         segment_name_clean = segment_name_clean.replace(',', '')
                         if not idx_in_group:
