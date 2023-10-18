@@ -160,8 +160,8 @@ def calculate_stats():
     # one group for each rider consisting of all of their rides
     for name in names:
         id_list_rider = [i for i in range(len(all_rides)) if all_rides[str(i)]['rider'] == name]
-        groups.append(id_list_rider)
-
+        if id_list_rider != []:
+            groups.append(id_list_rider)
     # add group of all rides
     groups.append(list(np.arange(len(all_rides))))
 
@@ -194,14 +194,15 @@ def calculate_stats():
                         ride_segment_efforts['end_index'] = seg_eff['end_index']
                         if 'average_watts' in seg_eff.keys():
                             ride_segment_efforts['power'] = seg_eff['average_watts']
-                segment_name_clean = segment_name.replace("'", "")
-                segment_name_clean = segment_name_clean.replace(',', '')
-                if not idx_in_group:
-                    segment_info = {'start_latlng': seg_eff['segment']
-                                    ['start_latlng'], 'end_latlng': seg_eff['segment']['end_latlng']}
-                    segment_efforts[segment_name_clean] = {ride_idx: ride_segment_efforts, 'Segment': segment_info}
-                else:
-                    segment_efforts[segment_name_clean][ride_idx] = ride_segment_efforts
+                        segment_name_clean = segment_name.replace("'", "")
+                        segment_name_clean = segment_name_clean.replace(',', '')
+                        if not idx_in_group:
+                            segment_info = {'start_latlng': seg_eff['segment']
+                                            ['start_latlng'], 'end_latlng': seg_eff['segment']['end_latlng']}
+                            segment_efforts[segment_name_clean] = {
+                                ride_idx: ride_segment_efforts, 'Segment': segment_info}
+                        else:
+                            segment_efforts[segment_name_clean][ride_idx] = ride_segment_efforts
 
             times = [segment_efforts[segment_name_clean][ride_idx]['time'] for ride_idx in group]
             ranks = sstat.rankdata(times,).astype(int)-1

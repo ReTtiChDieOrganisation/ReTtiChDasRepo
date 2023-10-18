@@ -155,7 +155,6 @@
 			} 
 
 			CURRENT_GROUP = group_id_all;
-			CURRENT_GROUP = 0;
 			seqGroups = rettich_motion_draw_groups()
 			map.on('click', rettich_onMapClick);
 
@@ -440,19 +439,10 @@
 			if (typeof ALL_STATS=='string'){
 				ALL_STATS = JSON.parse(ALL_STATS) // i have no idea why i have to parse it here again
 			}
-			const all_rides_segment_efforts = ALL_STATS[CURRENT_GROUP]['segments'];
-			console.log('abcsefg',all_rides_segment_efforts)
-			console.log(ALL_STATS)
+			
+
 			let myTable = document.getElementById("stats_table");
-			$(function() {
-				$.each(all_rides_segment_efforts, function(i, option) {
-					abcde = [i]
-					for (ride_id of ALL_STATS[CURRENT_GROUP]['ride_ids']){
-						abcde.push(option[ride_id].time)
-						}
-					$('#sel').append($('<option/>').attr("value", abcde).text(i));
-				});
-			})
+
 			
 			$(function() {
 			$.each(ALL_STATS, function(i, option) {
@@ -462,11 +452,23 @@
 
 			//--------------- only script function definition below ---------------//
 			function rettich_getComboGroup(selectObject) {
+				console.log('aaaaaaaa',ALL_STATS)
+				
 				value = selectObject.value; 
 				key = selectObject;
 				CURRENT_GROUP=value;
 				rettich_remove_all_rides_from_map()
 				seqGroups = rettich_motion_draw_groups()
+				const all_rides_segment_efforts = ALL_STATS[CURRENT_GROUP]['segments'];
+				$(function() {
+				$.each(all_rides_segment_efforts, function(i, option) {
+					abcde = [i]
+					for (ride_id of ALL_STATS[CURRENT_GROUP]['ride_ids']){
+						abcde.push(option[ride_id].time)
+						}
+					$('#sel').append($('<option/>').attr("value", abcde).text(i));
+				});
+			})
 			}
 			function rettich_getComboA(selectObject) {
 				value = selectObject.value; 
@@ -500,13 +502,13 @@
 						myTable.rows[riders_iterator].cells[1].textContent = rettich_fancyTimeFormat(seperated_values[riders_iterator]);
 					}
 
-					myTable.rows[1].cells[2].textContent = Math.round(all_riders_strava_segment_efforts[segment_name].Philipp.speed*100)/100;
-					myTable.rows[2].cells[2].textContent = Math.round(all_riders_strava_segment_efforts[segment_name].Felix.speed*100)/100;
-					myTable.rows[3].cells[2].textContent = Math.round(all_riders_strava_segment_efforts[segment_name].Flo.speed*100)/100;
+					// myTable.rows[1].cells[2].textContent = Math.round(all_riders_strava_segment_efforts[segment_name].Philipp.speed*100)/100;
+					// myTable.rows[2].cells[2].textContent = Math.round(all_riders_strava_segment_efforts[segment_name].Felix.speed*100)/100;
+					// myTable.rows[3].cells[2].textContent = Math.round(all_riders_strava_segment_efforts[segment_name].Flo.speed*100)/100;
 
-					myTable.rows[1].cells[3].textContent = Math.round(all_riders_strava_segment_efforts[segment_name].Philipp.power*100)/100;
-					myTable.rows[2].cells[3].textContent = Math.round(all_riders_strava_segment_efforts[segment_name].Felix.power*100)/100;
-					myTable.rows[3].cells[3].textContent = Math.round(all_riders_strava_segment_efforts[segment_name].Flo.power*100)/100;
+					// myTable.rows[1].cells[3].textContent = Math.round(all_riders_strava_segment_efforts[segment_name].Philipp.power*100)/100;
+					// myTable.rows[2].cells[3].textContent = Math.round(all_riders_strava_segment_efforts[segment_name].Felix.power*100)/100;
+					// myTable.rows[3].cells[3].textContent = Math.round(all_riders_strava_segment_efforts[segment_name].Flo.power*100)/100;
 					
 					rettich_motion_draw_segment(segment_name)
 				}
@@ -533,14 +535,20 @@
 
 			function rettich_motion_draw_segment(seg_name) {
 			
-				// TODO: here, the order of riders is hardcoded. make this more general
-				start_idx_set = [all_riders_strava_segment_efforts[seg_name].Philipp.start_index,all_riders_strava_segment_efforts[seg_name].Felix.start_index,all_riders_strava_segment_efforts[seg_name].Flo.start_index]
-				end_idx_set = [all_riders_strava_segment_efforts[seg_name].Philipp.end_index,all_riders_strava_segment_efforts[seg_name].Felix.end_index,all_riders_strava_segment_efforts[seg_name].Flo.end_index]				
+				
+				start_idx_set = []
+				end_idx_set = []
+				for (const [ride_iterator,ride_id] of  ALL_STATS[CURRENT_GROUP].ride_ids.entries()) {
+					//console.log(ALL_RIDES[ride_id])
+					start_idx_set.push(ALL_STATS[CURRENT_GROUP]['segments'][seg_name][ride_id]['start_index'])
+					end_idx_set.push(ALL_STATS[CURRENT_GROUP]['segments'][seg_name][ride_id]['end_index'])
+				}
 
-				rettich_motion_draw_riders(start_idx_set,end_idx_set)
-
-				marker_start = rettich_static_draw_marker(all_riders_strava_segment_efforts[seg_name].Segment.start_latlng, rettich_other_icons.start)
-				marker_finish = rettich_static_draw_marker(all_riders_strava_segment_efforts[seg_name].Segment.end_latlng, rettich_other_icons.finish)
+				rettich_motion_draw_groups(start_idx_set,end_idx_set)
+				console.log(seg_name)
+				console.log(ALL_STATS[CURRENT_GROUP]['segments'][seg_name])//['Segment']['start_latlng'])
+				marker_start = rettich_static_draw_marker(ALL_STATS[CURRENT_GROUP]['segments'][seg_name]['Segment']['start_latlng'], rettich_other_icons.start)
+				marker_finish = rettich_static_draw_marker(ALL_STATS[CURRENT_GROUP]['segments'][seg_name]['Segment']['end_latlng'], rettich_other_icons.finish)
 				
 				center = rettich_get_segment_center(marker_start, marker_finish)
 				bounds = L.latLngBounds(marker_start.getLatLng(), marker_finish.getLatLng())
