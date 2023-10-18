@@ -171,7 +171,6 @@
 				}
 				
 				for (const [ride_iterator,ride_id] of  ALL_STATS[CURRENT_GROUP].ride_ids.entries()) {
-					//console.log(ALL_RIDES[ride_id])
 					current_ride_data = ALL_RIDES[ride_id];
 
 
@@ -314,7 +313,7 @@
 						rettich_remove_all_rides_from_map()
 						current_segment = $("#sel").val().split(',')
 						if (current_segment == ""){
-							rettich_motion_draw_riders([1,1,1])
+							rettich_motion_draw_groups()
 						}else{
 							rettich_motion_draw_segment(current_segment[0])
 						}
@@ -452,7 +451,6 @@
 
 			//--------------- only script function definition below ---------------//
 			function rettich_getComboGroup(selectObject) {
-				console.log('aaaaaaaa',ALL_STATS)
 				
 				value = selectObject.value; 
 				key = selectObject;
@@ -477,7 +475,6 @@
 				// seperated_values = [seg_name, num_coords_curr_segm_rider1, ... , num_coords_curr_segm_ridern]
 				seperated_values = value.split(',');
 				segment_name = seperated_values[0];
-				console.log(seperated_values)
 				for (seqGroup of seqGroups){
 					seqGroup.motionStop();
 					seqGroup.removeFrom(map);
@@ -492,7 +489,7 @@
 				}
 				
 				if (seperated_values==""){
-					seqGroups = rettich_motion_draw_riders([1,1,1])
+					seqGroups = rettich_motion_draw_groups()
 					map.setView([50.896537, 7.025585], 12);
 				} 
 				else {
@@ -539,14 +536,11 @@
 				start_idx_set = []
 				end_idx_set = []
 				for (const [ride_iterator,ride_id] of  ALL_STATS[CURRENT_GROUP].ride_ids.entries()) {
-					//console.log(ALL_RIDES[ride_id])
 					start_idx_set.push(ALL_STATS[CURRENT_GROUP]['segments'][seg_name][ride_id]['start_index'])
 					end_idx_set.push(ALL_STATS[CURRENT_GROUP]['segments'][seg_name][ride_id]['end_index'])
 				}
 
 				rettich_motion_draw_groups(start_idx_set,end_idx_set)
-				console.log(seg_name)
-				console.log(ALL_STATS[CURRENT_GROUP]['segments'][seg_name])//['Segment']['start_latlng'])
 				marker_start = rettich_static_draw_marker(ALL_STATS[CURRENT_GROUP]['segments'][seg_name]['Segment']['start_latlng'], rettich_other_icons.start)
 				marker_finish = rettich_static_draw_marker(ALL_STATS[CURRENT_GROUP]['segments'][seg_name]['Segment']['end_latlng'], rettich_other_icons.finish)
 				
