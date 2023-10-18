@@ -346,12 +346,14 @@
 		<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 		<script src="./frontend/data/strava/stats.json"></script>
 		<script>
-			if (typeof ALL_STATS=='string'){
+			function rettich_draw_medals(){
+				if (typeof ALL_STATS=='string'){
 				ALL_STATS = JSON.parse(ALL_STATS) // i still have no idea why i have to parse it here again
 			}
 			console.log(ALL_STATS)
 
 			const ctx = document.getElementById('myChart');
+			
 			let medal_labels = ALL_STATS[CURRENT_GROUP]['riders']
 			let medal_data_gold = []
 			let medal_data_silver = []
@@ -360,9 +362,11 @@
 					medal_data_gold.push(ALL_STATS[CURRENT_GROUP]['medals'][ride_id][0])
 					medal_data_silver.push(ALL_STATS[CURRENT_GROUP]['medals'][ride_id][1])
 					medal_data_bronze.push(ALL_STATS[CURRENT_GROUP]['medals'][ride_id][2])
-				}
-
-			new Chart(ctx,
+			}
+			if (typeof medal_chart !== 'undefined') {
+				medal_chart.destroy();
+			}
+			medal_chart = new Chart(ctx,
 			{
 				type: 'bar',
 				data:
@@ -403,6 +407,8 @@
 					}
 				}
 			});
+			}
+			rettich_draw_medals()
 		</script>
 	</div>
 
@@ -469,6 +475,7 @@
 				value = selectObject.value; 
 				key = selectObject;
 				CURRENT_GROUP=value;
+				rettich_draw_medals()
 				rettich_remove_all_rides_from_map()
 				seqGroups = rettich_motion_draw_groups()
 				const all_rides_segment_efforts = ALL_STATS[CURRENT_GROUP]['segments'];
