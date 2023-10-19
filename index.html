@@ -450,8 +450,18 @@
 					tbody.removeChild(tbody.firstChild);
 				}
 
-				//reset the map view when selecting a new group TODO #86
-				map.setView([50.896537, 7.025585], 12);
+				
+				let bounds
+				let bounds_temp
+				for (const [ride_iterator, ride_id] of  ALL_STATS[CURRENT_GROUP].ride_ids.entries()){
+					if (ride_iterator==0){
+						bounds = L.latLngBounds(ALL_RIDES[ride_id]['latlng']['data'])
+					}else{
+						bounds_temp = L.latLngBounds(ALL_RIDES[ride_id]['latlng']['data'])
+						bounds.extend(bounds_temp)
+					}
+				}
+				map.fitBounds(bounds)
 
 			}
 			function rettich_getComboSegment(selectObject) {
@@ -544,7 +554,7 @@
 				bounds = L.latLngBounds(marker_start.getLatLng(), marker_finish.getLatLng())
 
 				map.setView(center);
-				map.fitBounds(bounds)
+				map.fitBounds(bounds);
 			}
 
 			function rettich_static_draw_marker(latlng, marker_icon) {
