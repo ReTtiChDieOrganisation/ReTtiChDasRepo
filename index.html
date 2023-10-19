@@ -17,7 +17,7 @@
 	<script src="./frontend/dependencies/leaflet-motion/dist/leaflet.motion.js"></script>
 	<script src="./frontend/data/strava/data.js"></script><!-- loads ALL_RIDES -->
 	<script src="./frontend/data/strava/stats.json"></script><!-- loads ALL_STATS -->
-	<script src="./frontend/data/rettich/riders.js"></script> <!-- loads RIDERS -->
+	<script src="./frontend/data/rettich/riders.js"></script> <!-- loads RIDERS_PROFILE_INFO -->
 
 	<script type="text/javascript" src="./frontend/data/rettich/icons.js"></script>
 
@@ -50,15 +50,16 @@
 			).addTo(map);
 			ALL_STATS = JSON.parse(ALL_STATS)
 			ALL_RIDES = JSON.parse(ALL_RIDES)
-			RIDERS = JSON.parse(RIDERS)
+			RIDERS_PROFILE_INFO = JSON.parse(RIDERS_PROFILE_INFO)
 
 			
-			let NAMES = Object.keys(RIDERS)
+			let NAMES = Object.keys(RIDERS_PROFILE_INFO)
 			
-			class Rettich_rider {
+			class rettich_rider {
 				// constructor
 				constructor(name, ride_ids, profile_picture_url= "./frontend/icons/profile_pictures/default.png", frame=rettich_frames.default) {
 					// all data members of rettich riders
+					console.log("Construct rider ", name);
 					this.name = name;
 					this.ride_ids = ride_ids;
 					this.profile_picture = {
@@ -97,13 +98,14 @@
 						ride_ids.push(ride_i)
 						ALL_RIDES[ride_i]['rider_id'] = id_counter
 					}
-				}
-			
+				}			
 
-				if (RIDERS[name]['icon_url']==''){
-					rr = new Rettich_rider(name, ride_ids)
+				// construct riders
+				if (RIDERS_PROFILE_INFO[name]['icon_url']=='' || RIDERS_PROFILE_INFO[name]['frame']==''){
+					// use default constructor if profile picture or frame info are missing
+					rr = new rettich_rider(name, ride_ids)
 				}else{
-					rr = new Rettich_rider(name, ride_ids, RIDERS[name]['icon_url'], frame=rettich_frames[RIDERS[name]['frame']])
+					rr = new rettich_rider(name, ride_ids, RIDERS_PROFILE_INFO[name]['icon_url'], rettich_frames[RIDERS_PROFILE_INFO[name]['frame']])
 				}
 				RIDER_ARR.push(rr)
 				id_counter +=1
