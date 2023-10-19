@@ -15,8 +15,9 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
 	<script src="./frontend/dependencies/leaflet-motion/dist/leaflet.motion.js"></script>
-	<script src="./frontend/data/strava/data.js"></script>
-	<script src="./frontend/data/strava/stats.json"></script>
+	<script src="./frontend/data/strava/data.js"></script><!-- loads ALL_RIDES -->
+	<script src="./frontend/data/strava/stats.json"></script><!-- loads ALL_STATS -->
+	<script src="./frontend/data/rettich/riders.js"></script> <!-- loads RIDERS -->
 
 	<script type="text/javascript" src="./frontend/data/rettich/icons.js"></script>
 
@@ -49,43 +50,22 @@
 			).addTo(map);
 			ALL_STATS = JSON.parse(ALL_STATS)
 			ALL_RIDES = JSON.parse(ALL_RIDES)
-
-
-
-			// TODO This should be loaded from ./data/riders.json if we properly know how to
-			RIDERS = {
-				"Felix": {
-					"refresh_token": "0ZPV1KDCo9WkxdTU1pjX1amSqaSpxdXWo5nX1aCXqKPTk9nY1ZnZpQ", 
-					"icon_url": "./frontend/piqs/felix_icon.png"
-				}, 
-				"Philipp": {
-					"refresh_token": "08em16GT2dapltaqoZKno6nHo6zWl9mq1JGjqabDo6fVltjUpZmorA", 
-					"icon_url": "./frontend/piqs/philipp_icon.png"
-				}, 
-				"Flo": {
-					"refresh_token": "oJXU2NbEqqbVwtfZpsfZ16fGqabTkdejpZWno6SUp6fRxqympMWnqw", 
-					"icon_url": "./frontend/piqs/flo_icon.png"
-				}, 
-				"David": {
-					"refresh_token": "05Os2daW1KSlxtTZ0ZemqtOSp6PTl9esppLZ1qDFpKajxdak1pespA", 
-					"icon_url": ""
-				}, 
-				"Lu": {
-					"refresh_token": "0ZOm1qSTqtbWxqvUoJOkqNaRo6jRl6yk0ZTZpqKS19WiwqOrqZGlpw", 
-					"icon_url": "./frontend/piqs/lu_icon.png"
-				}
-			}
+			RIDERS = JSON.parse(RIDERS)
 
 			
 			let NAMES = Object.keys(RIDERS)
 			
 			class Rettich_rider {
 				// constructor
-				constructor(name, ride_ids, profile_picture=rettich_profile_pictures.default, frame=rettich_frames.default) {
+				constructor(name, ride_ids, profile_picture_url= "./frontend/icons/profile_pictures/default.png", frame=rettich_frames.default) {
 					// all data members of rettich riders
 					this.name = name;
 					this.ride_ids = ride_ids;
-					this.profile_picture = profile_picture;
+					this.profile_picture = {
+						picture : profile_picture_url,
+						size : [33,44], // 3:4 ratio
+						anchor : [33/2,44+22] // picture_size_y + adjust (adjust to center picture in frame)
+					};
 					this.frame = frame;
 				}
 
@@ -118,29 +98,18 @@
 						ALL_RIDES[ride_i]['rider_id'] = id_counter
 					}
 				}
-				rr = new Rettich_rider(name, ride_ids, rettich_profile_pictures[name.toLowerCase()])
+			
 
-				// if (RIDERS[name]['icon_url']==''){
-					
-				// }
-				
+				if (RIDERS[name]['icon_url']==''){
+					rr = new Rettich_rider(name, ride_ids)
+				}else{
+					rr = new Rettich_rider(name, ride_ids, RIDERS[name]['icon_url'], frame=rettich_frames[RIDERS[name]['frame']])
+				}
 				RIDER_ARR.push(rr)
 				id_counter +=1
 			}
 
-
-
-
-			// ############################################################################################################################
-			// initialize all riders data and collect them in one array - this is all the data we need 
-			//let felix = new Rettich_rider("felix", (JSON.parse(felix_json)), rettich_profile_pictures.felix, rettich_frames.cinelli);
-			//let flo = new Rettich_rider("flo", (JSON.parse(flo_json)), rettich_profile_pictures.flo, rettich_frames.speedster);
-			//let philipp = new Rettich_rider("philipp", (JSON.parse(philipp_json)), rettich_profile_pictures.philipp, rettich_frames.orbea);
-			//let rettich_all_riders_arr = [philipp, felix, flo]; // TODO: order of riders matters, see rettich_motion_draw_segment()
-			//let num_riders = rettich_all_riders_arr.length;
-			// ############################################################################################################################
-
-			
+		
 			// find group of all rides
 			let GROUP_ID_ALL = -1
 			let largest_group = -1
@@ -189,9 +158,7 @@
 				}
 			
 				seqGroups = []
-			
 				for (const [ride_iterator,ride_id] of ALL_STATS[CURRENT_GROUP].ride_ids.entries()) {
-
 					current_rider = RIDER_ARR[ALL_RIDES[ride_id]['rider_id']];
 					current_ride_lat_lngs = lat_lngs_rides_arr[ride_iterator];
 					// frame background
@@ -444,7 +411,7 @@
 
 			$(function() {
 			$.each(ALL_STATS, function(i, option) {
-				$('#sel_group').append($('<option/>').attr("value", [i]).text(option['riders']));
+				$('#sel_group').append($('<option/>').attr("value", [i]).text(option['group_name']));
 			});
 		})
 

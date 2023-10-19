@@ -1,4 +1,3 @@
-from etc import rettich_encrypt
 import os
 import json
 import scipy.stats as sstat
@@ -16,6 +15,12 @@ SHARED_SEGS = 10  # number of share segments such that it counts as a group
 
 RAW_PATH = './frontend/data/strava/raw_data/'
 DATA_PATH = './frontend/data/strava/'
+RIDER_DATA_PATH = './frontend/data/rettich/'  # path where the cleaned riders dict is stored
+RIDER_FILE = './etc/etc.json'
+
+
+def clean_string(input_string):
+    return input_string.replace("'", "").replace(',', '').replace('"', '')
 
 
 def load_data():
@@ -24,23 +29,20 @@ def load_data():
     Saves accumulated data in DATA_PATH + 'data.json'
     '''
 
-    with open('./etc/etc.txt', 'r') as f:
-        client_sc = f.read()
-    password = rettich_encrypt.get_access()
+    with open(RIDER_FILE, 'r') as f:
+        riders = json.load(f)
+    names = list(riders.keys())
+    names.remove('client_secret')
+
     payload = {
         'client_id': "114307",
-        'client_secret': client_sc,
+        'client_secret': riders.pop('client_secret'),
         'refresh_token': '',
         'grant_type': "refresh_token",
         'f': 'json'
     }
 
-    with open('./data/riders.json', 'r') as f:
-        riders = json.load(f)
-    names = list(riders.keys())
-
-    refresh_tokens = [rettich_encrypt.decode(password, bytes(riders[name]['refresh_token'],  'utf-8'))for name in names]
-
+    refresh_tokens = [riders[name].pop('refresh_token') for name in names]
     if not os.path.exists(RAW_PATH):
         os.mkdir(RAW_PATH)
     remove_activities = os.listdir(RAW_PATH)  # get all saved activities to delete those which are not needed anymore
@@ -70,7 +72,7 @@ def load_data():
                 break
 
             act_id = activity['id']
-            if not os.path.exists(RAW_PATH+str(act_id)+'.json') and (activity['sport_type'] in ['Ride', 'Run']):
+            if not os.path.exists(RAW_PATH+str(act_id)+'.json') and (activity['sport_type'] in ['Ride', 'Run', 'Hike']):
                 detailed_url = 'https://www.strava.com/api/v3/activities/'+str(act_id)+'?include_all_efforts=True'
                 detailed_act = requests.get(detailed_url, headers=header, params=param).json()
 
@@ -83,21 +85,22 @@ def load_data():
                 full_act['segment_efforts'] = detailed_act['segment_efforts']
                 for i in range(len(full_act['segment_efforts'])):
                     segment_name = full_act['segment_efforts'][i]['name']
-                    segment_name_clean = segment_name.replace("'", "")
-                    segment_name_clean = segment_name_clean.replace(',', '')
+                    segment_name_clean = clean_string(segment_name)
                     full_act['segment_efforts'][i]['name'] = segment_name_clean
                     full_act['segment_efforts'][i]['segment']['name'] = segment_name_clean
 
                 with open(RAW_PATH+str(act_id)+'.json', 'w') as f:
                     json.dump(full_act, f)
+                all_rides[our_id] = full_act
+                our_id += 1
             elif str(act_id)+'.json' in remove_activities:
                 remove_activities.remove(str(act_id)+'.json')
 
                 with open(RAW_PATH+str(act_id)+'.json', 'r') as f:
                     full_act = json.load(f)
 
-            all_rides[our_id] = full_act
-            our_id += 1
+                all_rides[our_id] = full_act
+                our_id += 1
 
     for file in remove_activities:
         os.remove(RAW_PATH+file)
@@ -107,6 +110,10 @@ def load_data():
     with open(DATA_PATH + 'data.js', 'w') as f:
         f.write("ALL_RIDES = '")
         json.dump(all_rides, f)
+        f.write("'")
+    with open(RIDER_DATA_PATH + 'riders.js', 'w') as f:
+        f.write("RIDERS = '")
+        json.dump(riders, f)
         f.write("'")
 
 
@@ -120,9 +127,11 @@ def calculate_stats():
 
     with open(DATA_PATH + 'data.json', 'r') as f:
         all_rides = json.load(f)
-    with open('./data/riders.json', 'r') as f:
+    with open(RIDER_FILE, 'r') as f:
         riders = json.load(f)
     names = list(riders.keys())
+    names.remove('client_secret')
+
     groups = []
 
     # find groups which share more than SHARED_SEGS = 10 segments (only from the same day)
@@ -157,14 +166,23 @@ def calculate_stats():
             for subset in itertools.combinations(group, L):
                 groups.remove(list(subset))
 
+    group_names = [str(set([all_rides[str(i)]['rider'] for i in group])).replace("{", "").replace("}", "").replace("'", "")
+                   for group in groups]  # set() to make the names unique
+
+    for i, group in enumerate(groups):
+        act_datetime = iso8601.parse_date(all_rides[str(group[0])]['start_date'])
+        group_names[i] = group_names[i] + ' ' + str(act_datetime.day) + '/' + \
+            str(act_datetime.month) + '-' + str(act_datetime.hour) + 'h'
+
     # one group for each rider consisting of all of their rides
     for name in names:
         id_list_rider = [i for i in range(len(all_rides)) if all_rides[str(i)]['rider'] == name]
         if id_list_rider != []:
             groups.append(id_list_rider)
+            group_names.append(name + ' all rides')
     # add group of all rides
     groups.append(list(np.arange(len(all_rides))))
-
+    group_names.append('All all')
     # calculate stats for each group
     all_groups = {}
     group_id = 0
@@ -195,8 +213,7 @@ def calculate_stats():
                         if 'average_watts' in seg_eff.keys():
                             ride_segment_efforts['power'] = seg_eff['average_watts']
 
-                        segment_name_clean = segment_name.replace("'", "")
-                        segment_name_clean = segment_name_clean.replace(',', '')
+                        segment_name_clean = clean_string(segment_name)
                         if not idx_in_group:
                             segment_info = {'start_latlng': seg_eff['segment']
                                             ['start_latlng'], 'end_latlng': seg_eff['segment']['end_latlng']}
@@ -212,7 +229,7 @@ def calculate_stats():
                     medal_arr[i, ranks[i]] += 1
 
         all_groups[str(group_id)] = {'segments': segment_efforts, 'ride_ids': group, 'medals': {group[i]: list(
-            medal_arr[i, :]) for i in range(len(group))}, 'riders': [all_rides[str(i)]['rider'] for i in group]}
+            medal_arr[i, :]) for i in range(len(group))}, 'riders': [all_rides[str(i)]['rider'] for i in group], 'group_name': group_names[group_id]}
         group_id += 1
 
     with open(DATA_PATH+'stats.json', 'w') as f:
