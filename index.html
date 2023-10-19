@@ -15,207 +15,217 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
 	<script src="./frontend/dependencies/leaflet-motion/dist/leaflet.motion.js"></script>
-	<script src="./frontend/data/data.js"></script>
-	<script>
-		const start_icon = L.icon({
-			iconUrl: './frontend/piqs/start.png',
-			iconSize:     [21, 21], // size of the icon
-			iconAnchor:   [11,11], // point of the icon which will correspond to marker's location
-		});
-		const finish_icon = L.icon({
-			iconUrl: './frontend/piqs/finish.png',
-			iconSize:     [21, 21], // size of the icon
-			iconAnchor:   [11, 11], // point of the icon which will correspond to marker's location
-		});
-	</script>
+	<script src="./frontend/data/strava/data.js"></script><!-- loads ALL_RIDES -->
+	<script src="./frontend/data/strava/stats.json"></script><!-- loads ALL_STATS -->
+	<script src="./frontend/data/rettich/riders.js"></script> <!-- loads RIDERS_PROFILE_INFO -->
+
+	<script type="text/javascript" src="./frontend/data/rettich/icons.js"></script>
+
 	<style>
-		html, body {
-			height: 100%;
-			margin: 0;
-		}
-		.leaflet-container {
-			float: left;
-			height: 9000px;
-			width: 10000px;
-			max-width: 70%;
-			max-height: 99%;
-		}
-		.rightdivision {
-			float: right;
-			padding-right: 3%;
-			padding-top: 0%;
-			height: 9000px;
-			width: 10000px;
-			max-width: 26%;
-			max-height: 30%;
-		}
-		.rightdivision2 {
-			float: right;
-			padding-right: 3%;
-			padding-top: 0%;
-			height: 900px;
-			width: 10000px;
-			max-width: 26%;
-			max-height: 48%;
-		}
-		#pauseButton {
-			position: relative;
-			top: 2%;
-			right: 11%;
-			padding: 10px;
-			z-index: 400;
-		}
-		#pauseButton:hover{
-			opacity: 0.8;
-			cursor: pointer;
-		}	
-		#resumeButton {
-			position: relative;
-			top: 2%;
-			right: 11%;
-			padding: 10px;
-			z-index: 400;
-		}
-		#resumeButton:hover{
-			opacity: 0.8;
-			cursor: pointer;
-		}	
-		#restartButton {
-			position: relative;
-			top: 2%;
-			right: 11%;
-			padding: 10px;
-			z-index: 400;
-		}
-		#restartButton:hover{
-			opacity: 0.8;
-			cursor: pointer;
-		}	
-		#speedupButton {
-			position: relative;
-			top: 7%;
-			right: 16%;
-			padding: 10px;
-			z-index: 400;
-		}
-		#speedupButton:hover{
-			opacity: 0.8;
-			cursor: pointer;
-		}	
-		#slowdownButton {
-			position: relative;
-			top: 7%;
-			right: 16%;
-			padding: 10px;
-			z-index: 400;
-		}
-		#slowdownButton:hover{
-			opacity: 0.8;
-			cursor: pointer;
-		}
+		html, body {height: 100%; margin: 0;}
+		.leaflet-container {float: left; height: 9000px; width: 10000px; max-width: 70%; max-height: 99%;}
+		.rightdivision {float: right; padding-right: 3%; padding-top: 0%; height: 9000px; width: 10000px; max-width: 26%; max-height: 30%;}
+		.rightdivision2 {float: right; padding-right: 3%; padding-top: 0%; height: 900px; width: 10000px; max-width: 26%; max-height: 48%;}
+		#pauseButton {position: relative; top: 2%; right: 11%; padding: 10px; z-index: 400;}
+		#pauseButton:hover {opacity: 0.8; cursor: pointer;}	
+		#resumeButton {position: relative; top: 2%; right: 11%; padding: 10px; z-index: 400;}
+		#resumeButton:hover {opacity: 0.8; cursor: pointer;}	
+		#restartButton {position: relative; top: 2%; right: 11%; padding: 10px; z-index: 400;}
+		#restartButton:hover {opacity: 0.8; cursor: pointer;}	
+		#speedupButton {position: relative; top: 7%; right: 16%; padding: 10px; z-index: 400;}
+		#speedupButton:hover { opacity: 0.8;	cursor: pointer;}
+		#slowdownButton {position: relative; top: 7%; right: 16%; padding: 10px; z-index: 400;}
+		#slowdownButton:hover {opacity: 0.8; cursor: pointer;}
 	</style>
 </head>
 
 <!-- body -->
 <body>
+	<!-- map -->
 	<div id="map">
 		<script>
 			const map = L.map('map').setView([50.896537, 7.025585], 12);
+			const tiles = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+				{attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community', maxZoom:21}
+			).addTo(map);
+			ALL_STATS = JSON.parse(ALL_STATS)
+			ALL_RIDES = JSON.parse(ALL_RIDES)
+			RIDERS_PROFILE_INFO = JSON.parse(RIDERS_PROFILE_INFO)
 
-			const tiles = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-						attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community', 
-						maxZoom:21
-					}).addTo(map);
-			const felix_all = (JSON.parse(felix_json));
 			
-			const philipp_all = (JSON.parse(philipp_json));
-			const flo_all = (JSON.parse(flo_json));
-
-			// at the moment the enumeration here matters, 1 philipp (green), 2 felix (red), 3 flo (blue)
-			const all_data = [philipp_all,felix_all,flo_all];
-
-			// rider_icon  struct with png's and colors
-			var all_rider_icons = {
-				icon_urls : [
-					'./frontend/piqs/philipp_icon.png',
-					'./frontend/piqs/felix_icon.png',
-					'./frontend/piqs/flo_icon.png'
-				],
-				icon_colors : [
-					"rgba("+84+" ,"+130+","+53+")", // philipp (green)
-					"rgba("+197+" ,"+90+","+17+")", // felix (blue)
-					"rgba("+47+" ,"+85+","+151+")" // flo (red)
-				],
-				iconsize_x : 47,
-				iconsize_y : 60,
-				iconanchor_x : 24,
-				iconanchor_y : 60
-			}
+			let NAMES = Object.keys(RIDERS_PROFILE_INFO)
 			
-			console.log(all_data);
-			
-			let marker_start
-			let marker_finish
-
-			function draw(idx_set,idx_set_end=-1){
-				// draws all data in all_all starting with the corresponding index. So index_set should be an array of indices with the same size as all_data
-				let lat_lngs = [];
-				let speed_set = Array(all_data.length).fill(0)
-				for (let i=0; i < all_data.length; i++){
-					full_json = all_data[i];
-					if (idx_set_end==-1){
-						sliced_latlng = full_json.latlng.data.slice(idx_set[i]);
-						et = full_json.time.data.at(-1)-full_json.time.data[idx_set[i]];
-						dist = full_json.distance.data.at(-1)-full_json.distance.data[idx_set[i]];
-						speed_set[i] = 3.6*dist/et;
-					}else{
-						sliced_latlng = full_json.latlng.data.slice(idx_set[i], idx_set_end[i]);
-						et = full_json.time.data[idx_set_end[i]]-full_json.time.data[idx_set[i]];
-						dist = full_json.distance.data[idx_set_end[i]]-full_json.distance.data[idx_set[i]];
-						speed_set[i] = 3.6*dist/et;
-					}
-					lat_lngs.push(sliced_latlng.map(([lat, lng]) => ({ lat, lng })));
-
+			class rettich_rider {
+				// constructor
+				constructor(name, ride_ids, profile_picture_url= "./frontend/icons/profile_pictures/default.png", frame=rettich_frames.default) {
+					// all data members of rettich riders
+					console.log("Construct rider ", name);
+					this.name = name;
+					this.ride_ids = ride_ids;
+					this.profile_picture = {
+						picture : profile_picture_url,
+						size : [33,44], // 3:4 ratio
+						anchor : [33/2,44+22] // picture_size_y + adjust (adjust to center picture in frame)
+					};
+					this.frame = frame;
 				}
 
-				trackPolyLs = []
-				seqGroups = []
-
-				let n = 1
+				// getter functions
+				get_name () {return this.name;}
+				get_ride_ids () {return this.ride_ids;}
+				get_profile_picture () {return this.profile_picture;}
+				get_frame () {return this.frame;}
 				
-				for (let i=0; i < all_data.length; i++) {
-					let poly = L.motion.polyline(
-						lat_lngs[i], 
-						{color: all_rider_icons.icon_colors[i]},
-						{},
-						{icon: L.icon({iconUrl: all_rider_icons.icon_urls[i], iconAnchor: [all_rider_icons.iconanchor_x, all_rider_icons.iconanchor_y], iconSize: [all_rider_icons.iconsize_x, all_rider_icons.iconsize_y]}) , showMarker:true, iconSize: L.point(27.5, 24)}
-						)
-					if(speed_set!=-1){
-						poly.motionSpeed(speed_set[i]*n);
+				// setter functions
+				set_name (new_name) {this.name = new_name;}
+				set_ride_ids (new_ride_ids) {this.ride_ids = new_ride_ids;}
+				set_profile_picture (new_profile_picture) {this.profile_picture = new_profile_picture;}
+				set_frame (new_frame) {this.frame = new_frame;}
+				set_frame_fg (new_foreground) {this.frame.frame_fg = new_foreground;}
+				set_frame_bg (new_background) {this.frame.frame_bg = new_background;}
+				set_frame_line_color (new_line_color) {this.frame.line_color = new_line_color;}
+			}
+
+			let RIDER_ARR = []
+			let ride_ids = []
+			
+			let id_counter = 0;
+			for (name of NAMES){
+				//calculate all ids corresponding to this rider
+				ride_ids = []
+				for (ride_i of Object.keys(ALL_RIDES)){
+					if (ALL_RIDES[ride_i].rider==name){
+						ride_ids.push(ride_i)
+						ALL_RIDES[ride_i]['rider_id'] = id_counter
 					}
-					seqGroups.push(L.motion.seq([poly]).addTo(map));
+				}			
+
+				// construct riders
+				if (RIDERS_PROFILE_INFO[name]['icon_url']=='' || RIDERS_PROFILE_INFO[name]['frame']==''){
+					// use default constructor if profile picture or frame info are missing
+					rr = new rettich_rider(name, ride_ids)
+				}else{
+					rr = new rettich_rider(name, ride_ids, RIDERS_PROFILE_INFO[name]['icon_url'], rettich_frames[RIDERS_PROFILE_INFO[name]['frame']])
 				}
+				RIDER_ARR.push(rr)
+				id_counter +=1
+			}
+
+		
+			// find group of all rides
+			let GROUP_ID_ALL = -1
+			let largest_group = -1
+			for (group_id_i of Object.keys(ALL_STATS)){
+				if (ALL_STATS[group_id_i].ride_ids.length>largest_group){
+					largest_group = ALL_STATS[group_id_i].ride_ids.length
+					GROUP_ID_ALL = group_id_i
+				}
+				
+			} 
+
+			CURRENT_GROUP = GROUP_ID_ALL;
+			seqGroups = rettich_motion_draw_groups()
+			map.on('click', rettich_onMapClick);
+
+			//--------------- only script function definition below ---------------//
+			function rettich_motion_draw_groups(lat_lng_startidx_arr=-1,lat_lng_endidx=-1) {
+				// draw all_all starting with the corresponding index. So index_set should be an array of indices with the same size as the group corresponding to CURRENT_GROUP
+
+
+				num_rides = ALL_STATS[CURRENT_GROUP].ride_ids.length
+				let lat_lngs_rides_arr = [];
+				let speed_set = Array(num_rides).fill(0)
+				if (lat_lng_startidx_arr==-1){
+					lat_lng_startidx_arr= Array(num_rides).fill(0)
+				}
+				
+				for (const [ride_iterator,ride_id] of  ALL_STATS[CURRENT_GROUP].ride_ids.entries()) {
+					current_ride_data = ALL_RIDES[ride_id];
+
+
+					if (lat_lng_endidx==-1) {
+						sliced_latlng = current_ride_data.latlng.data.slice(lat_lng_startidx_arr[ride_iterator]);
+						et = current_ride_data.time.data.at(-1)-current_ride_data.time.data[lat_lng_startidx_arr[ride_iterator]];
+						dist = current_ride_data.distance.data.at(-1)-current_ride_data.distance.data[lat_lng_startidx_arr[ride_iterator]];
+						speed_set[ride_iterator] = 3.6*dist/et;
+					}
+					else {
+						sliced_latlng = current_ride_data.latlng.data.slice(lat_lng_startidx_arr[ride_iterator], lat_lng_endidx[ride_iterator]);
+						et = current_ride_data.time.data[lat_lng_endidx[ride_iterator]]-current_ride_data.time.data[lat_lng_startidx_arr[ride_iterator]];
+						dist = current_ride_data.distance.data[lat_lng_endidx[ride_iterator]]-current_ride_data.distance.data[lat_lng_startidx_arr[ride_iterator]];
+						speed_set[ride_iterator] = 3.6*dist/et;
+					}
+
+					lat_lngs_rides_arr.push(sliced_latlng.map(([lat, lng]) => ({ lat, lng })));
+				}
+			
+				seqGroups = []
+				for (const [ride_iterator,ride_id] of ALL_STATS[CURRENT_GROUP].ride_ids.entries()) {
+					current_rider = RIDER_ARR[ALL_RIDES[ride_id]['rider_id']];
+					current_ride_lat_lngs = lat_lngs_rides_arr[ride_iterator];
+					// frame background
+					let poly_frame_fg = L.motion.polyline(
+						current_ride_lat_lngs, {
+						color: current_rider.get_frame().line_color}, {}, {
+						icon: L.icon({
+							iconUrl: current_rider.get_frame().frame_fg,
+							iconAnchor: current_rider.get_frame().anchor, 
+							iconSize: current_rider.get_frame().size}
+						)}
+					)
+			
+					// profile picture
+					let poly_profile_pic = L.motion.polyline(
+						current_ride_lat_lngs, {
+						color: current_rider.get_frame().line_color}, {}, {
+						icon: L.icon({
+							iconUrl: current_rider.get_profile_picture().picture,
+							iconAnchor: current_rider.get_profile_picture().anchor, 
+							iconSize: current_rider.get_profile_picture().size}
+						)}
+					)
+
+					//frame foreground
+					let poly_frame_bg = L.motion.polyline(
+						current_ride_lat_lngs, {
+						color: current_rider.get_frame().line_color}, {}, {
+						icon: L.icon({
+							iconUrl: current_rider.get_frame().frame_bg,
+							iconAnchor: current_rider.get_frame().anchor, 
+							iconSize: current_rider.get_frame().size}
+						)}
+					)
+			
+					if (speed_set!=-1) {
+						poly_frame_bg.motionSpeed(speed_set[ride_iterator]);
+						poly_profile_pic.motionSpeed(speed_set[ride_iterator]);
+						poly_frame_fg.motionSpeed(speed_set[ride_iterator]);
+					}
+
+					seqGroups.push(L.motion.seq([poly_frame_bg]).addTo(map));
+					seqGroups.push(L.motion.seq([poly_profile_pic]).addTo(map));
+					seqGroups.push(L.motion.seq([poly_frame_fg]).addTo(map));
+				}
+
 				for (seqGroup of seqGroups){
 					seqGroup.motionStart();
 				}
+
 				return seqGroups
 			}
-
-			seqGroups = draw([1,1,1])
-
-			function distance(p,q) {
+			
+			function rettich_get_distance(p,q) {
 				return Math.sqrt(Math.pow(p[0] - q[0], 2) + Math.pow(p[1] - q[1], 2))
 			}
-
-			function findClosestIndex(arrayOP, point){
-				// Claculates the index of the array of points for the closest to point
-				// does not check the last index
-				let dist = 99999999.0;
+			
+			function rettich_find_closest_index(arrayOP, point){
+				// Calculates the index of the array of points for the closest to point, last index not checked
+				let dist = 99999999.0; // just some random - for planet earth - high enough value
 				let idx = -1;
-
+			
 				for (i = 0; i < arrayOP.length-1; i++){
 					point_i = arrayOP[i];
-					dist_i = distance(point_i,point)
+					dist_i = rettich_get_distance(point_i,point)
 					if (dist_i<dist){
 						dist = dist_i;
 						idx = i;
@@ -223,35 +233,40 @@
 				}
 				return idx
 			}
-
-			function onMapClick(e) {
-
-				idx_set = [];
-				for (let i = 0; i < all_data.length; i++){
-					full_json = all_data[i];
-					idx_temp = findClosestIndex(full_json.latlng.data,[e.latlng.lat, e.latlng.lng]);
-					idx_set.push(idx_temp);
+			
+			function rettich_onMapClick(e) {
+				lat_lng_startidx_arr = [];
+				if (typeof ALL_STATS=='string'){
+					ALL_STATS = JSON.parse(ALL_STATS) // i have no idea why i have to parse it here again
 				}
-				remove_all_riders(idx_set)
-				seqGroups = draw(idx_set)
+				
+				for (const [ride_iterator,ride_id] of  ALL_STATS[CURRENT_GROUP]['ride_ids'].entries()) {
+					current_ride_data = ALL_RIDES[ride_id];
+					idx_temp = rettich_find_closest_index(current_ride_data.latlng.data,[e.latlng.lat, e.latlng.lng]);
+					lat_lng_startidx_arr.push(idx_temp);
+				}
+					
+				
+				rettich_remove_all_rides_from_map()
+				seqGroups = rettich_motion_draw_groups(lat_lng_startidx_arr)
 			}
-
-			function remove_all_riders() { 
+			
+			function rettich_remove_all_rides_from_map() { 
 				for (seqGroup of seqGroups){
 					seqGroup.motionStop();
 					seqGroup.removeFrom(map);
 				}
-
+			
 				if (typeof marker_start !== 'undefined'){
 					map.removeLayer(marker_start);
 				}
-
+			
 				if (typeof marker_finish !== 'undefined'){
 					map.removeLayer(marker_finish);
 				}
 			}
-
-			function motion(key) {
+			
+			function rettich_motion_keys(key) {
 				for (seqGroup of seqGroups){
 					if (key == "stop"){
 						seqGroup.motionStop();
@@ -262,12 +277,12 @@
 					}else if (key == "toggle"){
 						seqGroup.motionToggle();
 					}else if (key == "restart"){
-						remove_all_riders()
-						current_segment = $("#sel").val().split(',')
+						rettich_remove_all_rides_from_map()
+						current_segment = $("#sel_segment").val().split(',')
 						if (current_segment == ""){
-							draw([1,1,1])
+							rettich_motion_draw_groups()
 						}else{
-							draw_segment(current_segment)
+							rettich_motion_draw_segment(current_segment[0])
 						}
 					}else if (key == "speedup"){
 						seqGroup.getFirstLayer().motionSpeed(seqGroup.getFirstLayer().motionOptions.speed*2);
@@ -275,49 +290,72 @@
 						seqGroup.getFirstLayer().motionSpeed(seqGroup.getFirstLayer().motionOptions.speed*0.5);
 					}
 				}
-			}
-
-			map.on('click', onMapClick);
+			}		
 		</script>
 	</div>
-	<button id="pauseButton" onClick="motion('pause')">Pause</button>
-	<button id="resumeButton" onClick="motion('resume')">Resume</button>
-	<button id="restartButton" onClick="motion('restart')">Restart</button>
-	<button id="speedupButton" onClick="motion('speedup')">2x</button>
-	<button id="slowdownButton" onClick="motion('slowdown')">0.5x</button>
+
+	<!-- buttons auf map -->
+	<button id="pauseButton" onClick="rettich_motion_keys('pause')">Pause</button>
+	<button id="resumeButton" onClick="rettich_motion_keys('resume')">Resume</button>
+	<button id="restartButton" onClick="rettich_motion_keys('restart')">Restart</button>
+	<button id="speedupButton" onClick="rettich_motion_keys('speedup')">2x</button>
+	<button id="slowdownButton" onClick="rettich_motion_keys('slowdown')">0.5x</button>
+	
+	<!-- medals table -->
 	<div class = "rightdivision" id="stats">
+		<select id="sel_group" onchange="rettich_getComboGroup(this)">
+			<option value="">--Please choose a group--</option>
+		</select>
+
+
 		<canvas id="myChart"></canvas>
 		<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-		<script src="./frontend/data/stats.js"></script>
-
+		
 		<script>
-			const medalz = (JSON.parse(medals));
+			function rettich_draw_medals(){
+				if (typeof ALL_STATS=='string'){
+				ALL_STATS = JSON.parse(ALL_STATS) // i still have no idea why i have to parse it here again
+			}
+
+
 			const ctx = document.getElementById('myChart');
 			
-			new Chart(ctx,
+			let medal_labels = ALL_STATS[CURRENT_GROUP]['riders']
+			let medal_data_gold = []
+			let medal_data_silver = []
+			let medal_data_bronze = []
+			for (const [ride_iterator, ride_id] of  ALL_STATS[CURRENT_GROUP].ride_ids.entries()) {
+					medal_data_gold.push(ALL_STATS[CURRENT_GROUP]['medals'][ride_id][0])
+					medal_data_silver.push(ALL_STATS[CURRENT_GROUP]['medals'][ride_id][1])
+					medal_data_bronze.push(ALL_STATS[CURRENT_GROUP]['medals'][ride_id][2])
+			}
+			if (typeof medal_chart !== 'undefined') {
+				medal_chart.destroy();
+			}
+			medal_chart = new Chart(ctx,
 			{
 				type: 'bar',
 				data:
 				{
-					labels: ['Filipp', 'Felix', 'Flo'],
+					labels: medal_labels,
 					datasets: [
 					{
 						label: 'Gold',
-						data: [medalz.Philipp[0], medalz.Felix[0], medalz.Flo[0]],
+						data: medal_data_gold,
 						borderWidth: 1,
 						backgroundColor: "rgb(255,215,0)",
 						stack: 'Stack 0',
 					},
 					{
 						label: 'Silver',
-						data: [medalz.Philipp[1], medalz.Felix[1], medalz.Flo[1]],
+						data: medal_data_silver,
 						borderWidth: 1,
 						backgroundColor: "rgb(208,208,208)",
 						stack: 'Stack 1',
 					},
 					{
 						label: 'Bronze',
-						data: [medalz.Philipp[2], medalz.Felix[2], medalz.Flo[2]],
+						data: medal_data_bronze,
 						borderWidth: 1,
 						backgroundColor: "rgb(205,127,50)",
 						stack: 'Stack 2',
@@ -335,15 +373,18 @@
 					}
 				}
 			});
+			}
+			rettich_draw_medals()
 		</script>
 	</div>
 
+	<!-- choose segment table and adjust map to segment -->
 	<div class = "rightdivision2" id="stats">
 		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 		<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.css" />
 		<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.js"></script>	
 
-		<select id="sel" onchange="getComboA(this)">
+		<select id="sel_segment" onchange="rettich_getComboSegment(this)">
 			<option value="">--Please choose a segment--</option>
 		</select>
 		
@@ -357,39 +398,128 @@
 				</tr>
 			</thead>
 			<tbody>
-				<tr>
-					<td>Philipp</td>
-					<td align="center"></td>
-					<td align="center"></td>
-					<td align="center"></td>
 
-				</tr>
-				<tr>
-					<td>Felix</td>
-					<td align="center"></td>
-					<td align="center"></td>
-					<td align="center"></td>
-				</tr>
-				<tr>
-					<td>Flo</td>
-					<td align="center"></td>
-					<td align="center"></td>
-					<td align="center"></td>
-				</tr>
 			</tbody>
 		</table>
 		
 		<script>
-			const segments = (JSON.parse(segment_efforts));
-			let value = 0
-			let myTable = document.getElementById("stats_table");
-			$(function() {
-				$.each(segments, function(i, option) {
-					$('#sel').append($('<option/>').attr("value", [i, option.Philipp.time, option.Felix.time, option.Flo.time]).text(i));
-				});
-			})
+			if (typeof ALL_STATS=='string'){
+			 	ALL_STATS = JSON.parse(ALL_STATS) // i have no idea why i have to parse it here again
+			}
 			
-			function fancyTimeFormat(duration) {
+
+			let myTable = document.getElementById("stats_table");
+			
+
+			$(function() {
+			$.each(ALL_STATS, function(i, option) {
+				$('#sel_group').append($('<option/>').attr("value", [i]).text(option['group_name']));
+			});
+		})
+
+			//--------------- only script function definition below ---------------//
+			function rettich_getComboGroup(selectObject) {
+				
+				value = selectObject.value; 
+				key = selectObject;
+				CURRENT_GROUP=value;
+				rettich_draw_medals()
+				rettich_remove_all_rides_from_map()
+				//clear rettich_getComboSegment
+				const group_select_segment = document.getElementById('sel_segment');
+				group_select_segment.innerHTML = ''; 
+				group_select_segment.add(new Option('--Please choose a segment--', ""));
+				seqGroups = rettich_motion_draw_groups()
+
+				const all_rides_segment_efforts = ALL_STATS[CURRENT_GROUP]['segments'];
+				$(function() {
+					$.each(all_rides_segment_efforts, function(i, option) {
+						abcde = [i]
+						for (ride_id of ALL_STATS[CURRENT_GROUP]['ride_ids']){
+							abcde.push(option[ride_id].time)
+						}
+						$('#sel_segment').append($('<option/>').attr("value", abcde).text(i));
+					});
+				})
+				
+				//Clear table when selecting a new group
+				const myTable = document.getElementById('stats_table');
+				// Get a reference to the table body (tbody)
+				const tbody = myTable.querySelector('tbody');
+
+				// Clear the existing rows in the tbody
+				while (tbody.firstChild) {
+					tbody.removeChild(tbody.firstChild);
+				}
+
+				
+				let bounds
+				let bounds_temp
+				for (const [ride_iterator, ride_id] of  ALL_STATS[CURRENT_GROUP].ride_ids.entries()){
+					if (ride_iterator==0){
+						bounds = L.latLngBounds(ALL_RIDES[ride_id]['latlng']['data'])
+					}else{
+						bounds_temp = L.latLngBounds(ALL_RIDES[ride_id]['latlng']['data'])
+						bounds.extend(bounds_temp)
+					}
+				}
+				map.fitBounds(bounds)
+
+			}
+			function rettich_getComboSegment(selectObject) {
+				value = selectObject.value; 
+				key = selectObject;
+
+				
+				seperated_values = value.split(',');
+				segment_name = seperated_values[0];
+				for (seqGroup of seqGroups){
+					seqGroup.motionStop();
+					seqGroup.removeFrom(map);
+				
+					if (typeof marker_start !== 'undefined'){
+						map.removeLayer(marker_start);
+					}
+
+					if (typeof marker_finish !== 'undefined'){
+						map.removeLayer(marker_finish);
+					}
+				}
+				
+				if (seperated_values==""){
+					seqGroups = rettich_motion_draw_groups()
+					map.setView([50.896537, 7.025585], 12);
+				} 
+				else {
+					const myTable = document.getElementById('stats_table');
+					let num_rides_at_current_segment = seperated_values.length-1;
+					// Get a reference to the table body (tbody)
+					const tbody = myTable.querySelector('tbody');
+
+					// Clear the existing rows in the tbody
+					while (tbody.firstChild) {
+						tbody.removeChild(tbody.firstChild);
+					}
+
+					for (const [ride_iterator, ride_id] of  ALL_STATS[CURRENT_GROUP].ride_ids.entries()) {
+						const row = tbody.insertRow();
+						let cell = row.insertCell(0);
+						cell.textContent = ALL_STATS[CURRENT_GROUP]['riders'][ride_iterator];
+						cell = row.insertCell(1);
+						cell.textContent = rettich_fancyTimeFormat(seperated_values[ride_iterator+1]);
+						cell = row.insertCell(2);
+						cell.textContent = Math.round(ALL_STATS[CURRENT_GROUP]['segments'][segment_name][ride_id]['speed']*100)/100;
+						cell = row.insertCell(3);
+
+						cell.textContent =  Math.round(ALL_STATS[CURRENT_GROUP]['segments'][segment_name][ride_id]['power']*100)/100;
+					}
+					
+	
+					rettich_motion_draw_segment(segment_name)
+				}
+			}
+
+			function rettich_fancyTimeFormat(duration) {
 				// Hours, minutes and seconds
 				const hrs = ~~(duration / 3600);
 				const mins = ~~((duration % 3600) / 60);
@@ -407,89 +537,75 @@
 
 				return ret;
 			}
+
+			function rettich_motion_draw_segment(seg_name) {
 			
-			function getComboA(selectObject) {
-				value = selectObject.value; 
-				key = selectObject;
-				seperated_values = value.split(',');
-				for (seqGroup of seqGroups){
-					seqGroup.motionStop();
-					seqGroup.removeFrom(map);
 				
-					if (typeof marker_start !== 'undefined'){
-						map.removeLayer(marker_start);
-					}
-
-					if (typeof marker_finish !== 'undefined'){
-						map.removeLayer(marker_finish);
-					}
+				start_idx_set = []
+				end_idx_set = []
+				for (const [ride_iterator,ride_id] of  ALL_STATS[CURRENT_GROUP].ride_ids.entries()) {
+					start_idx_set.push(ALL_STATS[CURRENT_GROUP]['segments'][seg_name][ride_id]['start_index'])
+					end_idx_set.push(ALL_STATS[CURRENT_GROUP]['segments'][seg_name][ride_id]['end_index'])
 				}
+
+				rettich_motion_draw_groups(start_idx_set,end_idx_set)
+				marker_start = rettich_static_draw_marker(ALL_STATS[CURRENT_GROUP]['segments'][seg_name]['Segment']['start_latlng'], rettich_other_icons.start)
+				marker_finish = rettich_static_draw_marker(ALL_STATS[CURRENT_GROUP]['segments'][seg_name]['Segment']['end_latlng'], rettich_other_icons.finish)
 				
-				if (seperated_values==""){
-					seqGroups = draw([1,1,1])
-					map.setView([50.896537, 7.025585], 12);
-				} 
-				else {
-					for (let i = 1; i < seperated_values.length; i++) {
-						myTable.rows[i].cells[1].textContent = fancyTimeFormat(seperated_values[i]);
-					}
-					myTable.rows[1].cells[2].textContent = Math.round(segments[seperated_values[0]].Philipp.speed*100)/100;
-					myTable.rows[2].cells[2].textContent = Math.round(segments[seperated_values[0]].Felix.speed*100)/100;
-					myTable.rows[3].cells[2].textContent = Math.round(segments[seperated_values[0]].Flo.speed*100)/100;
-
-					myTable.rows[1].cells[3].textContent = Math.round(segments[seperated_values[0]].Philipp.power*100)/100;
-					myTable.rows[2].cells[3].textContent = Math.round(segments[seperated_values[0]].Felix.power*100)/100;
-					myTable.rows[3].cells[3].textContent = Math.round(segments[seperated_values[0]].Flo.power*100)/100;
-					draw_segment(seperated_values)
-				}
-			}
-
-			function draw_segment(seperated_values){
-				let seg_name = seperated_values[0]
-			
-				start_idx_set = [segments[seg_name].Philipp.start_index,segments[seg_name].Felix.start_index,segments[seg_name].Flo.start_index]
-				end_idx_set = [segments[seg_name].Philipp.end_index,segments[seg_name].Felix.end_index,segments[seg_name].Flo.end_index]				
-
-				draw(start_idx_set,end_idx_set)
-
-				marker_start = L.marker(segments[seg_name].Segment.start_latlng, {icon: start_icon}).addTo(map);
-				marker_finish = L.marker(segments[seg_name].Segment.end_latlng, {icon: finish_icon}).addTo(map);
-				
-				center = get_segment_center(marker_start, marker_finish)
+				center = rettich_get_segment_center(marker_start, marker_finish)
 				bounds = L.latLngBounds(marker_start.getLatLng(), marker_finish.getLatLng())
 
 				map.setView(center);
-				map.fitBounds(bounds)
-
+				map.fitBounds(bounds);
 			}
 
-			function get_segment_center(start, finish){
+			function rettich_static_draw_marker(latlng, marker_icon) {
+				return L.marker(
+					latlng, {
+					icon: L.icon({
+						iconUrl: marker_icon.icon,
+						iconAnchor: marker_icon.anchor, 
+						iconSize: marker_icon.size})}
+				).addTo(map);
+			}
 
+			function rettich_get_segment_center(start, finish) {
 				coefficient = 1;
 
 				if ((start.getLatLng().lat > 90 && finish.getLatLng().lat < -90) || (finish.getLatLng().lat > 90 && start.getLatLng().lat < -90)) {
-				midLat = 180 - ((start.getLatLng().lat - finish.getLatLng().lat) / 2).abs();
-				// If output will be in the 1st quartile then co-ef will remain 1, if in 4th then it will be -1
-				if ((start.getLatLng().lat < 0 && start.getLatLng().lat.abs() < finish.getLatLng().lat.abs()) ||
-					(finish.getLatLng().lat < 0 && finish.getLatLng().lat.abs() < start.getLatLng().lat.abs())) coefficient = -1;
-				// Applying coefficient
-				midLat *= coefficient;
-				} else
-				midLat = (finish.getLatLng().lat + start.getLatLng().lat) / 2;
-
+					midLat = 180 - ((start.getLatLng().lat - finish.getLatLng().lat) / 2).abs();
+					
+					// If output will be in the 1st quartile then co-ef will remain 1, if in 4th then it will be -1
+					if ((start.getLatLng().lat < 0 && start.getLatLng().lat.abs() < finish.getLatLng().lat.abs()) ||
+						(finish.getLatLng().lat < 0 && finish.getLatLng().lat.abs() < start.getLatLng().lat.abs())) {
+						coefficient = -1;
+					}
+					
+					// Applying coefficient
+					midLat *= coefficient;
+				}
+				else {
+					midLat = (finish.getLatLng().lat + start.getLatLng().lat) / 2;
+				}
+				
 				// Calculating midLong
 				coefficient = 1;
 
 				if ((start.getLatLng().lng > 90 && finish.getLatLng().lng < -90) || (finish.getLatLng().lng > 90 && start.getLatLng().lng < -90)) {
-				midLong = 180 - ((start.getLatLng().lng.abs() - finish.getLatLng().lng.abs()) / 2).abs();
-				// If output will be in the 1st quartile then co-ef will remain 1, if in 4th then it will be -1
-				if ((start.getLatLng().lng < 0 && start.getLatLng().lng.abs() < finish.getLatLng().lng.abs()) ||
-					(finish.getLatLng().lng < 0 && finish.getLatLng().lng.abs() < start.getLatLng().lng.abs())) coefficient = -1;
+					midLong = 180 - ((start.getLatLng().lng.abs() - finish.getLatLng().lng.abs()) / 2).abs();
+					
+					// If output will be in the 1st quartile then co-ef will remain 1, if in 4th then it will be -1
+					if ((start.getLatLng().lng < 0 && start.getLatLng().lng.abs() < finish.getLatLng().lng.abs()) ||
+						(finish.getLatLng().lng < 0 && finish.getLatLng().lng.abs() < start.getLatLng().lng.abs())) {
+						coefficient = -1;
+					}
 
-				// Applying coefficient
-				midLong *= coefficient;
-				} else
-				midLong = (finish.getLatLng().lng + start.getLatLng().lng) / 2;
+					// Applying coefficient
+					midLong *= coefficient;
+				} 
+				else {
+					midLong = (finish.getLatLng().lng + start.getLatLng().lng) / 2;
+				}
 
 				return [midLat, midLong]
 			}

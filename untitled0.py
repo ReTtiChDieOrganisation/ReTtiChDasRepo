@@ -1,135 +1,243 @@
+import os
+import json
+import scipy.stats as sstat
+import numpy as np
+import iso8601
+import datetime
+import itertools
 import requests
 import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
-import datetime
-import iso8601
-import numpy as np
+NO_DAYS = 7  # number of days which are saved and displayed
+SHARED_SEGS = 10  # number of share segments such that it counts as a group
 
-import scipy.stats as sstat
-import json
-
-from etc import rettich_encrypt
-
-auth_url = "https://www.strava.com/oauth/token"
-
-password = rettich_encrypt.get_access()
-
-payload = {
-    'client_id': "114307",
-    'client_secret': rettich_encrypt.decode(password, rettich_encrypt.get_client_secret()),
-    'refresh_token': '',
-    'grant_type': "refresh_token",
-    'f': 'json'
-}
-
-# =============================================================================
-# Insert refresh tokens here
-# =============================================================================
-
-with open('./data/unique_identifier.json','r') as f:
-    unique_identifier = json.load(f)
-names = list(unique_identifier.keys())
-
-# TODO: remove magic number 3 and make more general
-names = [names[i] for i in range(3)]
-
-refresh_tokens = [rettich_encrypt.decode(password, bytes(unique_identifier[name],  'utf-8'))for name in names]
-
-streams = []
-segments = []
-for refresh_token in refresh_tokens:
-
-    payload['refresh_token']=refresh_token
-    print("Requesting Token...\n")
-    res = requests.post(auth_url, data=payload, verify=False)
-    access_token = res.json()['access_token']
-    print("Access Token = {}\n".format(access_token))
-    
-    header = {'Authorization': 'Bearer ' + access_token}
-    param = {'per_page': 20, 'page': 1}
-    
-    
-    # =============================================================================
-    # activity information
-    # =============================================================================
-    
-    activites_url = "https://www.strava.com/api/v3/athlete/activities"
-    my_dataset = requests.get(activites_url, headers=header, params=param).json()
-    
-    id_last_tour = my_dataset[0]['id']
-    print(iso8601.parse_date(my_dataset[0]['start_date']))
-    segments_url = 'https://www.strava.com/api/v3/activities/'+str(id_last_tour)+'?include_all_efforts=True'
-    my_segments = requests.get(segments_url, headers=header, params=param).json()
-    
-    # stream_url = 'https://www.strava.com/api/v3/activities/'+str(id_last_tour)+'/streams'
-    # my_stream =  requests.get(stream_url, headers=header, params=param).json()
-    
-    
-    stream_url = 'https://www.strava.com/api/v3/activities/'+str(id_last_tour)+'/streams?keys=time,distance,latlng,altitude,heartrate&key_by_type=true'
-    all_stream =  requests.get(stream_url, headers=header, params=param).json()
-    
-    streams.append(all_stream)
-    segments.append(my_segments)
+RAW_PATH = './frontend/data/strava/raw_data/'
+DATA_PATH = './frontend/data/strava/'
+RIDER_DATA_PATH = './frontend/data/rettich/'  # path where the cleaned riders dict is stored
+RIDER_FILE = './etc/etc.json'
 
 
-with open('./frontend/data/data.js', 'w') as f:
-    for i, name in enumerate(names):
-        
-        f.write(name.lower()+"_json = '")
-        json.dump(streams[i],f)
-        f.write("'\n")
+def clean_string(input_string):
+    return input_string.replace("'", "").replace(',', '').replace('"', '')
 
 
-def intersection(lst1, lst2):
-    lst3 = [value for value in lst1 if value in lst2]
-    return lst3
+def load_data():
+    '''
+    Loads raw data of the last NO_DAYS days into RAW_PATH and clears all old and other files in this folder
+    Saves accumulated data in DATA_PATH + 'data.json'
+    '''
 
-segment_list = intersection([a['name'] for a in segments[2]['segment_efforts']],intersection([a['name'] for a in segments[0]['segment_efforts']],[a['name'] for a in segments[1]['segment_efforts']]))
+    with open(RIDER_FILE, 'r') as f:
+        riders = json.load(f)
+    names = list(riders.keys())
+    names.remove('client_secret')
 
-segment_efforts = {}
-medal_arr = np.zeros((len(names),3))
+    payload = {
+        'client_id': "114307",
+        'client_secret': riders.pop('client_secret'),
+        'refresh_token': '',
+        'grant_type': "refresh_token",
+        'f': 'json'
+    }
 
-for segment_name in segment_list:
+    refresh_tokens = [riders[name].pop('refresh_token') for name in names]
+    if not os.path.exists(RAW_PATH):
+        os.mkdir(RAW_PATH)
+    remove_activities = os.listdir(RAW_PATH)  # get all saved activities to delete those which are not needed anymore
 
-    for idx_rider, seg_stream in enumerate(segments):
-        personal_se = {}
-        for i in range(len(seg_stream['segment_efforts'])):
-            if seg_stream['segment_efforts'][i]['name']==segment_name:
-                seg_eff = seg_stream['segment_efforts'][i]
-                personal_se['time'] = seg_eff['elapsed_time']
-                personal_se['speed'] = seg_eff['distance']*60*60/(1000*seg_eff['elapsed_time'])
-                personal_se['start_index'] = seg_eff['start_index']
-                personal_se['end_index'] = seg_eff['end_index']
-                
-                if 'average_watts' in seg_eff.keys():
-                    personal_se['power'] = seg_eff['average_watts']
-        segment_name_clean = segment_name.replace("'","")
-        segment_name_clean = segment_name_clean.replace(',','')
-        if not idx_rider:
-            segment_info = {'start_latlng':seg_eff['segment']['start_latlng'], 'end_latlng':seg_eff['segment']['end_latlng']}
-            segment_efforts[segment_name_clean] = {names[idx_rider]:personal_se, 'Segment':segment_info}
-        else:
-            segment_efforts[segment_name_clean][names[idx_rider]] = personal_se
+    our_id = 0
+    all_rides = {}
+    for rider_idx, refresh_token in enumerate(refresh_tokens):
+
+        payload['refresh_token'] = refresh_token
+        print("Requesting Token...\n")
+        res = requests.post("https://www.strava.com/oauth/token", data=payload, verify=False)
+        access_token = res.json()['access_token']
+        header = {'Authorization': 'Bearer ' + access_token}
+        param = {'per_page': 50, 'page': 1}
+
+        # =============================================================================
+        # activity information
+        # =============================================================================
+        # retrieve last 50 activities
+        activites_url = "https://www.strava.com/api/v3/athlete/activities"
+        last_activities = requests.get(activites_url, headers=header, params=param).json()
+
+        for activity in last_activities:
+            today = datetime.date.today()
+            act_date = datetime.datetime.date(iso8601.parse_date(activity['start_date']))
+            if today-act_date > datetime.timedelta(days=NO_DAYS):
+                break
+
+            act_id = activity['id']
+            if not os.path.exists(RAW_PATH+str(act_id)+'.json') and (activity['sport_type'] in ['Ride', 'Run', 'Hike']):
+                detailed_url = 'https://www.strava.com/api/v3/activities/'+str(act_id)+'?include_all_efforts=True'
+                detailed_act = requests.get(detailed_url, headers=header, params=param).json()
+
+                stream_url = 'https://www.strava.com/api/v3/activities/' + \
+                    str(act_id)+'/streams?keys=time,distance,latlng,altitude,heartrate&key_by_type=true'
+                full_act = requests.get(stream_url, headers=header, params=param).json()
+                full_act['strava_id'] = act_id
+                full_act['rider'] = names[rider_idx]
+                full_act['start_date'] = str(iso8601.parse_date(activity['start_date']))
+                full_act['segment_efforts'] = detailed_act['segment_efforts']
+                for i in range(len(full_act['segment_efforts'])):
+                    segment_name = full_act['segment_efforts'][i]['name']
+                    segment_name_clean = clean_string(segment_name)
+                    full_act['segment_efforts'][i]['name'] = segment_name_clean
+                    full_act['segment_efforts'][i]['segment']['name'] = segment_name_clean
+
+                with open(RAW_PATH+str(act_id)+'.json', 'w') as f:
+                    json.dump(full_act, f)
+                all_rides[our_id] = full_act
+                our_id += 1
+            elif str(act_id)+'.json' in remove_activities:
+                remove_activities.remove(str(act_id)+'.json')
+
+                with open(RAW_PATH+str(act_id)+'.json', 'r') as f:
+                    full_act = json.load(f)
+
+                all_rides[our_id] = full_act
+                our_id += 1
+
+    for file in remove_activities:
+        os.remove(RAW_PATH+file)
+
+    with open(DATA_PATH + 'data.json', 'w') as f:
+        json.dump(all_rides, f)
+    with open(DATA_PATH + 'data.js', 'w') as f:
+        f.write("ALL_RIDES = '")
+        json.dump(all_rides, f)
+        f.write("'")
+    with open(RIDER_DATA_PATH + 'riders.js', 'w') as f:
+        f.write("RIDERS = '")
+        json.dump(riders, f)
+        f.write("'")
 
 
+def calculate_stats():
+    '''
+    loads data from DATA_PATH +'data.json' calculates the groups and the statistics for each group and saves them to 
+    '''
+    def intersection(lst1, lst2):
+        lst3 = [value for value in lst1 if value in lst2]
+        return lst3
 
-    times = [segment_efforts[segment_name_clean][name]['time'] for name in names]
-    ranks = sstat.rankdata(times,).astype(int)-1 
-    
-    for idx_rider in range(len(names)):
-        medal_arr[idx_rider,ranks[idx_rider]] +=1
+    with open(DATA_PATH + 'data.json', 'r') as f:
+        all_rides = json.load(f)
+    with open(RIDER_FILE, 'r') as f:
+        riders = json.load(f)
+    names = list(riders.keys())
+    names.remove('client_secret')
 
-    
-medals = {names[i]: list(medal_arr[i,:]) for i in range(len(names))} 
+    groups = []
+
+    # find groups which share more than SHARED_SEGS = 10 segments (only from the same day)
+
+    for day_del in range(NO_DAYS):
+        today = datetime.date.today()
+
+        # get all indices from i days ago
+        day_idcs = []
+        for i in range(len(all_rides)):
+            act_date = datetime.datetime.date(iso8601.parse_date(all_rides[str(i)]['start_date']))
+            if today-act_date == datetime.timedelta(days=day_del):
+                day_idcs.append(i)
+
+        # TODO now we have all indices from this day and have to check all possible subsets for intersection of segments
+        for L in range(len(day_idcs)-1):
+            for subset in itertools.combinations(day_idcs, L+2):  # TODO this gets big if the sets get large
+                for i in range(len(subset)):
+                    if not i:
+                        segments = [seg['name'] for seg in all_rides[str(subset[i])]['segment_efforts']]
+                    else:
+                        segments = intersection(segments, [seg['name']
+                                                for seg in all_rides[str(subset[i])]['segment_efforts']])
+                    if len(segments) < SHARED_SEGS:
+                        break
+                if len(segments) > SHARED_SEGS:
+                    groups.append(list(subset))
+
+    groups.sort(key=len, reverse=True)
+    for group in groups:
+        for L in range(2, len(group)):
+            for subset in itertools.combinations(group, L):
+                groups.remove(list(subset))
+
+    group_names = [str(set([all_rides[str(i)]['rider'] for i in group])).replace("{", "").replace("}", "").replace("'", "")
+                   for group in groups]  # set() to make the names unique
+
+    for i, group in enumerate(groups):
+        act_datetime = iso8601.parse_date(all_rides[str(group[0])]['start_date'])
+        group_names[i] = group_names[i] + ' ' + str(act_datetime.day) + '/' + \
+            str(act_datetime.month) + '-' + str(act_datetime.hour) + 'h'
+
+    # one group for each rider consisting of all of their rides
+    for name in names:
+        id_list_rider = [i for i in range(len(all_rides)) if all_rides[str(i)]['rider'] == name]
+        if id_list_rider != []:
+            groups.append(id_list_rider)
+            group_names.append(name + ' all rides')
+    # add group of all rides
+    groups.append(list(np.arange(len(all_rides))))
+    group_names.append('All all')
+    # calculate stats for each group
+    all_groups = {}
+    group_id = 0
+    for group in groups:
+        # for some reason there are some int32 and not int and this does not work with json.dump
+        group = [int(g) for g in group]
+        shared_segments = [seg['name'] for seg in all_rides[str(group[0])]['segment_efforts']]
+        for i in range(1, len(group)):
+            shared_segments = intersection(shared_segments, [seg['name']
+                                           for seg in all_rides[str(group[i])]['segment_efforts']])
+
+        segment_efforts = {}
+
+        medal_arr = np.zeros((len(group), 3))
+
+        for segment_name in shared_segments:
+            for idx_in_group, ride_idx in enumerate(group):
+                activity_stats = all_rides[str(ride_idx)]
+                ride_segment_efforts = {}
+
+                for seg_idx in range(len(activity_stats['segment_efforts'])):
+                    seg_eff = activity_stats['segment_efforts'][seg_idx]
+                    if seg_eff['name'] == segment_name:
+                        ride_segment_efforts['time'] = seg_eff['elapsed_time']
+                        ride_segment_efforts['speed'] = seg_eff['distance']*60*60/(1000*seg_eff['elapsed_time'])
+                        ride_segment_efforts['start_index'] = seg_eff['start_index']
+                        ride_segment_efforts['end_index'] = seg_eff['end_index']
+                        if 'average_watts' in seg_eff.keys():
+                            ride_segment_efforts['power'] = seg_eff['average_watts']
+
+                        segment_name_clean = clean_string(segment_name)
+                        if not idx_in_group:
+                            segment_info = {'start_latlng': seg_eff['segment']
+                                            ['start_latlng'], 'end_latlng': seg_eff['segment']['end_latlng']}
+                            segment_efforts[segment_name_clean] = {
+                                ride_idx: ride_segment_efforts, 'Segment': segment_info}
+                        else:
+                            segment_efforts[segment_name_clean][ride_idx] = ride_segment_efforts
+
+            times = [segment_efforts[segment_name_clean][ride_idx]['time'] for ride_idx in group]
+            ranks = sstat.rankdata(times,).astype(int)-1
+            for i in range(len(group)):
+                if ranks[i] < 3:
+                    medal_arr[i, ranks[i]] += 1
+
+        all_groups[str(group_id)] = {'segments': segment_efforts, 'ride_ids': group, 'medals': {group[i]: list(
+            medal_arr[i, :]) for i in range(len(group))}, 'riders': [all_rides[str(i)]['rider'] for i in group], 'group_name': group_names[group_id]}
+        group_id += 1
+
+    with open(DATA_PATH+'stats.json', 'w') as f:
+        f.write("ALL_STATS= '")
+        json.dump(all_groups, f)
+        f.write("'")
 
 
-
-with open('./frontend/data/stats.js', 'w') as f:
-    f.write("medals = '")
-    json.dump(medals,f)
-    f.write("'\n")
-    f.write("segment_efforts = '")
-    json.dump(segment_efforts,f)
-    f.write("'")
+if __name__ == "__main__":
+    load_data()
+    calculate_stats()

@@ -1,2 +1,8 @@
 */__pycache*
 /__pycache*
+.DS_Store
+frontend/.DS_Store
+frontend/icons/.DS_Store
+etc/*
+frontend/data/strava/raw_data
+frontend/data/strava/data.json
