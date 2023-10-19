@@ -187,13 +187,6 @@ var rettich_frames = {
         size : [54,72], // 3:4 ratio
         anchor : [54/2,72] // frame_size_x/2
     },
-    /* TODO: 
-     * black
-     * white
-     * bronce
-     * silver
-     * gold
-     */
 };
 
 var rettich_other_icons = {
