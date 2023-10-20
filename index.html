@@ -128,8 +128,10 @@
 			//--------------- only script function definition below ---------------//
 			function rettich_motion_draw_groups(lat_lng_startidx_arr=-1,lat_lng_endidx=-1) {
 				// draw all_all starting with the corresponding index. So index_set should be an array of indices with the same size as the group corresponding to CURRENT_GROUP
-
-
+				toggle_button = document.getElementById('toggleButton')
+				if (toggle_button){ //only if it is already created
+					toggle_button.innerHTML = '&#9208;'; // set pause key so it shows pause
+				}
 				num_rides = ALL_STATS[CURRENT_GROUP].ride_ids.length
 				let lat_lngs_rides_arr = [];
 				let speed_set = Array(num_rides).fill(0)
@@ -270,8 +272,10 @@
 				isPaused = !isPaused;
 				if (isPaused) {
 					rettich_motion_keys('pause');
+					document.getElementById('toggleButton').innerHTML = '&#9658;';
 				} else {
 					rettich_motion_keys('resume');
+					document.getElementById('toggleButton').innerHTML = '&#9208;';
 				}
 			}
 
@@ -304,7 +308,7 @@
 	</div>
 
 	<!-- buttons auf map -->
-	<button id="toggleButton" onClick="toggleFunction('pause')">&#9658; / &#9208; </button>
+	<button id="toggleButton" onClick="toggleFunction()"> &#9208; </button>
 	<button id="restartButton" onClick="rettich_motion_keys('restart')">Restart</button>
 	<button id="speedupButton" onClick="rettich_motion_keys('speedup')">2x</button>
 	<button id="slowdownButton" onClick="rettich_motion_keys('slowdown')">0.5x</button>
