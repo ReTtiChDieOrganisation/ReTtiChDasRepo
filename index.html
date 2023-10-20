@@ -270,10 +270,8 @@
 				isPaused = !isPaused;
 				if (isPaused) {
 					rettich_motion_keys('pause');
-					document.getElementById('toggleButton').innerHTML = 'Resume';
 				} else {
 					rettich_motion_keys('resume');
-					document.getElementById('toggleButton').innerHTML = 'Pause';
 				}
 			}
 
@@ -306,7 +304,7 @@
 	</div>
 
 	<!-- buttons auf map -->
-	<button id="toggleButton" onClick="toggleFunction('pause')">Pause</button>
+	<button id="toggleButton" onClick="toggleFunction('pause')">&#9658; / &#9208; </button>
 	<button id="restartButton" onClick="rettich_motion_keys('restart')">Restart</button>
 	<button id="speedupButton" onClick="rettich_motion_keys('speedup')">2x</button>
 	<button id="slowdownButton" onClick="rettich_motion_keys('slowdown')">0.5x</button>
