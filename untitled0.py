@@ -72,7 +72,7 @@ def load_data():
                 break
 
             act_id = activity['id']
-            if not os.path.exists(RAW_PATH+str(act_id)+'.json') and (activity['sport_type'] in ['Ride', 'Run', 'Hike']):
+            if not os.path.exists(RAW_PATH+str(act_id)+'.json') and (activity['sport_type'] in ['Ride', 'Run', 'Hike', 'Walk']):
                 detailed_url = 'https://www.strava.com/api/v3/activities/'+str(act_id)+'?include_all_efforts=True'
                 detailed_act = requests.get(detailed_url, headers=header, params=param).json()
 
