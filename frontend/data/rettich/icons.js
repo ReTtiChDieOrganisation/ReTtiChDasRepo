@@ -1,31 +1,3 @@
-// rettich icons consist of a profile picture and a frame. The frame consists of a .png and a corresponding polyline color
-var rettich_profile_pictures = {
-    flo :
-    {
-        picture : "./frontend/icons/profile_pictures/flo.png",
-        size : [33,44], // 3:4 ratio
-        anchor : [33/2,44+22] // picture_size_y + adjust (adjust to center picture in frame)
-    },
-    felix :
-    {
-        picture : "./frontend/icons/profile_pictures/felix.png",
-        size : [33,44], // 3:4 ratio
-        anchor : [33/2,44+22] // picture_size_y + adjust (adjust to center picture in frame)
-    },
-    philipp :
-    {
-        picture : "./frontend/icons/profile_pictures/philipp.png",
-        size : [33,44], // 3:4 ratio
-        anchor : [33/2,44+22] // picture_size_y + adjust (adjust to center picture in frame)
-    },
-    default :
-    {
-        picture : "./frontend/icons/profile_pictures/default.png",
-        size : [33,44], // 3:4 ratio
-        anchor : [33/2,44+22] // picture_size_y + adjust (adjust to center picture in frame)
-    }
-};
-
 var rettich_frames = {
     blue :
     {
