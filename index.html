@@ -49,6 +49,7 @@
 			ALL_STATS = JSON.parse(ALL_STATS)
 			ALL_RIDES = JSON.parse(ALL_RIDES)
 			RIDERS_PROFILE_INFO = JSON.parse(RIDERS_PROFILE_INFO)
+			var ISPAUSED = false;
 
 			
 			let NAMES = Object.keys(RIDERS_PROFILE_INFO)
@@ -128,6 +129,14 @@
 			//--------------- only script function definition below ---------------//
 			function rettich_motion_draw_groups(lat_lng_startidx_arr=-1,lat_lng_endidx=-1) {
 				// draw all_all starting with the corresponding index. So index_set should be an array of indices with the same size as the group corresponding to CURRENT_GROUP
+				toggle_button = document.getElementById('toggleButton');
+				if (toggle_button){ //only if toggle button already created
+					toggle_button.innerHTML = '&#9208;';
+					ISPAUSED = false;
+				}
+				
+
+
 
 				num_rides = ALL_STATS[CURRENT_GROUP].ride_ids.length
 				let lat_lngs_rides_arr = [];
@@ -263,11 +272,11 @@
 				}
 			}
 			
-			var isPaused = false;
+
 
 			function toggleFunction() {
-				isPaused = !isPaused;
-				if (isPaused) {
+				ISPAUSED = !ISPAUSED;
+				if (ISPAUSED) {
 					rettich_motion_keys('pause');
 					document.getElementById('toggleButton').innerHTML = '&#9658;';
 				} else {
