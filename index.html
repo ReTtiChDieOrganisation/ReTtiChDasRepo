@@ -26,10 +26,8 @@
 		.leaflet-container {float: left; height: 9000px; width: 10000px; max-width: 70%; max-height: 99%;}
 		.rightdivision {float: right; padding-right: 3%; padding-top: 0%; height: 9000px; width: 10000px; max-width: 26%; max-height: 30%;}
 		.rightdivision2 {float: right; padding-right: 3%; padding-top: 0%; height: 900px; width: 10000px; max-width: 26%; max-height: 48%;}
-		#pauseButton {position: relative; top: 2%; right: 11%; padding: 10px; z-index: 400;}
-		#pauseButton:hover {opacity: 0.8; cursor: pointer;}	
-		#resumeButton {position: relative; top: 2%; right: 11%; padding: 10px; z-index: 400;}
-		#resumeButton:hover {opacity: 0.8; cursor: pointer;}	
+		#toggleButton {position: relative; top: 2%; right: 11%; padding: 10px; z-index: 400;}
+		#toggleButton:hover {opacity: 0.8; cursor: pointer;}	
 		#restartButton {position: relative; top: 2%; right: 11%; padding: 10px; z-index: 400;}
 		#restartButton:hover {opacity: 0.8; cursor: pointer;}	
 		#speedupButton {position: relative; top: 7%; right: 16%; padding: 10px; z-index: 400;}
@@ -266,6 +264,19 @@
 				}
 			}
 			
+			var isPaused = false;
+
+			function toggleFunction() {
+				isPaused = !isPaused;
+				if (isPaused) {
+					rettich_motion_keys('pause');
+					document.getElementById('toggleButton').innerHTML = 'Resume';
+				} else {
+					rettich_motion_keys('resume');
+					document.getElementById('toggleButton').innerHTML = 'Pause';
+				}
+			}
+
 			function rettich_motion_keys(key) {
 				for (seqGroup of seqGroups){
 					if (key == "stop"){
@@ -295,8 +306,7 @@
 	</div>
 
 	<!-- buttons auf map -->
-	<button id="pauseButton" onClick="rettich_motion_keys('pause')">Pause</button>
-	<button id="resumeButton" onClick="rettich_motion_keys('resume')">Resume</button>
+	<button id="toggleButton" onClick="toggleFunction('pause')">Pause</button>
 	<button id="restartButton" onClick="rettich_motion_keys('restart')">Restart</button>
 	<button id="speedupButton" onClick="rettich_motion_keys('speedup')">2x</button>
 	<button id="slowdownButton" onClick="rettich_motion_keys('slowdown')">0.5x</button>
