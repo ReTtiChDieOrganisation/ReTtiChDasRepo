@@ -112,7 +112,7 @@ def load_data():
         json.dump(all_rides, f)
         f.write("'")
     with open(RIDER_DATA_PATH + 'riders.js', 'w') as f:
-        f.write("RIDERS = '")
+        f.write("RIDERS_PROFILE_INFO = '")
         json.dump(riders, f)
         f.write("'")
 
