@@ -1,31 +1,3 @@
-// rettich icons consist of a profile picture and a frame. The frame consists of a .png and a corresponding polyline color
-var rettich_profile_pictures = {
-    flo :
-    {
-        picture : "./frontend/icons/profile_pictures/flo.png",
-        size : [33,44], // 3:4 ratio
-        anchor : [33/2,44+22] // picture_size_y + adjust (adjust to center picture in frame)
-    },
-    felix :
-    {
-        picture : "./frontend/icons/profile_pictures/felix.png",
-        size : [33,44], // 3:4 ratio
-        anchor : [33/2,44+22] // picture_size_y + adjust (adjust to center picture in frame)
-    },
-    philipp :
-    {
-        picture : "./frontend/icons/profile_pictures/philipp.png",
-        size : [33,44], // 3:4 ratio
-        anchor : [33/2,44+22] // picture_size_y + adjust (adjust to center picture in frame)
-    },
-    default :
-    {
-        picture : "./frontend/icons/profile_pictures/default.png",
-        size : [33,44], // 3:4 ratio
-        anchor : [33/2,44+22] // picture_size_y + adjust (adjust to center picture in frame)
-    }
-};
-
 var rettich_frames = {
     blue :
     {
@@ -48,6 +20,14 @@ var rettich_frames = {
         frame_fg : "./frontend/icons/frames/fg_orbea.png",
         frame_bg : "./frontend/icons/frames/bg_white.png",
         line_color : "rgba("+207+" ,"+181+","+59+")",
+        size : [54,72], // 3:4 ratio
+        anchor : [54/2,72] // frame_size_x/2
+    },
+    ulle :
+    {
+        frame_fg : "./frontend/icons/frames/fg_ulle_war_sauber.png",
+        frame_bg : "./frontend/icons/frames/bg_white.png",
+        line_color : "rgba("+227+" ,"+0+","+126+")",
         size : [54,72], // 3:4 ratio
         anchor : [54/2,72] // frame_size_x/2
     },
