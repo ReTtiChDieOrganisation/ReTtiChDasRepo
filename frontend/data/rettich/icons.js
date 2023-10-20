@@ -55,7 +55,7 @@ var rettich_frames = {
     {
         frame_fg : "./frontend/icons/frames/fg_ulle_war_sauber.png",
         frame_bg : "./frontend/icons/frames/bg_white.png",
-        line_color : "rgba("+255+" ,"+102+","+0+")",
+        line_color : "rgba("+227+" ,"+0+","+126+")",
         size : [54,72], // 3:4 ratio
         anchor : [54/2,72] // frame_size_x/2
     },
