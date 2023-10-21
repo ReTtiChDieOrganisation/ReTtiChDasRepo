@@ -48,10 +48,34 @@
 	<!-- map -->
 	<div id="map">
 		<script>
-			const map = L.map('map').setView([50.896537, 7.025585], 12);
-			const tiles = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+			// Load all tiles from the server
+			var imagery = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
 				{attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community', maxZoom:21}
-			).addTo(map);
+			);
+			var street = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+				maxZoom: 19,
+				attribution: '© OpenStreetMap'
+			});
+			var cyclOSM = L.tileLayer('https://{s}.tile-cyclosm.openstreetmap.fr/cyclosm/{z}/{x}/{y}.png', {
+				maxZoom: 19,
+				attribution: '© OpenStreetMap'
+			});
+
+			var map = L.map('map', {
+				center: [50.896537, 7.025585],
+				zoom: 12,
+				layers: [imagery, street, cyclOSM]
+			});
+
+			var baseMaps = {
+				"cycleOSM": cyclOSM,
+				"Imagery": imagery,
+				"Street": street,
+			};
+
+			var layerControl = L.control.layers(baseMaps).addTo(map);
+
+
 			ALL_STATS = JSON.parse(ALL_STATS)
 			ALL_RIDES = JSON.parse(ALL_RIDES)
 			RIDERS_PROFILE_INFO = JSON.parse(RIDERS_PROFILE_INFO)
