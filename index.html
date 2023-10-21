@@ -12,8 +12,11 @@
 	<link rel="shortcut icon" type="image/x-icon" href="https://raw.githubusercontent.com/ReTtiChDieOrganisation/ReTtiChDasRepo/main/pics/ReTtiChDasBild.png" />
 
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet-timedimension@1.1.1/dist/leaflet.timedimension.control.min.css" />
+	
+	<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+	<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/iso8601-js-period@0.2.1/iso8601.min.js"></script>
+	<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/leaflet-timedimension@1.1.1/dist/leaflet.timedimension.min.js"></script>
 	<script src="./frontend/dependencies/leaflet-motion/dist/leaflet.motion.js"></script>
 	<script src="./frontend/data/strava/data.js"></script><!-- loads ALL_RIDES -->
 	<script src="./frontend/data/strava/stats.json"></script><!-- loads ALL_STATS -->
@@ -48,10 +51,24 @@
 	<!-- map -->
 	<div id="map">
 		<script>
-			const map = L.map('map').setView([50.896537, 7.025585], 12);
+			var map = L.map('map', {
+				center: [50.896537, 7.025585],
+				zoom: 12,
+				//layers: [imagery, street, cyclOSM],
+				timeDimension: true,
+    			//timeDimensionOptions: {
+				//	timeInterval: "2014-09-30/2014-10-30",
+				//	period: "PT1H"
+				//},
+    			timeDimensionControl: true,
+			});
 			const tiles = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
 				{attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community', maxZoom:21}
 			).addTo(map);
+			
+			//var tdWmsLayer = L.timeDimension.layer.wms(wmsLayer);
+			//tdWmsLayer.addTo(map);
+
 			ALL_STATS = JSON.parse(ALL_STATS)
 			ALL_RIDES = JSON.parse(ALL_RIDES)
 			RIDERS_PROFILE_INFO = JSON.parse(RIDERS_PROFILE_INFO)
@@ -320,11 +337,11 @@
 	</div>
 
 	<!-- buttons auf map -->
-	<button id="toggleButton" onClick="toggleFunction()">&#9208; </button>
+<!-- 	<button id="toggleButton" onClick="toggleFunction()">&#9208; </button>
 	<button id="restartButton" onClick="rettich_motion_keys('restart')">Restart</button>
 	<button id="speedupButton" onClick="rettich_motion_keys('speedup')">2x</button>
 	<button id="slowdownButton" onClick="rettich_motion_keys('slowdown')">0.5x</button>
-	
+ -->	
 	<!-- medals table -->
 	<div class = "rightdivision" id="stats">
 		<select id="sel_group" onchange="rettich_getComboGroup(this)">
