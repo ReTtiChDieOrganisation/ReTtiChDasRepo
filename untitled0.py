@@ -180,6 +180,30 @@ def calculate_stats():
         if id_list_rider != []:
             groups.append(id_list_rider)
             group_names.append(name + ' all rides')
+            rider_group_temp = []
+            name_group_temp = []
+            for L in range(len(id_list_rider)-1):
+                for subset in itertools.combinations(id_list_rider, L+2):  # TODO this gets big if the sets get large
+                    for i in range(len(subset)):
+                        if not i:
+                            segments = [seg['name'] for seg in all_rides[str(subset[i])]['segment_efforts']]
+                        else:
+                            segments = intersection(segments, [seg['name']
+                                                    for seg in all_rides[str(subset[i])]['segment_efforts']])
+                        if len(segments) < SHARED_SEGS:
+                            break
+                    if len(segments) > SHARED_SEGS:
+                        rider_group_temp.append(list(subset))
+                        name_group_temp.append(name + segments[0][:15])
+            for group in rider_group_temp:
+                for L in range(2, len(group)):
+                    for subset in itertools.combinations(group, L):
+                        rider_group_temp.remove(list(subset))
+
+            groups.extend(rider_group_temp)
+            for group in rider_group_temp:
+                group_names  # TODO AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAaaa
+
     # add group of all rides
     groups.append(list(np.arange(len(all_rides))))
     group_names.append('All all')
