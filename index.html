@@ -12,10 +12,12 @@
 	<link rel="shortcut icon" type="image/x-icon" href="https://raw.githubusercontent.com/ReTtiChDieOrganisation/ReTtiChDasRepo/main/pics/ReTtiChDasBild.png" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
 	<script src="./frontend/dependencies/leaflet-motion/dist/leaflet.motion.js"></script>
-	<script src="./frontend/data/strava/data.js"></script> <!-- loads ALL_RIDES -->
-	<script src="./frontend/data/strava/stats.json"></script> <!-- loads ALL_STATS -->
+	<script src="./frontend/data/strava/data.js"></script><!-- loads ALL_RIDES -->
+	<script src="./frontend/data/strava/stats.json"></script><!-- loads ALL_STATS -->
 	<script src="./frontend/data/rettich/riders.js"></script> <!-- loads RIDERS_PROFILE_INFO -->
+
 	<script type="text/javascript" src="./frontend/data/rettich/icons.js"></script>
 
 	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet-easybutton@2/src/easy-button.css">
@@ -37,97 +39,93 @@
 			<button id="speedupButton" onClick="rettich_motion_keys('speedup')">2x</button>
 			<button id="slowdownButton" onClick="rettich_motion_keys('slowdown')">0.5x</button> -->
 		</div>
+	</div>
+
+	<!-- buttons auf map -->
+	<button id="toggleButton" onClick="toggleFunction()">&#9208; </button>
+	<button id="restartButton" onClick="rettich_motion_keys('restart')">Restart</button>
+	<button id="speedupButton" onClick="rettich_motion_keys('speedup')">2x</button>
+	<button id="slowdownButton" onClick="rettich_motion_keys('slowdown')">0.5x</button>
 	
+	<!-- medals table -->
+	<div class = "rightdivision" id="stats">
+		<select id="sel_group" onchange="rettich_getComboGroup(this)">
+			<option value="">--Please choose a group--</option>
+		</select>
+
+
+		<canvas id="myChart"></canvas>
+		<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 		
-		
-		<!-- medals table -->
-		<div id = "stats-container">
-			<div id = "chart-container">
+		<script>
+			function rettich_draw_medals(){
+				if (typeof ALL_STATS=='string'){
+				ALL_STATS = JSON.parse(ALL_STATS) // i still have no idea why i have to parse it here again
+			}
+
+
+			const ctx = document.getElementById('myChart');
 			
-			</div>
-			<div id = "table-container">
-			
-			</div>
-			<!-- select id="sel_group" onchange="rettich_getComboGroup(this)">
-				<option value="">--Please choose a group--</option>
-			</select>
-	
-	
-			<canvas id="myChart"></canvas>
-			<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-			
-			<script>
-				function rettich_draw_medals(){
-					if (typeof ALL_STATS=='string'){
-					ALL_STATS = JSON.parse(ALL_STATS) // i still have no idea why i have to parse it here again
-				}
-	
-	
-				const ctx = document.getElementById('myChart');
-				
-				let medal_labels = ALL_STATS[CURRENT_GROUP]['riders']
-				let medal_data_gold = []
-				let medal_data_silver = []
-				let medal_data_bronze = []
-				for (const [ride_iterator, ride_id] of  ALL_STATS[CURRENT_GROUP].ride_ids.entries()) {
-						medal_data_gold.push(ALL_STATS[CURRENT_GROUP]['medals'][ride_id][0])
-						medal_data_silver.push(ALL_STATS[CURRENT_GROUP]['medals'][ride_id][1])
-						medal_data_bronze.push(ALL_STATS[CURRENT_GROUP]['medals'][ride_id][2])
-				}
-				if (typeof medal_chart !== 'undefined') {
-					medal_chart.destroy();
-				}
-				medal_chart = new Chart(ctx,
+			let medal_labels = ALL_STATS[CURRENT_GROUP]['riders']
+			let medal_data_gold = []
+			let medal_data_silver = []
+			let medal_data_bronze = []
+			for (const [ride_iterator, ride_id] of  ALL_STATS[CURRENT_GROUP].ride_ids.entries()) {
+					medal_data_gold.push(ALL_STATS[CURRENT_GROUP]['medals'][ride_id][0])
+					medal_data_silver.push(ALL_STATS[CURRENT_GROUP]['medals'][ride_id][1])
+					medal_data_bronze.push(ALL_STATS[CURRENT_GROUP]['medals'][ride_id][2])
+			}
+			if (typeof medal_chart !== 'undefined') {
+				medal_chart.destroy();
+			}
+			medal_chart = new Chart(ctx,
+			{
+				type: 'bar',
+				data:
 				{
-					type: 'bar',
-					data:
+					labels: medal_labels,
+					datasets: [
 					{
-						labels: medal_labels,
-						datasets: [
-						{
-							label: 'Gold',
-							data: medal_data_gold,
-							borderWidth: 1,
-							backgroundColor: "rgb(255,215,0)",
-							stack: 'Stack 0',
-						},
-						{
-							label: 'Silver',
-							data: medal_data_silver,
-							borderWidth: 1,
-							backgroundColor: "rgb(208,208,208)",
-							stack: 'Stack 1',
-						},
-						{
-							label: 'Bronze',
-							data: medal_data_bronze,
-							borderWidth: 1,
-							backgroundColor: "rgb(205,127,50)",
-							stack: 'Stack 2',
-						},]
+						label: 'Gold',
+						data: medal_data_gold,
+						borderWidth: 1,
+						backgroundColor: "rgb(255,215,0)",
+						stack: 'Stack 0',
 					},
-					options:
 					{
-						scales:
+						label: 'Silver',
+						data: medal_data_silver,
+						borderWidth: 1,
+						backgroundColor: "rgb(208,208,208)",
+						stack: 'Stack 1',
+					},
+					{
+						label: 'Bronze',
+						data: medal_data_bronze,
+						borderWidth: 1,
+						backgroundColor: "rgb(205,127,50)",
+						stack: 'Stack 2',
+					},]
+				},
+				options:
+				{
+					scales:
+					{
+						y: 
 						{
-							y: 
-							{
-								stacked: true,
-								beginAtZero: true
-							}
+							stacked: true,
+							beginAtZero: true
 						}
 					}
-				});
 				}
-				rettich_draw_medals()
-			</script> -->
-		</div>
-		
-	
-	</section>
+			});
+			}
+			rettich_draw_medals()
+		</script>
+	</div>
 
 	<!-- choose segment table and adjust map to segment -->
-	<!-- <div class = "rightdivision2" id="stats">
+	<div class = "rightdivision2" id="stats">
 		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 		<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.css" />
 		<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.js"></script>	
@@ -300,7 +298,6 @@
 				marker_start = rettich_static_draw_marker(ALL_STATS[CURRENT_GROUP]['segments'][seg_name]['Segment']['start_latlng'], rettich_other_icons.start)
 				marker_finish = rettich_static_draw_marker(ALL_STATS[CURRENT_GROUP]['segments'][seg_name]['Segment']['end_latlng'], rettich_other_icons.finish)
 				
-				center = rettich_get_segment_center(marker_start, marker_finish)
 				bounds = L.latLngBounds(marker_start.getLatLng(), marker_finish.getLatLng())
 
 				map.setView(center);
@@ -358,7 +355,7 @@
 				return [midLat, midLong]
 			}
 		</script>
-	</div> -->
+	</div>
 	<!-- GitHub Icon Link -->
     <a href="https://github.com/ReTtiChDieOrganisation/ReTtiChDasRepo" target="_blank" id="github-icon">
         <svg width="32" height="32" xmlns="http://www.w3.org/2000/svg">
