@@ -12,29 +12,29 @@ body {
     max-width: 70vw;
     float: left; /* Float the map container to the left */
     position: relative; /* Needed to maintain the Leaflet map's size */
-    background-color: rgb(28, 112, 185);
     flex: 1;
     min-height: 100vh;
 }
-/* Chart-container for the chart on the right 30% of the screen */
+
 #stats-container {
     float: right; 
     max-width: 30vw;
-    background-color: chocolate;
     flex: 1;
     max-height: 100vh;
+    padding-left: 1%;
+    padding-top: 1%;
 }
 #chart-container {
     float: top; 
-    background-color: rgb(210, 30, 90);
-    flex: 1;
-    min-height: 50vh;
+    flex: 2;
+    min-width: 100%;
+    max-height: 50vh;
 }
 #table-container {
     float: top; 
-    background-color: rgb(189, 30, 210);
     flex: 1;
-    min-height: 50vh;
+    min-width: 100%;
+    max-height: 50vh;
 }
 .leaflet-container {
     float: left; 
