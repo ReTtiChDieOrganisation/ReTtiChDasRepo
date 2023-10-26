@@ -68,7 +68,7 @@ def load_data():
         for activity in last_activities:
             today = datetime.date.today()
             act_date = datetime.datetime.date(iso8601.parse_date(activity['start_date']))
-            if today-act_date > datetime.timedelta(days=NO_DAYS):
+            if today-act_date >= datetime.timedelta(days=NO_DAYS):
                 break
 
             act_id = activity['id']
