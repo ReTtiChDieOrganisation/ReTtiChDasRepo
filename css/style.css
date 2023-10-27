@@ -1,0 +1,69 @@
+body {
+    min-height: 100vh; 
+    margin: 0;
+}
+/* Container for the two columns */
+.container {
+    display: flex;
+}
+
+    /* Map container - Takes up 70% of screen width */
+#map-container {
+    max-width: 70vw;
+    float: left; /* Float the map container to the left */
+    position: relative; /* Needed to maintain the Leaflet map's size */
+    flex: 1;
+    min-height: 100vh;
+}
+
+#stats-container {
+    float: right; 
+    max-width: 30vw;
+    flex: 1;
+    max-height: 100vh;
+    padding-left: 1%;
+    padding-top: 1%;
+}
+#chart-container {
+    float: top; 
+    flex: 2;
+    min-width: 100%;
+    max-height: 50vh;
+}
+#table-container {
+    float: top; 
+    flex: 1;
+    min-width: 100%;
+    max-height: 50vh;
+}
+.leaflet-container {
+    float: left; 
+    position: relative;
+    min-width: 100%; 
+    min-height: 100%;
+    flex: 1;
+}
+
+#toggleButton {
+    float: right;
+    position: relative;
+    top: 20px;
+    right: 20px;
+    z-index: 999;
+}
+#toggleButton:hover {
+    opacity: 0.8; 
+    cursor: pointer;
+}	
+/* #restartButton {position: relative; top: 2%; right: 11%; padding: 10px; z-index: 400;}
+#restartButton:hover {opacity: 0.8; cursor: pointer;}	
+#speedupButton {position: relative; top: 7%; right: 16%; padding: 10px; z-index: 400;}
+#speedupButton:hover { opacity: 0.8;	cursor: pointer;}
+#slowdownButton {position: relative; top: 7%; right: 16%; padding: 10px; z-index: 400;}
+#slowdownButton:hover {opacity: 0.8; cursor: pointer;} */
+#github-icon {
+position: fixed;
+bottom: 20px; 
+right: 20px; 
+z-index: 999;
+}   
