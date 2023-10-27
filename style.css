@@ -1,0 +1,126 @@
+@import url('https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css');
+
+:root {
+    --sidebar-width: 500px; /* Hier wird die Variable definiert */
+}
+
+body, html {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+.mapContainer {
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    /* top: 10%;     */
+    left:0;
+    /* margin:0 auto; */
+    width: 100%;
+    height: 100%;
+    overflow:hidden;
+}
+
+#map {
+    margin-left: auto;
+    margin-right: auto;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+
+}
+
+.buttons {
+    position: absolute;
+    /* background-color: gray;
+    opacity: 0.8; */
+    margin-left: auto;
+    margin-right: auto;
+    margin-bottom: 30px;
+    border-radius: 10px;
+
+    width: 350px;
+    height: 70px;
+    z-index: 4;
+
+}
+
+.control_button {
+    height: 100%;
+    width: 70px;
+    border-radius: 70px;
+    margin: 0;
+    padding: 0;
+
+}
+
+#slowdownButton {
+    content: '\f624';
+}
+
+.ti-circle-chevrons-right {
+    font-size: 30px;
+    margin: 0;
+    padding: 0;
+}
+
+.ti-circle-chevron-right {
+    font-size: 30px;
+    margin: 0;
+    padding: 0;
+}
+
+.gg-play-button {
+    font-size: 50px;
+    margin: 0;
+    padding: 0;
+}
+
+.ti-refresh {
+    font-size: 30px;
+    margin: 0;
+    padding: 0;
+}
+
+
+.sidebar {
+    width: var(--sidebar-width); /* Breite der Sidebar */
+    height: 100%;
+    position: fixed;
+    top: 0;
+    right: calc(20px - var(--sidebar-width)); /* Positioniert die Sidebar außerhalb des sichtbaren Bereichs */
+    background-color: white;
+    transition: right 0.3s; /* Fügt eine Animationsübergangseigenschaft hinzu */
+    z-index: 5;
+}
+
+.content {
+    margin-right: 0; /* Der Hauptinhalt rückt nach rechts, um Platz für die Sidebar zu machen */
+    transition: margin 0.3s;
+}
+
+#toggleSidebar {
+    display: flex;
+    background-color: none;
+}
+
+.rightdivision, .rightdivision2 {
+    margin-left: 20px;
+}
+
+#github-icon {
+    position: fixed;
+    bottom: 20px; 
+    right: 20px; 
+    z-index: 999;
+}
+
+#stats {
+    font-family: Arial, sans-serif;
+}
+
+#toggleSidebar {
+    border-style: none;
+    background-color: transparent;
+}

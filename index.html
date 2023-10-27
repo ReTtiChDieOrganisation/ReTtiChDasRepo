@@ -12,7 +12,13 @@
 	<link rel="shortcut icon" type="image/x-icon" href="https://raw.githubusercontent.com/ReTtiChDieOrganisation/ReTtiChDasRepo/main/pics/ReTtiChDasBild.png" />
 
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    
+    <link rel="stylesheet" href="style.css">
+    <script src="script.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+    <link href='https://unpkg.com/css.gg@2.0.0/icons/css/play-button.css' rel='stylesheet'>
+	
+	<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
 	<script src="./frontend/dependencies/leaflet-motion/dist/leaflet.motion.js"></script>
 	<script src="./frontend/data/strava/data.js"></script><!-- loads ALL_RIDES -->
@@ -20,32 +26,12 @@
 	<script src="./frontend/data/rettich/riders.js"></script> <!-- loads RIDERS_PROFILE_INFO -->
 
 	<script type="text/javascript" src="./frontend/data/rettich/icons.js"></script>
-
-	<style>
-		html, body {height: 100%; margin: 0;}
-		.leaflet-container {float: left; height: 9000px; width: 10000px; max-width: 70%; max-height: 99%;}
-		.rightdivision {float: right; padding-right: 3%; padding-top: 0%; height: 9000px; width: 10000px; max-width: 26%; max-height: 30%;}
-		.rightdivision2 {float: right; padding-right: 3%; padding-top: 0%; height: 900px; width: 10000px; max-width: 26%; max-height: 48%;}
-		#toggleButton {position: relative; top: 2%; right: 11%; padding: 10px; z-index: 400;}
-		#toggleButton:hover {opacity: 0.8; cursor: pointer;}	
-		#restartButton {position: relative; top: 2%; right: 11%; padding: 10px; z-index: 400;}
-		#restartButton:hover {opacity: 0.8; cursor: pointer;}	
-		#speedupButton {position: relative; top: 7%; right: 16%; padding: 10px; z-index: 400;}
-		#speedupButton:hover { opacity: 0.8;	cursor: pointer;}
-		#slowdownButton {position: relative; top: 7%; right: 16%; padding: 10px; z-index: 400;}
-		#slowdownButton:hover {opacity: 0.8; cursor: pointer;}
-		#github-icon {
-        position: fixed;
-        bottom: 20px; 
-        right: 20px; 
-        z-index: 999;
-    	}
-	</style>
 </head>
 
 <!-- body -->
 <body>
 	<!-- map -->
+	<div class="mapContainer">
 	<div id="map">
 		<script>
 			// Load all tiles from the server
@@ -73,7 +59,11 @@
 				"Street": street,
 			};
 
-			var layerControl = L.control.layers(baseMaps).addTo(map);
+			var options = {
+				"setPositon": 'bottomleft',
+			}
+
+			var layerControl = L.control.layers(baseMaps, null, {position: 'bottomleft'}).addTo(map);
 
 
 			ALL_STATS = JSON.parse(ALL_STATS)
@@ -341,14 +331,25 @@
 				}
 			}		
 		</script>
+
+	</div>
+	
+		<!-- buttons auf map -->
+		<div class="buttons">
+			<button class="control_button" id="restartButton" onClick="rettich_motion_keys('restart')">Restart</button>
+			<button class="control_button" id="slowdownButton" onClick="rettich_motion_keys('slowdown')">0.5x</button>
+			<button class="control_button" id="toggleButton" onClick="toggleFunction()">&#9208; </button>
+			<button class="control_button" id="speedupButton" onClick="rettich_motion_keys('speedup')">2x</button>
+			</div>
 	</div>
 
-	<!-- buttons auf map -->
-	<button id="toggleButton" onClick="toggleFunction()">&#9208; </button>
-	<button id="restartButton" onClick="rettich_motion_keys('restart')">Restart</button>
-	<button id="speedupButton" onClick="rettich_motion_keys('speedup')">2x</button>
-	<button id="slowdownButton" onClick="rettich_motion_keys('slowdown')">0.5x</button>
 	
+
+	
+	
+	<div class="sidebar">
+		
+        <button id="toggleSidebar"><</button>
 	<!-- medals table -->
 	<div class = "rightdivision" id="stats">
 		<select id="sel_group" onchange="rettich_getComboGroup(this)">
@@ -622,5 +623,8 @@
             <image xlink:href="./frontend/icons/github-mark.svg" src="./frontend/icons/github-mark.png" width="32" height="32"/>
         </svg>
     </a>
+	
+</div>
+	
 </body>
 </html>
