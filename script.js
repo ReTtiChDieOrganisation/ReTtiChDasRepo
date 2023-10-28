@@ -6,6 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const slowdownButton = document.getElementById('slowdownButton');
     const playPauseButton = document.getElementById('toggleButton');
     const speedupButton = document.getElementById('speedupButton');
+    var mediaQuery = window.matchMedia("(min-width: 1000px)");
 
     // Load all tiles from the server
     var imagery = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
@@ -31,10 +32,6 @@ document.addEventListener('DOMContentLoaded', () => {
         "Imagery": imagery,
         "Street": street,
     };
-
-    var options = {
-        "setPositon": 'bottomleft',
-    }
 
     var layerControl = L.control.layers(baseMaps, null, {position: 'bottomleft'}).addTo(map);
 
@@ -124,8 +121,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // draw all_all starting with the corresponding index. So index_set should be an array of indices with the same size as the group corresponding to CURRENT_GROUP
         ISPAUSED = false;
         if (speedupButton){ //only if toggle button already created
-            const playPauseIcon = playPauseButton.querySelector('i');
-            playPauseIcon.className = "ti ti-player-pause-filled";
+            playPauseButton.title = "Pause";
+            document.getElementById("playPauseIcon").src = "./frontend/icons/control/PauseButton.png";
         }
         
 
@@ -342,10 +339,12 @@ document.addEventListener('DOMContentLoaded', () => {
         ISPAUSED = !ISPAUSED;
         if (ISPAUSED) {
             rettich_motion_keys('pause');
-            playPauseButton.querySelector("i").className = "ti ti-player-play-filled";
+            document.getElementById("playPauseIcon").src = "./frontend/icons/control/PlayButton.png";
+            playPauseButton.title = 'Play';
         } else {
             rettich_motion_keys('resume');
-            playPauseButton.querySelector("i").className = "ti ti-player-pause-filled";
+            playPauseButton.title = 'Pause';
+            document.getElementById("playPauseIcon").src = "./frontend/icons/control/PauseButton.png";
         }
     });
     
@@ -396,10 +395,9 @@ document.addEventListener('DOMContentLoaded', () => {
     })
 
     //--------------- only script function definition below ---------------//
-    function rettich_getComboGroup(selectObject) {
-        
-        value = selectObject.value; 
-        key = selectObject;
+    document.getElementById("sel_group").addEventListener("change", rettich_getComboGroup);
+    function rettich_getComboGroup() {
+        value = document.getElementById("sel_group").value; 
         CURRENT_GROUP=value;
         rettich_draw_medals()
         rettich_remove_all_rides_from_map()
@@ -444,9 +442,11 @@ document.addEventListener('DOMContentLoaded', () => {
         map.fitBounds(bounds)
 
     }
-    function rettich_getComboSegment(selectObject) {
-        value = selectObject.value; 
-        key = selectObject;
+
+    
+    document.getElementById("sel_segment").addEventListener("change", rettich_getComboSegment);
+    function rettich_getComboSegment() {
+        value = document.getElementById("sel_segment").value; 
 
         
         seperated_values = value.split(',');
@@ -546,20 +546,74 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     toggleSidebarButton.addEventListener('click', () => {
-        if (sidebar.style.right === '0px') {
-            // Sidebar ausblenden
-            sidebar.style.right =  `calc(0px - var(--sidebar-width))`;
-            // content.style.marginRight = '0';
-            toggleSidebarButton.querySelector('i').className = 'ti ti-layout-sidebar-right-expand';
-            // container1_1.style.marginRight = 'auto';
+        // Überprüfe, ob die Abfrage übereinstimmt
+        if (mediaQuery.matches) {
+            // Der Bildschirm hat mindestens 500px Breite
+            // Hier kannst du JavaScript-Code für diese Bedingung ausführen
+            if (getComputedStyle(sidebar).right === '0px') {
+                // Sidebar ausblenden
+                sidebar.style.right =  `calc(0px - var(--sidebar-width))`;
+                document.getElementById('toggleSidebarIcon').src = './frontend/icons/control/ArrowLeft.png';
+                document.getElementById('buttonContainer').style.left = '50%';
+            } else {
+                // Sidebar einblenden
+                sidebar.style.right = '0px';
+                document.getElementById('toggleSidebarIcon').src = './frontend/icons/control/ArrowRight.png';
+                document.getElementById('buttonContainer').style.left = 'calc(50% - 250px)';
+            }
         } else {
-            // Sidebar einblenden
-            sidebar.style.right = '0';
-            // content.style.marginRight = `-${getComputedStyle(sidebar).getPropertyValue('var(--sidebar-width)')}`;
-            // container1_1.style.marginRight = '0 auto';
-            toggleSidebarButton.querySelector('i').className = 'ti ti-layout-sidebar-right-collapse';
-            
-            // container1_1.style.left = `calc(500px + var(--sidebar-width))`;
+            // Der Bildschirm hat weniger als 500px Breite
+            // Hier kannst du JavaScript-Code für diese Bedingung ausführen
+            if (getComputedStyle(sidebar).bottom === '0px') {
+                // Sidebar ausblenden
+                sidebar.style.bottom =  `calc(0px - 35%)`;
+                // content.style.marginRight = '0';
+                document.getElementById('toggleSidebarIcon').src = './frontend/icons/control/ArrowUp.png';
+                document.getElementById('buttonContainer').style.bottom = '80px';
+                // container1_1.style.marginRight = 'auto';
+            } else {
+                // Sidebar einblenden
+                sidebar.style.bottom = '0px';
+                // content.style.marginRight = `-${getComputedStyle(sidebar).getPropertyValue('var(--sidebar-width)')}`;
+                // container1_1.style.marginRight = '0 auto';
+                document.getElementById('toggleSidebarIcon').src = './frontend/icons/control/ArrowDown.png';
+                document.getElementById('buttonContainer').style.bottom = 'calc(35% + 80px)';
+                // toggleSidebarButton.querySelector('i').className = 'ti ti-layout-sidebar-right-collapse';
+                
+                // container1_1.style.left = `calc(500px + var(--sidebar-width))`;
+            }
         }
+        
     });
+
+    // Füge einen Event Listener hinzu, um auf Änderungen der Abfrage zu reagieren
+    mediaQuery.addListener(function (event) {
+    if (event.matches) {
+      // Die Bildschirmbreite hat sich auf mindestens 500px geändert
+      // Hier kannst du JavaScript-Code für diese Bedingung ausführen
+      layerControl.setPosition('bottomleft');
+      document.getElementById('buttonContainer').style.left = 'calc(50% - 250px)';
+      document.getElementById('buttonContainer').style.bottom = '80px';
+      if (getComputedStyle(sidebar).right === '0px') {
+        document.getElementById('toggleSidebarIcon').src = './frontend/icons/control/ArrowRight.png';
+      } else {
+        document.getElementById('toggleSidebarIcon').src = './frontend/icons/control/ArrowLeft.png';
+      }
+    } else {
+      // Die Bildschirmbreite hat sich auf weniger als 500px geändert
+      // Hier kannst du JavaScript-Code für diese Bedingung ausführen
+      layerControl.setPosition('topright');
+      
+      document.getElementById('buttonContainer').style.left = '50%';
+      if (getComputedStyle(sidebar).bottom === '0px') {
+        // Sidebar expanded
+        document.getElementById('buttonContainer').style.bottom = 'calc(35% + 80px)';
+        document.getElementById('toggleSidebarIcon').src = './frontend/icons/control/ArrowDown.png';
+      } else {
+        // Sidebar collapsed
+        document.getElementById('buttonContainer').style.bottom = '80px';
+        document.getElementById('toggleSidebarIcon').src = './frontend/icons/control/ArrowUp.png';
+      }
+    }
+  });
 });

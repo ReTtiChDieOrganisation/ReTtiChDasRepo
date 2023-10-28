@@ -36,11 +36,16 @@
 		</div>
 	
 		<!-- buttons auf map -->
-		<div class="buttons">
-			<button class="control_buttons" id="restartButton"><i class="ti ti-refresh"></i></button>
-			<button class="control_buttons" id="slowdownButton"><i class="ti ti-circle-chevron-right"></i></button>
-			<button class="control_buttons" id="toggleButton"><i class="ti ti-player-play-filled"></i></button>
-			<button class="control_buttons" id="speedupButton"><i class="ti ti-circle-chevrons-right"></i></button>
+		<div id="buttonContainer">
+			<div id="controlTopRow">
+				<button title="Reset" class="control_buttons" id="restartButton"><img class="controlButtonIcon" id="resetIcon" src="./frontend/icons/control/ResetButton.png" alt="resetButton" border="0" /></button>
+				<button title="x0.5" class="control_buttons" id="slowdownButton"><img class="controlButtonIcon" id="slowDownIcon" src="./frontend/icons/control/SlowDownButton.png" alt="slowdownButton" border="0" /></button>
+				<button title="Play" class="control_buttons" id="toggleButton"><img class="controlButtonIcon" id="playPauseIcon" src="./frontend/icons/control/PlayButton.png" alt="playPauseButton" border="0" /></button>
+				<button title="x2" class="control_buttons" id="speedupButton"><img class="controlButtonIcon" id="speedupIcon" src="./frontend/icons/control/FastForwardButton.png" alt="fastForwardButton" border="0" /></button>
+				<div class="controlDivider"></div>
+				<p>x1</p>
+			</div>
+			<div id="ProgressBar"></div>
 		</div>
 
 		
@@ -48,51 +53,57 @@
 	
 	<div id="sidebar">
 		
-		<button id="toggleSidebarButton"><i class="ti ti-layout-sidebar-right-collapse"></i></button>
+		<button id="toggleSidebarButton"><img id="toggleSidebarIcon" src="./frontend/icons/control/ArrowDown.png" alt="Arrow"></button>
 		<!-- medals table -->
-		<div class = "rightdivision" id="stats">
-			<select id="sel_group" onchange="rettich_getComboGroup(this)">
-				<option value="">--Please choose a group--</option>
-			</select>
-
-
-			<canvas id="myChart"></canvas>
-			<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-			
+		<div id="sidebarcontent">
+			<div class = "rightdivision" id="stats">
+				<select id="sel_group">
+					<option value="">--Please choose a group--</option>
+				</select>
+	
+	
+				<canvas id="myChart"></canvas>
+				<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+				
+			</div>
+	
+			<!-- choose segment table and adjust map to segment -->
+			<div class = "rightdivision2" id="stats">
+				<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+				<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.css" />
+				<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.js"></script>	
+	
+				<select id="sel_segment">
+					<option value="">--Please choose a segment--</option>
+				</select>
+				
+				<table id="stats_table" class="display" style="width:100%">
+					<thead>
+						<tr>
+							<th>Rider</th>
+							<th>Time [min:s]</th>
+							<th>Speed [km/h]</th>
+							<th>Power [W]</th>
+						</tr>
+					</thead>
+					<tbody>
+	
+					</tbody>
+				</table>
+			</div>
 		</div>
-
-		<!-- choose segment table and adjust map to segment -->
-		<div class = "rightdivision2" id="stats">
-			<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
-			<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.css" />
-			<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.js"></script>	
-
-			<select id="sel_segment" onchange="rettich_getComboSegment(this)">
-				<option value="">--Please choose a segment--</option>
-			</select>
-			
-			<table id="stats_table" class="display" style="width:100%">
-				<thead>
-					<tr>
-						<th>Rider</th>
-						<th>Time [min:s]</th>
-						<th>Speed [km/h]</th>
-						<th>Power [W]</th>
-					</tr>
-				</thead>
-				<tbody>
-
-				</tbody>
-			</table>
-		</div>
-		<!-- GitHub Icon Link -->
-		<a href="https://github.com/ReTtiChDieOrganisation/ReTtiChDasRepo" target="_blank" id="github-icon">
-			<svg width="32" height="32" xmlns="http://www.w3.org/2000/svg">
-				<image xlink:href="./frontend/icons/github-mark.svg" src="./frontend/icons/github-mark.png" width="32" height="32"/>
-			</svg>
-		</a>
+		
+		
 	
 	</div>
 	
 </body>
+<footer>
+	<!-- GitHub Icon Link -->
+	<a href="https://github.com/ReTtiChDieOrganisation/ReTtiChDasRepo" target="_blank" id="github-icon">
+		<svg width="32" height="32" xmlns="http://www.w3.org/2000/svg">
+			<image xlink:href="./frontend/icons/github-mark.svg" src="./frontend/icons/github-mark.png" width="32" height="32"/>
+		</svg>
+	</a>
+</footer>
 </html>
