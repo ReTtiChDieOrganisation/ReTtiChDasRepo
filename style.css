@@ -4,6 +4,7 @@
     --sidebar-width: 500px; /* Hier wird die Variable definiert */
 }
 
+
 body, html {
     height: 100%;
     margin: 0;
@@ -31,78 +32,51 @@ body, html {
 
 }
 
-.buttons {
-    position: absolute;
-    /* background-color: gray;
-    opacity: 0.8; */
-    margin-left: auto;
-    margin-right: auto;
-    margin-bottom: 30px;
-    border-radius: 10px;
-
-    width: 350px;
-    height: 70px;
-    z-index: 4;
-
+.buttons
+{
+    background-color: white;
+    opacity: 70%;
+    border-radius: 30px;
+	height: 100px;
+	width: 400px;
+	margin-bottom: 20px;
+    text-align:center;
+    position:absolute;
+    z-index: 300;
 }
 
-.control_button {
-    height: 100%;
+.control_buttons {
+    height: 70px;
     width: 70px;
     border-radius: 70px;
-    margin: 0;
+    margin: 10px 10px;
     padding: 0;
-
-}
-
-#slowdownButton {
-    content: '\f624';
-}
-
-.ti-circle-chevrons-right {
     font-size: 30px;
-    margin: 0;
-    padding: 0;
-}
-
-.ti-circle-chevron-right {
-    font-size: 30px;
-    margin: 0;
-    padding: 0;
-}
-
-.gg-play-button {
-    font-size: 50px;
-    margin: 0;
-    padding: 0;
-}
-
-.ti-refresh {
-    font-size: 30px;
-    margin: 0;
-    padding: 0;
 }
 
 
-.sidebar {
+#sidebar {
     width: var(--sidebar-width); /* Breite der Sidebar */
     height: 100%;
     position: fixed;
     top: 0;
-    right: calc(20px - var(--sidebar-width)); /* Positioniert die Sidebar außerhalb des sichtbaren Bereichs */
+    right: 0px; /* Positioniert die Sidebar außerhalb des sichtbaren Bereichs */
     background-color: white;
     transition: right 0.3s; /* Fügt eine Animationsübergangseigenschaft hinzu */
     z-index: 5;
+    max-width: 100%;
+    animation: sidebarInitialShow 3s 1;
+}
+
+@keyframes sidebarInitialShow {
+    0% {right: calc(0px - var(--sidebar-width));}
+    100% {right: 0px;}
+    
 }
 
 .content {
     margin-right: 0; /* Der Hauptinhalt rückt nach rechts, um Platz für die Sidebar zu machen */
     transition: margin 0.3s;
-}
-
-#toggleSidebar {
-    display: flex;
-    background-color: none;
 }
 
 .rightdivision, .rightdivision2 {
@@ -120,7 +94,34 @@ body, html {
     font-family: Arial, sans-serif;
 }
 
-#toggleSidebar {
-    border-style: none;
-    background-color: transparent;
+#toggleSidebarButton {
+    position: absolute;
+    top: 10px;
+    left: -40px;
+    height: 40px;
+    width: 40px;
+    background-color: white;
+    border: none;
+    border-radius: 20% 0 0 20%;
+    opacity: 80%;
+    z-index: 500;
+    font-size: 30px;
+}
+
+
+
+@media screen and (max-width: 500px) {
+    body {
+        --sidebar-width: 300px;
+    }
+
+    .buttons {
+        height: 70px;
+    }
+
+    .control_buttons {
+        height: 50px;
+        width: 50px;
+        border-radius: 50%;
+    }
 }
