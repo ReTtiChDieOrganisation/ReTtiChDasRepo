@@ -48,10 +48,34 @@
 	<!-- map -->
 	<div id="map">
 		<script>
-			const map = L.map('map').setView([50.896537, 7.025585], 12);
-			const tiles = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+			// Load all tiles from the server
+			var imagery = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
 				{attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community', maxZoom:21}
-			).addTo(map);
+			);
+			var street = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+				maxZoom: 19,
+				attribution: '© OpenStreetMap'
+			});
+			var cyclOSM = L.tileLayer('https://{s}.tile-cyclosm.openstreetmap.fr/cyclosm/{z}/{x}/{y}.png', {
+				maxZoom: 19,
+				attribution: '© OpenStreetMap'
+			});
+
+			var map = L.map('map', {
+				center: [50.896537, 7.025585],
+				zoom: 12,
+				layers: [imagery, street, cyclOSM]
+			});
+
+			var baseMaps = {
+				"cycleOSM": cyclOSM,
+				"Imagery": imagery,
+				"Street": street,
+			};
+
+			var layerControl = L.control.layers(baseMaps).addTo(map);
+
+
 			ALL_STATS = JSON.parse(ALL_STATS)
 			ALL_RIDES = JSON.parse(ALL_RIDES)
 			RIDERS_PROFILE_INFO = JSON.parse(RIDERS_PROFILE_INFO)
@@ -576,10 +600,8 @@
 				marker_start = rettich_static_draw_marker(ALL_STATS[CURRENT_GROUP]['segments'][seg_name]['Segment']['start_latlng'], rettich_other_icons.start)
 				marker_finish = rettich_static_draw_marker(ALL_STATS[CURRENT_GROUP]['segments'][seg_name]['Segment']['end_latlng'], rettich_other_icons.finish)
 				
-				center = rettich_get_segment_center(marker_start, marker_finish)
 				bounds = L.latLngBounds(marker_start.getLatLng(), marker_finish.getLatLng())
 
-				map.setView(center);
 				map.fitBounds(bounds);
 			}
 
@@ -591,47 +613,6 @@
 						iconAnchor: marker_icon.anchor, 
 						iconSize: marker_icon.size})}
 				).addTo(map);
-			}
-
-			function rettich_get_segment_center(start, finish) {
-				coefficient = 1;
-
-				if ((start.getLatLng().lat > 90 && finish.getLatLng().lat < -90) || (finish.getLatLng().lat > 90 && start.getLatLng().lat < -90)) {
-					midLat = 180 - ((start.getLatLng().lat - finish.getLatLng().lat) / 2).abs();
-					
-					// If output will be in the 1st quartile then co-ef will remain 1, if in 4th then it will be -1
-					if ((start.getLatLng().lat < 0 && start.getLatLng().lat.abs() < finish.getLatLng().lat.abs()) ||
-						(finish.getLatLng().lat < 0 && finish.getLatLng().lat.abs() < start.getLatLng().lat.abs())) {
-						coefficient = -1;
-					}
-					
-					// Applying coefficient
-					midLat *= coefficient;
-				}
-				else {
-					midLat = (finish.getLatLng().lat + start.getLatLng().lat) / 2;
-				}
-				
-				// Calculating midLong
-				coefficient = 1;
-
-				if ((start.getLatLng().lng > 90 && finish.getLatLng().lng < -90) || (finish.getLatLng().lng > 90 && start.getLatLng().lng < -90)) {
-					midLong = 180 - ((start.getLatLng().lng.abs() - finish.getLatLng().lng.abs()) / 2).abs();
-					
-					// If output will be in the 1st quartile then co-ef will remain 1, if in 4th then it will be -1
-					if ((start.getLatLng().lng < 0 && start.getLatLng().lng.abs() < finish.getLatLng().lng.abs()) ||
-						(finish.getLatLng().lng < 0 && finish.getLatLng().lng.abs() < start.getLatLng().lng.abs())) {
-						coefficient = -1;
-					}
-
-					// Applying coefficient
-					midLong *= coefficient;
-				} 
-				else {
-					midLong = (finish.getLatLng().lng + start.getLatLng().lng) / 2;
-				}
-
-				return [midLat, midLong]
 			}
 		</script>
 	</div>
