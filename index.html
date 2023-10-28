@@ -552,7 +552,7 @@
 					for (const [ride_iterator, ride_id] of  ALL_STATS[CURRENT_GROUP].ride_ids.entries()) {
 						const row = tbody.insertRow();
 						let cell = row.insertCell(0);
-						cell.textContent = ALL_STATS[CURRENT_GROUP]['riders'][ride_iterator];
+						cell.textContent = ALL_STATS[CURRENT_GROUP]['riders'][ride_iterator]+' '+ALL_RIDES[ride_id]['start_date'].slice(5,13)+'h';
 						cell = row.insertCell(1);
 						cell.textContent = rettich_fancyTimeFormat(seperated_values[ride_iterator+1]);
 						cell = row.insertCell(2);

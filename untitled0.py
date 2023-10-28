@@ -10,7 +10,7 @@ import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
-NO_DAYS = 7  # number of days which are saved and displayed
+NO_DAYS = 10  # number of days which are saved and displayed
 SHARED_SEGS = 10  # number of share segments such that it counts as a group
 
 RAW_PATH = './frontend/data/strava/raw_data/'
@@ -194,15 +194,18 @@ def calculate_stats():
                             break
                     if len(segments) > SHARED_SEGS:
                         rider_group_temp.append(list(subset))
-                        name_group_temp.append(name + segments[0][:15])
-            for group in rider_group_temp:
+                        name_group_temp.append(name +' '+ segments[0][:15])
+            rider_group_temp_copy = rider_group_temp.copy()
+            for group in rider_group_temp_copy:
                 for L in range(2, len(group)):
                     for subset in itertools.combinations(group, L):
-                        rider_group_temp.remove(list(subset))
+                        if list(subset) in rider_group_temp:
+                            del name_group_temp[rider_group_temp.index(list(subset))]
+                            rider_group_temp.remove(list(subset))
 
             groups.extend(rider_group_temp)
-            for group in rider_group_temp:
-                group_names  # TODO AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAaaa
+            group_names.extend(name_group_temp)
+
 
     # add group of all rides
     groups.append(list(np.arange(len(all_rides))))
