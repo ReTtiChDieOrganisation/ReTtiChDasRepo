@@ -20,7 +20,24 @@ RIDER_FILE = './etc/etc.json'
 
 
 def clean_string(input_string):
-    return input_string.replace("'", "").replace(',', '').replace('"', '')
+    return input_string.replace("'", "").replace(',', '').replace('"', '').replace('ö', '')
+
+def clean_dict(dirty_dic):
+    clean_full = {}
+    for x, y in dirty_dic.items():
+        if type(y) is dict:
+            y = clean_dict(y)
+        if type(x) is str:
+            clean_x = clean_string(x)
+        else:
+            clean_x = x
+        if type(y) is str:
+            clean_y = clean_string(y)
+        else:
+            clean_y = y        
+        clean_full[clean_x] = clean_y
+    return clean_full
+
 
 
 def load_data():
@@ -82,7 +99,7 @@ def load_data():
                 full_act['strava_id'] = act_id
                 full_act['rider'] = names[rider_idx]
                 full_act['start_date'] = str(iso8601.parse_date(activity['start_date']))
-                full_act['segment_efforts'] = detailed_act['segment_efforts']
+                full_act['segment_efforts'] = [clean_dict(se) for se in detailed_act['segment_efforts']]
                 for i in range(len(full_act['segment_efforts'])):
                     segment_name = full_act['segment_efforts'][i]['name']
                     segment_name_clean = clean_string(segment_name)
@@ -104,7 +121,7 @@ def load_data():
 
     for file in remove_activities:
         os.remove(RAW_PATH+file)
-
+    
     with open(DATA_PATH + 'data.json', 'w') as f:
         json.dump(all_rides, f)
     with open(DATA_PATH + 'data.js', 'w') as f:
