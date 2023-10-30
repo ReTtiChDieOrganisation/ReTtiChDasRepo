@@ -24,6 +24,9 @@
 	<script src="./frontend/data/strava/data.js"></script><!-- loads ALL_RIDES -->
 	<script src="./frontend/data/strava/stats.json"></script><!-- loads ALL_STATS -->
 	<script src="./frontend/data/rettich/riders.js"></script> <!-- loads RIDERS_PROFILE_INFO -->
+	<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.css" />
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+	<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.js"></script>	
 
 	<script type="text/javascript" src="./frontend/data/rettich/icons.js"></script>
 </head>
@@ -32,7 +35,8 @@
 <body>
 	<!-- map -->
 	<div class="mapContainer">
-		<div id="map">
+		<div id="map">				
+			<script src="js/map.js"></script>
 		</div>
 	
 		<!-- buttons auf map -->
@@ -60,18 +64,16 @@
 				<select id="sel_group">
 					<option value="">--Please choose a group--</option>
 				</select>
-	
-	
 				<canvas id="myChart"></canvas>
 				<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+				<script src="js/medals.js"></script>
 				
 			</div>
 	
 			<!-- choose segment table and adjust map to segment -->
 			<div class = "rightdivision2" id="stats">
-				<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
-				<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.css" />
-				<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.js"></script>	
+				
+				
 	
 				<select id="sel_segment">
 					<option value="">--Please choose a segment--</option>
@@ -90,6 +92,7 @@
 	
 					</tbody>
 				</table>
+				<script src="js/segments.js"></script>
 			</div>
 		</div>
 		
