@@ -10,7 +10,7 @@ import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
-NO_DAYS = 7  # number of days which are saved and displayed
+NO_DAYS = 10  # number of days which are saved and displayed
 SHARED_SEGS = 10  # number of share segments such that it counts as a group
 
 RAW_PATH = './frontend/data/strava/raw_data/'
@@ -180,6 +180,33 @@ def calculate_stats():
         if id_list_rider != []:
             groups.append(id_list_rider)
             group_names.append(name + ' all rides')
+            rider_group_temp = []
+            name_group_temp = []
+            for L in range(len(id_list_rider)-1):
+                for subset in itertools.combinations(id_list_rider, L+2):  # TODO this gets big if the sets get large
+                    for i in range(len(subset)):
+                        if not i:
+                            segments = [seg['name'] for seg in all_rides[str(subset[i])]['segment_efforts']]
+                        else:
+                            segments = intersection(segments, [seg['name']
+                                                    for seg in all_rides[str(subset[i])]['segment_efforts']])
+                        if len(segments) < SHARED_SEGS:
+                            break
+                    if len(segments) > SHARED_SEGS:
+                        rider_group_temp.append(list(subset))
+                        name_group_temp.append(name +' '+ segments[0][:15])
+            rider_group_temp_copy = rider_group_temp.copy()
+            for group in rider_group_temp_copy:
+                for L in range(2, len(group)):
+                    for subset in itertools.combinations(group, L):
+                        if list(subset) in rider_group_temp:
+                            del name_group_temp[rider_group_temp.index(list(subset))]
+                            rider_group_temp.remove(list(subset))
+
+            groups.extend(rider_group_temp)
+            group_names.extend(name_group_temp)
+
+
     # add group of all rides
     groups.append(list(np.arange(len(all_rides))))
     group_names.append('All all')
