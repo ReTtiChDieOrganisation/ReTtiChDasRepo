@@ -1,150 +1,156 @@
-document.addEventListener('DOMContentLoaded', () => {
-    const restartButton = document.getElementById('restartButton');
-    const slowdownButton = document.getElementById('slowdownButton');
-    const playPauseButton = document.getElementById('toggleButton');
-    const speedupButton = document.getElementById('speedupButton');
+// Load all tiles from the server
+let currentSpeed = 1.0;
 
-    // Load all tiles from the server
-    var imagery = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-    {attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community', maxZoom:21}
-    );
-    var street = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19,
-        attribution: '© OpenStreetMap'
-    });
-    var cyclOSM = L.tileLayer('https://{s}.tile-cyclosm.openstreetmap.fr/cyclosm/{z}/{x}/{y}.png', {
-        maxZoom: 19,
-        attribution: '© OpenStreetMap'
-    });
+var imagery = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+{attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community', maxZoom:21}
+);
+var street = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '© OpenStreetMap'
+});
+var cyclOSM = L.tileLayer('https://{s}.tile-cyclosm.openstreetmap.fr/cyclosm/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '© OpenStreetMap'
+});
 
-    var map = L.map('map', {
-        center: [50.896537, 7.025585],
-        zoom: 12,
-        layers: [imagery, street, cyclOSM]
-    });
+var map = L.map('map', {
+    center: [50.896537, 7.025585],
+    zoom: 12,
+    layers: [imagery, street, cyclOSM]
+});
 
-    var baseMaps = {
-        "cycleOSM": cyclOSM,
-        "Imagery": imagery,
-        "Street": street,
-    };
+var baseMaps = {
+    "cycleOSM": cyclOSM,
+    "Imagery": imagery,
+    "Street": street,
+};
 
-    var layerControl = L.control.layers(baseMaps, null, {position: 'bottomleft'}).addTo(map);
+var layerControl = L.control.layers(baseMaps, null, {position: 'bottomleft'}).addTo(map);
 
 
-    ALL_STATS = JSON.parse(ALL_STATS)
-    ALL_RIDES = JSON.parse(ALL_RIDES)
-    RIDERS_PROFILE_INFO = JSON.parse(RIDERS_PROFILE_INFO)
-    var ISPAUSED = false;
+ALL_STATS = JSON.parse(ALL_STATS)
+ALL_RIDES = JSON.parse(ALL_RIDES)
+RIDERS_PROFILE_INFO = JSON.parse(RIDERS_PROFILE_INFO)
+var ISPAUSED = false;
 
 
-    let NAMES = Object.keys(RIDERS_PROFILE_INFO)
+let NAMES = Object.keys(RIDERS_PROFILE_INFO)
 
 
-    class rettich_rider {
-        // constructor
-        constructor(name, ride_ids, profile_picture_url= "./frontend/icons/profile_pictures/default.png", frame=rettich_frames.default) {
-            // all data members of rettich riders
-            console.log("Construct rider ", name);
-            this.name = name;
-            this.ride_ids = ride_ids;
-            this.profile_picture = {
-                picture : profile_picture_url,
-                size : [33,44], // 3:4 ratio
-                anchor : [33/2,44+22] // picture_size_y + adjust (adjust to center picture in frame)
-            };
-            this.frame = frame;
-        }
-
-        // getter functions
-        get_name () {return this.name;}
-        get_ride_ids () {return this.ride_ids;}
-        get_profile_picture () {return this.profile_picture;}
-        get_frame () {return this.frame;}
-        
-        // setter functions
-        set_name (new_name) {this.name = new_name;}
-        set_ride_ids (new_ride_ids) {this.ride_ids = new_ride_ids;}
-        set_profile_picture (new_profile_picture) {this.profile_picture = new_profile_picture;}
-        set_frame (new_frame) {this.frame = new_frame;}
-        set_frame_fg (new_foreground) {this.frame.frame_fg = new_foreground;}
-        set_frame_bg (new_background) {this.frame.frame_bg = new_background;}
-        set_frame_line_color (new_line_color) {this.frame.line_color = new_line_color;}
+class rettich_rider {
+    // constructor
+    constructor(name, ride_ids, profile_picture_url= "./frontend/icons/profile_pictures/default.png", frame=rettich_frames.default) {
+        // all data members of rettich riders
+        console.log("Construct rider ", name);
+        this.name = name;
+        this.ride_ids = ride_ids;
+        this.profile_picture = {
+            picture : profile_picture_url,
+            size : [33,44], // 3:4 ratio
+            anchor : [33/2,44+22] // picture_size_y + adjust (adjust to center picture in frame)
+        };
+        this.frame = frame;
     }
 
-    let RIDER_ARR = []
-    let ride_ids = []
-
-    let id_counter = 0;
-    for (name of NAMES){
-        //calculate all ids corresponding to this rider
-        ride_ids = []
-        for (ride_i of Object.keys(ALL_RIDES)){
-            if (ALL_RIDES[ride_i].rider==name){
-                ride_ids.push(ride_i)
-                ALL_RIDES[ride_i]['rider_id'] = id_counter
-            }
-        }			
-
-        // construct riders
-        if (RIDERS_PROFILE_INFO[name]['icon_url']=='' || RIDERS_PROFILE_INFO[name]['frame']==''){
-            // use default constructor if profile picture or frame info are missing
-            rr = new rettich_rider(name, ride_ids)
-        }else{
-            rr = new rettich_rider(name, ride_ids, RIDERS_PROFILE_INFO[name]['icon_url'], rettich_frames[RIDERS_PROFILE_INFO[name]['frame']])
-        }
-        RIDER_ARR.push(rr)
-        id_counter +=1
-    }
-
-    // find group of all rides
-    let GROUP_ID_ALL = -1
-    let largest_group = -1
-    for (group_id_i of Object.keys(ALL_STATS)){
-        if (ALL_STATS[group_id_i].ride_ids.length>largest_group){
-            largest_group = ALL_STATS[group_id_i].ride_ids.length
-            GROUP_ID_ALL = group_id_i
-        }
-        
-    } 
-
-    CURRENT_GROUP = GROUP_ID_ALL;
-    seqGroups = rettich_motion_draw_groups()
-    map.on('click', rettich_onMapClick);
-
+    // getter functions
+    get_name () {return this.name;}
+    get_ride_ids () {return this.ride_ids;}
+    get_profile_picture () {return this.profile_picture;}
+    get_frame () {return this.frame;}
     
+    // setter functions
+    set_name (new_name) {this.name = new_name;}
+    set_ride_ids (new_ride_ids) {this.ride_ids = new_ride_ids;}
+    set_profile_picture (new_profile_picture) {this.profile_picture = new_profile_picture;}
+    set_frame (new_frame) {this.frame = new_frame;}
+    set_frame_fg (new_foreground) {this.frame.frame_fg = new_foreground;}
+    set_frame_bg (new_background) {this.frame.frame_bg = new_background;}
+    set_frame_line_color (new_line_color) {this.frame.line_color = new_line_color;}
+}
 
-    restartButton.addEventListener('click', () => {
-        rettich_motion_keys('restart');
-    });
+let RIDER_ARR = []
+let ride_ids = []
 
-    slowdownButton.addEventListener('click', () => {
-        rettich_motion_keys('slowdown');
-    });
-
-    playPauseButton.addEventListener('click', () => {
-        ISPAUSED = !ISPAUSED;
-        if (ISPAUSED) {
-            rettich_motion_keys('pause');
-            document.getElementById("playPauseIcon").src = "./frontend/icons/control/PlayButton.png";
-            playPauseButton.title = 'Play';
-        } else {
-            rettich_motion_keys('resume');
-            playPauseButton.title = 'Pause';
-            document.getElementById("playPauseIcon").src = "./frontend/icons/control/PauseButton.png";
+let id_counter = 0;
+for (name of NAMES){
+    //calculate all ids corresponding to this rider
+    ride_ids = []
+    for (ride_i of Object.keys(ALL_RIDES)){
+        if (ALL_RIDES[ride_i].rider==name){
+            ride_ids.push(ride_i)
+            ALL_RIDES[ride_i]['rider_id'] = id_counter
         }
-    });
+    }			
 
-    speedupButton.addEventListener('click', () => {
-        rettich_motion_keys('speedup');
-    });
+    // construct riders
+    if (RIDERS_PROFILE_INFO[name]['icon_url']=='' || RIDERS_PROFILE_INFO[name]['frame']==''){
+        // use default constructor if profile picture or frame info are missing
+        rr = new rettich_rider(name, ride_ids)
+    }else{
+        rr = new rettich_rider(name, ride_ids, RIDERS_PROFILE_INFO[name]['icon_url'], rettich_frames[RIDERS_PROFILE_INFO[name]['frame']])
+    }
+    RIDER_ARR.push(rr)
+    id_counter +=1
+}
+
+// find group of all rides
+let GROUP_ID_ALL = -1
+let largest_group = -1
+for (group_id_i of Object.keys(ALL_STATS)){
+    if (ALL_STATS[group_id_i].ride_ids.length>largest_group){
+        largest_group = ALL_STATS[group_id_i].ride_ids.length
+        GROUP_ID_ALL = group_id_i
+    }
+    
+} 
+
+CURRENT_GROUP = GROUP_ID_ALL;
+seqGroups = rettich_motion_draw_groups()
+map.on('click', rettich_onMapClick);
+
+
+
+document.getElementById('restartButton').addEventListener('click', () => {
+    document.body.style.cursor = 'wait';
+    currentSpeed = 1;
+    rettich_change_speed_label();
+    rettich_motion_keys('restart');
+    document.body.style.cursor = 'default';
+});
+
+document.getElementById('slowdownButton').addEventListener('click', () => {
+    rettich_motion_keys('slowdown');
+    currentSpeed *= 0.5;
+    rettich_change_speed_label();
+});
+
+document.getElementById('toggleButton').addEventListener('click', () => {
+    ISPAUSED = !ISPAUSED;
+    if (ISPAUSED) {
+        rettich_motion_keys('pause');
+        document.getElementById("playPauseIcon").src = "./frontend/icons/control/PlayButton.png";
+        document.getElementById('toggleButton').title = 'Play';
+    } else {
+        rettich_motion_keys('resume');
+        document.getElementById("playPauseIcon").src = "./frontend/icons/control/PauseButton.png";
+        document.getElementById('toggleButton').title = 'Pause';
+    }
+});
+
+document.getElementById('speedupButton').addEventListener('click', () => {
+    rettich_motion_keys('speedup');
+    currentSpeed *= 2;
+    rettich_change_speed_label();
+});
+
+
 
 //--------------- only script function definition below ---------------//
 function rettich_motion_draw_groups(lat_lng_startidx_arr=-1,lat_lng_endidx=-1) {
     // draw all_all starting with the corresponding index. So index_set should be an array of indices with the same size as the group corresponding to CURRENT_GROUP
     ISPAUSED = false;
-    if (speedupButton){ //only if toggle button already created
-        playPauseButton.title = "Pause";
+    if (document.getElementById('speedupButton')){ //only if toggle button already created
+        document.getElementById('toggleButton').title = "Pause";
         document.getElementById("playPauseIcon").src = "./frontend/icons/control/PauseButton.png";
     }
 
@@ -312,8 +318,6 @@ function rettich_static_draw_marker(latlng, marker_icon) {
     ).addTo(map);
 }
 
-
-
 function rettich_motion_keys(key) {
     for (seqGroup of seqGroups){
         if (key == "stop"){
@@ -339,5 +343,7 @@ function rettich_motion_keys(key) {
         }
     }
 }
-    
-});
+
+function rettich_change_speed_label() {
+    document.getElementById('speedLabel').innerText = `x${currentSpeed}`;
+}

@@ -81,7 +81,7 @@ body, html {
     width: 2px;
     margin-left: 15px;
     margin-right: 15px;
-    border-radius: 1px;
+    border-radius: 20px;
     border: 2px solid white;
 }
 
@@ -91,13 +91,13 @@ body, html {
     text-align: center;
     font-family: 'Arial Rounded MT Bold', Arial, sans-serif;
     font-size: 30px;
-    color: rgb(119, 194, 115);
+    color: rgba(119, 194, 150, 1);
     line-height: 50px;
 }
 
 #ProgressBar {
     position: absolute;
-    background-color: rgb(119, 194, 115);
+    background-color: rgba(119, 194, 150, 1);
     width: 80%;
     height: 15px;
     border-radius: 7.5px;
@@ -115,7 +115,7 @@ body, html {
     left: 0; 
     background-color: rgba(255, 255, 255, 1);
     transition: bottom 0.3s;
-    z-index: 5;
+    z-index: 7;
     /* max-height: 40%; */
     
 }
@@ -152,9 +152,10 @@ body, html {
     background-color: rgba(255, 255, 255, 1);
     border: none;
     border-radius: 0 0 0 0;
-    z-index: 500;
+    z-index: 4;
     font-size: 30px;
     cursor: pointer;
+    box-shadow: 0px -1px 10px rgba(0, 0, 0, 0.4);
 }
 
 #toggleSidebarButton:hover {
@@ -165,6 +166,12 @@ body, html {
     width: 15px;
 }
 
+.stats_dropdown {
+    position: relative;
+    padding: 5px;
+    margin: 15px;
+    width: 50%;
+}
 
 
 @media screen and (min-width: 1000px) {
@@ -190,7 +197,7 @@ body, html {
         right: 0px; /* Positioniert die Sidebar außerhalb des sichtbaren Bereichs */
         background-color: white;
         transition: right 0.3s; /* Fügt eine Animationsübergangseigenschaft hinzu */
-        z-index: 5;
+        z-index: 50;
         max-width: 100%;
         /* animation: sidebarInitialShow 3s 1; */
     }
@@ -209,8 +216,9 @@ body, html {
         width: 40px;
         background-color: white;
         border: none;
-        z-index: 500;
         font-size: 30px;
+        box-shadow: -1px 0px 1px rgba(0, 0, 0, 0.4);
+        z-index: 5;
     }
 
     #toggleSidebarIcon {
