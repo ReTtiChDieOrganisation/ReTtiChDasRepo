@@ -1,3 +1,4 @@
+"use strict"
 
 if (typeof ALL_STATS=='string'){
     ALL_STATS = JSON.parse(ALL_STATS) // i have no idea why i have to parse it here again
@@ -9,12 +10,12 @@ let myTable = document.getElementById("stats_table");
 
 document.getElementById("sel_segment").addEventListener("change", rettich_getComboSegment);
 function rettich_getComboSegment() {
-    value = document.getElementById("sel_segment").value; 
+    let value = document.getElementById("sel_segment").value; 
 
     
-    seperated_values = value.split(',');
-    segment_name = seperated_values[0];
-    for (seqGroup of seqGroups){
+    let seperated_values = value.split(',');
+    let segment_name = seperated_values[0];
+    for (let seqGroup of seqGroups){
         seqGroup.motionStop();
         seqGroup.removeFrom(map);
     
@@ -56,7 +57,7 @@ function rettich_getComboSegment() {
         }
         
 
-        rettich_motion_draw_segment(segment_name)
+        seqGroups = rettich_motion_draw_segment(segment_name);
     }
 }
 

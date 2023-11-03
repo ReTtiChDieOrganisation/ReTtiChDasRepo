@@ -1,3 +1,5 @@
+"use strict"
+
 // Load all tiles from the server
 let currentSpeed = 1.0;
 
@@ -25,7 +27,7 @@ var baseMaps = {
     "Street": street,
 };
 
-var layerControl = L.control.layers(baseMaps, null, {position: 'bottomleft'}).addTo(map);
+let layerControl = L.control.layers(baseMaps, null, {position: 'bottomleft'}).addTo(map);
 
 
 ALL_STATS = JSON.parse(ALL_STATS)
@@ -72,15 +74,17 @@ let RIDER_ARR = []
 let ride_ids = []
 
 let id_counter = 0;
-for (name of NAMES){
+for (let name of NAMES){
     //calculate all ids corresponding to this rider
     ride_ids = []
-    for (ride_i of Object.keys(ALL_RIDES)){
+    for (let ride_i of Object.keys(ALL_RIDES)){
         if (ALL_RIDES[ride_i].rider==name){
             ride_ids.push(ride_i)
             ALL_RIDES[ride_i]['rider_id'] = id_counter
         }
-    }			
+    }	
+    
+    let rr;
 
     // construct riders
     if (RIDERS_PROFILE_INFO[name]['icon_url']=='' || RIDERS_PROFILE_INFO[name]['frame']==''){
@@ -96,7 +100,7 @@ for (name of NAMES){
 // find group of all rides
 let GROUP_ID_ALL = -1
 let largest_group = -1
-for (group_id_i of Object.keys(ALL_STATS)){
+for (let group_id_i of Object.keys(ALL_STATS)){
     if (ALL_STATS[group_id_i].ride_ids.length>largest_group){
         largest_group = ALL_STATS[group_id_i].ride_ids.length
         GROUP_ID_ALL = group_id_i
@@ -104,8 +108,9 @@ for (group_id_i of Object.keys(ALL_STATS)){
     
 } 
 
-CURRENT_GROUP = GROUP_ID_ALL;
-seqGroups = rettich_motion_draw_groups()
+let CURRENT_GROUP = GROUP_ID_ALL;
+
+let seqGroups = rettich_motion_draw_groups()
 map.on('click', rettich_onMapClick);
 
 
@@ -119,9 +124,11 @@ document.getElementById('restartButton').addEventListener('click', () => {
 });
 
 document.getElementById('slowdownButton').addEventListener('click', () => {
-    rettich_motion_keys('slowdown');
-    currentSpeed *= 0.5;
-    rettich_change_speed_label();
+    if (currentSpeed > 0.5) {
+        rettich_motion_keys('slowdown');
+        currentSpeed *= 0.5;
+        rettich_change_speed_label();
+    }
 });
 
 document.getElementById('toggleButton').addEventListener('click', () => {
@@ -155,15 +162,18 @@ function rettich_motion_draw_groups(lat_lng_startidx_arr=-1,lat_lng_endidx=-1) {
     }
 
 
-    num_rides = ALL_STATS[CURRENT_GROUP].ride_ids.length
+    let num_rides = ALL_STATS[CURRENT_GROUP].ride_ids.length
     let lat_lngs_rides_arr = [];
     let speed_set = Array(num_rides).fill(0)
     if (lat_lng_startidx_arr==-1){
         lat_lng_startidx_arr= Array(num_rides).fill(0)
     }
     
-    for (const [ride_iterator,ride_id] of  ALL_STATS[CURRENT_GROUP].ride_ids.entries()) {
-        current_ride_data = ALL_RIDES[ride_id];
+    for (const [ride_iterator,ride_id] of ALL_STATS[CURRENT_GROUP].ride_ids.entries()) {
+        let current_ride_data = ALL_RIDES[ride_id];
+        let sliced_latlng;
+        let et;
+        let dist;
 
 
         if (lat_lng_endidx==-1) {
@@ -182,10 +192,10 @@ function rettich_motion_draw_groups(lat_lng_startidx_arr=-1,lat_lng_endidx=-1) {
         lat_lngs_rides_arr.push(sliced_latlng.map(([lat, lng]) => ({ lat, lng })));
     }
 
-    seqGroups = []
+    let seqGroupsIntern = []
     for (const [ride_iterator,ride_id] of ALL_STATS[CURRENT_GROUP].ride_ids.entries()) {
-        current_rider = RIDER_ARR[ALL_RIDES[ride_id]['rider_id']];
-        current_ride_lat_lngs = lat_lngs_rides_arr[ride_iterator];
+        let current_rider = RIDER_ARR[ALL_RIDES[ride_id]['rider_id']];
+        let current_ride_lat_lngs = lat_lngs_rides_arr[ride_iterator];
         // frame background
         let poly_frame_fg = L.motion.polyline(
             current_ride_lat_lngs, {
@@ -225,16 +235,16 @@ function rettich_motion_draw_groups(lat_lng_startidx_arr=-1,lat_lng_endidx=-1) {
             poly_frame_fg.motionSpeed(speed_set[ride_iterator]);
         }
 
-        seqGroups.push(L.motion.seq([poly_frame_bg]).addTo(map));
-        seqGroups.push(L.motion.seq([poly_profile_pic]).addTo(map));
-        seqGroups.push(L.motion.seq([poly_frame_fg]).addTo(map));
+        seqGroupsIntern.push(L.motion.seq([poly_frame_bg]).addTo(map));
+        seqGroupsIntern.push(L.motion.seq([poly_profile_pic]).addTo(map));
+        seqGroupsIntern.push(L.motion.seq([poly_frame_fg]).addTo(map));
     }
 
-    for (seqGroup of seqGroups){
+    for (let seqGroup of seqGroupsIntern){
         seqGroup.motionStart();
     }
 
-    return seqGroups
+    return seqGroupsIntern
 }
 
 function rettich_get_distance(p,q) {
@@ -246,9 +256,9 @@ function rettich_find_closest_index(arrayOP, point){
     let dist = 99999999.0; // just some random - for planet earth - high enough value
     let idx = -1;
 
-    for (i = 0; i < arrayOP.length-1; i++){
-        point_i = arrayOP[i];
-        dist_i = rettich_get_distance(point_i,point)
+    for (let i = 0; i < arrayOP.length-1; i++){
+        let point_i = arrayOP[i];
+        let dist_i = rettich_get_distance(point_i,point)
         if (dist_i<dist){
             dist = dist_i;
             idx = i;
@@ -258,24 +268,26 @@ function rettich_find_closest_index(arrayOP, point){
 }
 
 function rettich_onMapClick(e) {
-    lat_lng_startidx_arr = [];
+    let lat_lng_startidx_arr = [];
     if (typeof ALL_STATS=='string'){
         ALL_STATS = JSON.parse(ALL_STATS) // i have no idea why i have to parse it here again
     }
     
     for (const [ride_iterator,ride_id] of  ALL_STATS[CURRENT_GROUP]['ride_ids'].entries()) {
-        current_ride_data = ALL_RIDES[ride_id];
-        idx_temp = rettich_find_closest_index(current_ride_data.latlng.data,[e.latlng.lat, e.latlng.lng]);
+        let current_ride_data = ALL_RIDES[ride_id];
+        let idx_temp = rettich_find_closest_index(current_ride_data.latlng.data,[e.latlng.lat, e.latlng.lng]);
         lat_lng_startidx_arr.push(idx_temp);
     }
         
     
     rettich_remove_all_rides_from_map()
     seqGroups = rettich_motion_draw_groups(lat_lng_startidx_arr)
+    currentSpeed = 1;
+    rettich_change_speed_label();
 }
 
 function rettich_remove_all_rides_from_map() { 
-    for (seqGroup of seqGroups){
+    for (let seqGroup of seqGroups){
         seqGroup.motionStop();
         seqGroup.removeFrom(map);
     }
@@ -292,20 +304,21 @@ function rettich_remove_all_rides_from_map() {
 function rettich_motion_draw_segment(seg_name) {
     
         
-    start_idx_set = []
-    end_idx_set = []
+    let start_idx_set = [];
+    let end_idx_set = [];
     for (const [ride_iterator,ride_id] of  ALL_STATS[CURRENT_GROUP].ride_ids.entries()) {
         start_idx_set.push(ALL_STATS[CURRENT_GROUP]['segments'][seg_name][ride_id]['start_index'])
         end_idx_set.push(ALL_STATS[CURRENT_GROUP]['segments'][seg_name][ride_id]['end_index'])
     }
 
-    rettich_motion_draw_groups(start_idx_set,end_idx_set)
-    marker_start = rettich_static_draw_marker(ALL_STATS[CURRENT_GROUP]['segments'][seg_name]['Segment']['start_latlng'], rettich_other_icons.start)
-    marker_finish = rettich_static_draw_marker(ALL_STATS[CURRENT_GROUP]['segments'][seg_name]['Segment']['end_latlng'], rettich_other_icons.finish)
+    let seqGroupsIntern = rettich_motion_draw_groups(start_idx_set,end_idx_set)
+    let marker_start = rettich_static_draw_marker(ALL_STATS[CURRENT_GROUP]['segments'][seg_name]['Segment']['start_latlng'], rettich_other_icons.start)
+    let marker_finish = rettich_static_draw_marker(ALL_STATS[CURRENT_GROUP]['segments'][seg_name]['Segment']['end_latlng'], rettich_other_icons.finish)
     
-    bounds = L.latLngBounds(marker_start.getLatLng(), marker_finish.getLatLng())
+    let bounds = L.latLngBounds(marker_start.getLatLng(), marker_finish.getLatLng())
 
     map.fitBounds(bounds);
+    return seqGroupsIntern;
 }
 
 function rettich_static_draw_marker(latlng, marker_icon) {
@@ -319,27 +332,33 @@ function rettich_static_draw_marker(latlng, marker_icon) {
 }
 
 function rettich_motion_keys(key) {
-    for (seqGroup of seqGroups){
-        if (key == "stop"){
-            seqGroup.motionStop();
-        }else if (key == "pause"){
-            seqGroup.motionPause();
-        }else if (key == "resume"){
-            seqGroup.motionResume();
-        }else if (key == "toggle"){
-            seqGroup.motionToggle();
-        }else if (key == "restart"){
-            rettich_remove_all_rides_from_map()
-            current_segment = $("#sel_segment").val().split(',')
-            if (current_segment == ""){
-                rettich_motion_draw_groups()
-            }else{
-                rettich_motion_draw_segment(current_segment[0])
+    // The restart case is outside the for loop, because inside the rettich_remove_all_rides_from_map there is already an iteration over all seqGroups
+    if (key == "restart"){
+        rettich_remove_all_rides_from_map()
+        let current_segment = $("#sel_segment").val().split(',')
+        seqGroups = (current_segment == "") ? rettich_motion_draw_groups() : rettich_motion_draw_segment(current_segment[0]);
+    } else {
+        for (let seqGroup of seqGroups){
+            switch (key) {
+            case 'stop':
+                seqGroup.motionStop();
+                break;
+            case "pause":
+                seqGroup.motionPause();
+                break;
+            case "resume":
+                seqGroup.motionResume();
+                break;
+            case "toggle":
+                seqGroup.motionToggle();
+                break;
+            case 'speedup':
+                seqGroup.getFirstLayer().motionSpeed(seqGroup.getFirstLayer().motionOptions.speed*2);
+                break;
+            case "slowdown":
+                seqGroup.getFirstLayer().motionSpeed(seqGroup.getFirstLayer().motionOptions.speed*0.5);
+                break;
             }
-        }else if (key == "speedup"){
-            seqGroup.getFirstLayer().motionSpeed(seqGroup.getFirstLayer().motionOptions.speed*2);
-        }else if (key == "slowdown"){
-            seqGroup.getFirstLayer().motionSpeed(seqGroup.getFirstLayer().motionOptions.speed*0.5);
         }
     }
 }

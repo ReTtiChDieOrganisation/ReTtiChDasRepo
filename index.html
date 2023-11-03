@@ -26,7 +26,6 @@
 	<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.css" />
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 	<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.js"></script>	
-	<!-- <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> -->
 	<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
 	<script type="text/javascript" src="./frontend/data/rettich/icons.js"></script>
@@ -47,9 +46,8 @@
 				<button title="Play" class="control_buttons" id="toggleButton"><img class="controlButtonIcon" id="playPauseIcon" src="./frontend/icons/control/PlayButton.png" alt="playPauseButton" border="0" /></button>
 				<button title="x2" class="control_buttons" id="speedupButton"><img class="controlButtonIcon" id="speedupIcon" src="./frontend/icons/control/FastForwardButton.png" alt="fastForwardButton" border="0" /></button>
 				<div class="controlDivider"></div>
-				<p id="speedLabel">x1</p>
+				<p title="Current Speed" id="speedLabel">x1</p>
 			</div>
-			<div id="ProgressBar"></div>
 		</div>
 
 		
@@ -60,20 +58,20 @@
 		<button id="toggleSidebarButton"><img id="toggleSidebarIcon" src="./frontend/icons/control/ArrowDown.png" alt="Arrow"></button>
 		<!-- medals table -->
 		<div id="sidebarcontent">
-			<div class = "medals" id="stats">
+			<div id="medals">
 				<select class="stats_dropdown" id="sel_group">
 					<option value="">--Please choose a group--</option>
 				</select>
-				<canvas id="myChart"></canvas>
+				<canvas id="myChart" class="stats"></canvas>
 			</div>
 	
 			<!-- choose segment table and adjust map to segment -->
-			<div class = "segments" id="stats">
+			<div id="segments">
 				<select class="stats_dropdown" id="sel_segment">
 					<option value="">--Please choose a segment--</option>
 				</select>
 				
-				<table id="stats_table" class="display" style="width:100%">
+				<table id="stats_table" class="stats">
 					<thead>
 						<tr>
 							<th>Rider</th>
@@ -88,9 +86,6 @@
 				</table>
 			</div>
 		</div>
-		
-		
-	
 	</div>	
 </body>
 <footer>
@@ -102,7 +97,8 @@
 	</a>
 </footer>
 <script src="js/map.js"></script>
-<script src="script.js"></script>
+<script src="js/windowSize.js"></script>
+<script src="js/sidebar.js"></script>
 <script src="js/medals.js"></script>
 <script src="js/segments.js"></script>
 </html>

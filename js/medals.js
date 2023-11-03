@@ -1,8 +1,9 @@
+"use strict"
+
 function rettich_draw_medals(){
     if (typeof ALL_STATS=='string'){
     ALL_STATS = JSON.parse(ALL_STATS) // i still have no idea why i have to parse it here again
     }
-
 
     const ctx = document.getElementById('myChart');
 
@@ -15,6 +16,7 @@ function rettich_draw_medals(){
             medal_data_silver.push(ALL_STATS[CURRENT_GROUP]['medals'][ride_id][1])
             medal_data_bronze.push(ALL_STATS[CURRENT_GROUP]['medals'][ride_id][2])
     }
+    // let medal_chart;
     if (typeof medal_chart !== 'undefined') {
         medal_chart.destroy();
     }
@@ -59,8 +61,11 @@ function rettich_draw_medals(){
             }
         }
     });
+    return medal_chart;
 }
-rettich_draw_medals()
+let medal_chart;
+
+medal_chart = rettich_draw_medals()
 
 $(function() {
     $.each(ALL_STATS, function(i, option) {
@@ -71,7 +76,7 @@ $(function() {
 //--------------- only script function definition below ---------------//
 document.getElementById("sel_group").addEventListener("change", rettich_getComboGroup);
 function rettich_getComboGroup() {
-    value = document.getElementById("sel_group").value; 
+    let value = document.getElementById("sel_group").value; 
     CURRENT_GROUP=value;
     rettich_draw_medals()
     rettich_remove_all_rides_from_map()
@@ -84,8 +89,8 @@ function rettich_getComboGroup() {
     const all_rides_segment_efforts = ALL_STATS[CURRENT_GROUP]['segments'];
     $(function() {
         $.each(all_rides_segment_efforts, function(i, option) {
-            abcde = [i]
-            for (ride_id of ALL_STATS[CURRENT_GROUP]['ride_ids']){
+            let abcde = [i]
+            for (let ride_id of ALL_STATS[CURRENT_GROUP]['ride_ids']){
                 abcde.push(option[ride_id].time)
             }
             $('#sel_segment').append($('<option/>').attr("value", abcde).text(i));
