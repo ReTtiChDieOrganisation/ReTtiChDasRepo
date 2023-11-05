@@ -34,7 +34,8 @@ ALL_STATS = JSON.parse(ALL_STATS)
 ALL_RIDES = JSON.parse(ALL_RIDES)
 RIDERS_PROFILE_INFO = JSON.parse(RIDERS_PROFILE_INFO)
 var ISPAUSED = false;
-
+let marker_start;
+let marker_finish;
 
 let NAMES = Object.keys(RIDERS_PROFILE_INFO)
 
@@ -243,6 +244,9 @@ function rettich_motion_draw_groups(lat_lng_startidx_arr=-1,lat_lng_endidx=-1) {
     for (let seqGroup of seqGroupsIntern){
         seqGroup.motionStart();
     }
+    
+    currentSpeed = 1;
+    rettich_change_speed_label();
 
     return seqGroupsIntern
 }
@@ -282,8 +286,6 @@ function rettich_onMapClick(e) {
     
     rettich_remove_all_rides_from_map()
     seqGroups = rettich_motion_draw_groups(lat_lng_startidx_arr)
-    currentSpeed = 1;
-    rettich_change_speed_label();
 }
 
 function rettich_remove_all_rides_from_map() { 
@@ -312,8 +314,15 @@ function rettich_motion_draw_segment(seg_name) {
     }
 
     let seqGroupsIntern = rettich_motion_draw_groups(start_idx_set,end_idx_set)
-    let marker_start = rettich_static_draw_marker(ALL_STATS[CURRENT_GROUP]['segments'][seg_name]['Segment']['start_latlng'], rettich_other_icons.start)
-    let marker_finish = rettich_static_draw_marker(ALL_STATS[CURRENT_GROUP]['segments'][seg_name]['Segment']['end_latlng'], rettich_other_icons.finish)
+    if (typeof marker_start !== 'undefined'){
+        map.removeLayer(marker_start);
+    }
+
+    if (typeof marker_finish !== 'undefined'){
+        map.removeLayer(marker_finish);
+    }
+    marker_start = rettich_static_draw_marker(ALL_STATS[CURRENT_GROUP]['segments'][seg_name]['Segment']['start_latlng'], rettich_other_icons.start)
+    marker_finish = rettich_static_draw_marker(ALL_STATS[CURRENT_GROUP]['segments'][seg_name]['Segment']['end_latlng'], rettich_other_icons.finish)
     
     let bounds = L.latLngBounds(marker_start.getLatLng(), marker_finish.getLatLng())
 
