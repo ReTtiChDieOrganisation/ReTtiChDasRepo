@@ -1,0 +1,228 @@
+@import url('https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css');
+
+
+body, html {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+
+}
+
+.mapContainer {
+    position: absolute;
+    left:0;
+    width: 100%;
+    height: 100%;
+    overflow:hidden;
+}
+
+#map {
+    margin-left: auto;
+    margin-right: auto;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+
+}
+
+#buttonContainer
+{
+    display: flex;
+    position: absolute;
+    background-color: rgba(244, 244, 244, 0.8);
+    border-radius: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+	height: 65px;
+	bottom: calc(35% + 80px);
+    text-align: center;
+    justify-content: center;
+    align-items: center;
+    box-shadow: -2px 2px 5px rgba(0, 0, 0, 0.5);
+    transition: bottom 0.3s;
+    min-width: 300px;
+    z-index: 2;
+}
+
+#controlTopRow {
+    list-style-type: none;
+    text-align: center;
+    padding: 0;
+    display: flex;
+    align-items: center;
+}
+
+#controlTopRow li {
+    display: flex;
+    align-items: center;
+    margin: 0 3px;
+    height: 45px;
+
+}
+
+.control_buttons {
+    background: rgba(255, 255, 255, 1);
+    border-radius: 50%;
+    border: none;
+    height: 45px;
+    width: 45px;
+    font-size: 30px;
+    cursor: pointer;
+    box-shadow: -1px 1px 5px rgba(0, 0, 0, 0.5);
+}
+
+.control_buttons:hover {
+    background-color: rgba(236, 236, 236, 1)
+}
+
+.controlButtonIcon {
+    height: 20px;
+}
+
+.controlDivider {
+    background-color: rgba(255, 255, 255, 1);
+    width: 4px;
+    height: 100%;
+    border-radius: 2px;
+}
+
+#speedLabel {
+    margin: 0;
+    font-family: 'Arial Rounded MT Bold', Arial, sans-serif;
+    text-align: center;
+    width: 50px;
+    font-size: 20px;
+    color: rgba(119, 194, 150, 1);
+}
+
+#sidebar {
+    width: 100%;
+    height: 35%;
+    position: fixed;
+    bottom: 0px;
+    left: 0; 
+    background-color: rgba(255, 255, 255, 1);
+    transition: bottom 0.3s;
+    z-index: 7;
+    
+}
+
+#sidebarcontent {
+    flex: 1;
+    position: absolute;
+    height: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    align-items: center;
+    overflow-y: auto;
+    width: 100%;
+}
+
+#github-icon {
+    position: fixed;
+    bottom: 20px; 
+    right: 20px; 
+    z-index: 999;
+}
+
+.stats {
+    font-family: Arial, sans-serif;
+    width: 100%;
+}
+
+#toggleSidebarButton {
+    position: absolute;
+    left: auto;
+    height: 40px;
+    top: -40px;
+    width: 100%;
+    background-color: rgba(255, 255, 255, 1);
+    border: none;
+    border-radius: 0 0 0 0;
+    z-index: 4;
+    font-size: 30px;
+    cursor: pointer;
+    box-shadow: 0px -1px 10px rgba(0, 0, 0, 0.4);
+}
+
+#toggleSidebarButton:hover {
+    background-color: rgba(236, 236, 236, 1)
+}
+
+#toggleSidebarIcon {
+    width: 15px;
+}
+
+.stats_dropdown {
+    position: relative;
+    padding: 5px;
+    margin: 15px;
+    width: 50%;
+}
+
+
+@media screen and (min-width: 1000px) {
+    body {
+        --sidebar-width: 500px;
+    }
+
+    #buttonContainer {
+        bottom: 80px;
+        left: calc(50% - 250px);
+        right: auto;
+        transition: left 0.3s;
+        transition: bottom 0.3s;
+    }
+
+    #controlTopRow li {
+        margin: 0 8px;
+    }
+
+    #speedLabel {
+        font-size: 25px;
+        width: 80px;
+    }
+
+
+
+    #sidebar {
+        width: var(--sidebar-width);
+        height: 100%;
+        position: fixed;
+        left: auto;
+        top: 0;
+        right: 0px;
+        background-color: white;
+        transition: right 0.3s;
+        z-index: 50;
+        max-width: 100%;
+    }
+
+    @keyframes sidebarInitialShow {
+        0% {right: calc(0px - var(--sidebar-width));}
+        100% {right: 0px;}
+        
+    }
+
+    #toggleSidebarButton {
+        position: absolute;
+        top: 0px;
+        left: -40px;
+        height: 100%;
+        width: 40px;
+        background-color: white;
+        border: none;
+        font-size: 30px;
+        box-shadow: -1px 0px 1px rgba(0, 0, 0, 0.4);
+        z-index: 5;
+    }
+
+    #toggleSidebarIcon {
+        src: './frontend/icons/control/ArrowRight.png';
+    }
+
+    #sidebarcontent {
+        width: 90%;
+        height: auto;
+    }
+}
