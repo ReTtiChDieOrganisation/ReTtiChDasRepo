@@ -34,7 +34,8 @@ ALL_STATS = JSON.parse(ALL_STATS)
 ALL_RIDES = JSON.parse(ALL_RIDES)
 RIDERS_PROFILE_INFO = JSON.parse(RIDERS_PROFILE_INFO)
 var ISPAUSED = false;
-
+let marker_start;
+let marker_finish;
 
 let NAMES = Object.keys(RIDERS_PROFILE_INFO)
 
@@ -313,8 +314,15 @@ function rettich_motion_draw_segment(seg_name) {
     }
 
     let seqGroupsIntern = rettich_motion_draw_groups(start_idx_set,end_idx_set)
-    let marker_start = rettich_static_draw_marker(ALL_STATS[CURRENT_GROUP]['segments'][seg_name]['Segment']['start_latlng'], rettich_other_icons.start)
-    let marker_finish = rettich_static_draw_marker(ALL_STATS[CURRENT_GROUP]['segments'][seg_name]['Segment']['end_latlng'], rettich_other_icons.finish)
+    if (typeof marker_start !== 'undefined'){
+        map.removeLayer(marker_start);
+    }
+
+    if (typeof marker_finish !== 'undefined'){
+        map.removeLayer(marker_finish);
+    }
+    marker_start = rettich_static_draw_marker(ALL_STATS[CURRENT_GROUP]['segments'][seg_name]['Segment']['start_latlng'], rettich_other_icons.start)
+    marker_finish = rettich_static_draw_marker(ALL_STATS[CURRENT_GROUP]['segments'][seg_name]['Segment']['end_latlng'], rettich_other_icons.finish)
     
     let bounds = L.latLngBounds(marker_start.getLatLng(), marker_finish.getLatLng())
 
