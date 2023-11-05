@@ -69,6 +69,7 @@ body, html {
     font-size: 30px;
     cursor: pointer;
     box-shadow: -1px 1px 5px rgba(0, 0, 0, 0.5);
+    padding: 0;
 }
 
 .control_buttons:hover {
@@ -84,6 +85,7 @@ body, html {
     width: 4px;
     height: 100%;
     border-radius: 2px;
+    padding: 0;
 }
 
 #speedLabel {
@@ -93,6 +95,7 @@ body, html {
     width: 50px;
     font-size: 20px;
     color: rgba(119, 194, 150, 1);
+    padding: 0;
 }
 
 #sidebar {
