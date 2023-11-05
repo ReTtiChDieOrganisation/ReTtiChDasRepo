@@ -243,6 +243,9 @@ function rettich_motion_draw_groups(lat_lng_startidx_arr=-1,lat_lng_endidx=-1) {
     for (let seqGroup of seqGroupsIntern){
         seqGroup.motionStart();
     }
+    
+    currentSpeed = 1;
+    rettich_change_speed_label();
 
     return seqGroupsIntern
 }
@@ -282,8 +285,6 @@ function rettich_onMapClick(e) {
     
     rettich_remove_all_rides_from_map()
     seqGroups = rettich_motion_draw_groups(lat_lng_startidx_arr)
-    currentSpeed = 1;
-    rettich_change_speed_label();
 }
 
 function rettich_remove_all_rides_from_map() { 
