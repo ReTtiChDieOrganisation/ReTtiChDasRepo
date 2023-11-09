@@ -87,6 +87,8 @@ def load_data():
             act_date = datetime.datetime.date(iso8601.parse_date(activity['start_date']))
             if today-act_date >= datetime.timedelta(days=NO_DAYS):
                 break
+            if activity['manual']:
+                continue
 
             act_id = activity['id']
             if not os.path.exists(RAW_PATH+str(act_id)+'.json') and (activity['sport_type'] in ['Ride', 'Run', 'Hike', 'Walk']):
