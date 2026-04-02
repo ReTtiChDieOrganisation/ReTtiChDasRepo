@@ -33,7 +33,12 @@ const RettichApp = (function () {
         siteConfig = window.RETTICH_DATA.site_config || { password_hash: 0 };
 
         if (siteConfig.password_hash && siteConfig.password_hash !== 0) {
-            showPasswordGate();
+            // Check if already authenticated this session
+            if (sessionStorage.getItem('rettich_auth') === String(siteConfig.password_hash)) {
+                await startApp();
+            } else {
+                showPasswordGate();
+            }
         } else {
             await startApp();
         }
@@ -49,6 +54,7 @@ const RettichApp = (function () {
         const tryPassword = () => {
             const hash = simpleHash(input.value);
             if (hash === siteConfig.password_hash) {
+                sessionStorage.setItem('rettich_auth', String(siteConfig.password_hash));
                 gate.classList.add('hidden');
                 startApp();
             } else {
