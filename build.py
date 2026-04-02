@@ -56,6 +56,12 @@ def main():
     commute_config = config.get('commute', {})
     commute_data = export_commute_data(conn, DATA_DIR, commute_config)
 
+    # Step 2c: Export explorer tile data
+    print("Exporting explorer data...")
+    from backend.explorer_export import export_explorer_data
+    explorer_config = config.get('explorer', {})
+    explorer_data = export_explorer_data(conn, DATA_DIR, explorer_config)
+
     conn.close()
 
     # Step 3: Read site password from config
@@ -70,6 +76,10 @@ def main():
     # Step 5: Build commutes.html
     print("Building commutes.html...")
     build_commutes_html(commute_data, site_config)
+
+    # Step 6: Build explorer.html
+    print("Building explorer.html...")
+    build_explorer_html(explorer_data, site_config)
 
     print(f"\nDone! Open {os.path.join(FRONTEND_DIR, 'index.html')} in your browser.")
 
@@ -142,6 +152,7 @@ def build_html(site_config):
             <div class="topnav-tabs">
                 <a href="#" class="tab active" id="tab-map">Map</a>
                 <a href="commutes.html" class="tab" id="tab-commutes">Commutes</a>
+                <a href="explorer.html" class="tab" id="tab-explorer">Explorer</a>
             </div>
             <div class="topnav-spacer"></div>
         </nav>
@@ -408,6 +419,7 @@ def build_commutes_html(commute_data, site_config):
             <div class="topnav-tabs">
                 <a href="index.html" class="tab">Map</a>
                 <a href="commutes.html" class="tab active">Commutes</a>
+                <a href="explorer.html" class="tab">Explorer</a>
             </div>
             <div class="topnav-spacer"></div>
         </nav>
@@ -766,6 +778,438 @@ def build_commutes_html(commute_data, site_config):
 </html>'''
 
     out_path = os.path.join(FRONTEND_DIR, 'commutes.html')
+    with open(out_path, 'w', encoding='utf-8') as f:
+        f.write(html)
+    size_kb = os.path.getsize(out_path) / 1024
+    print(f"  Written {out_path} ({size_kb:.0f} KB)")
+
+
+def build_explorer_html(explorer_data, site_config):
+    """Build the tile explorer page with heatmap, Rettich Revier, per-rider scores."""
+    if not explorer_data:
+        explorer_data = {'tiles': [], 'stats': {}, 'daily_new': [], 'rider_scores': [], 'zoom': 16, 'max_visits': 1}
+
+    css = _read_text(os.path.join(FRONTEND_DIR, 'css', 'style.css'))
+    explorer_json = json.dumps(explorer_data, separators=(',', ':'))
+
+    html = f'''<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ReTtiCh — Explorer</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+{css}
+.explorer-layout {{ display: flex; height: calc(100vh - var(--topnav-height)); }}
+.explorer-sidebar {{
+    width: 360px; background: var(--bg-secondary); border-right: 1px solid var(--border);
+    overflow-y: auto; flex-shrink: 0; padding: 20px 16px;
+}}
+.explorer-map {{ flex: 1; position: relative; }}
+#explorer-map {{ width: 100%; height: 100%; }}
+.exp-section {{ margin-bottom: 18px; }}
+.exp-section-title {{
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 1.2px; color: var(--text-muted); margin-bottom: 10px;
+}}
+.exp-stats-grid {{ display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }}
+.exp-stat {{
+    background: var(--bg-tertiary); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 10px; text-align: center;
+}}
+.exp-stat.wide {{ grid-column: span 2; }}
+.exp-stat.highlight {{ border-color: var(--accent); background: rgba(255,102,0,0.08); }}
+.exp-stat .exp-val {{
+    font-family: var(--font-mono); font-size: 20px; font-weight: 700; color: var(--accent);
+}}
+.exp-stat .exp-val.teal {{ color: #00d4aa; }}
+.exp-stat .exp-lbl {{
+    font-size: 10px; color: var(--text-muted); text-transform: uppercase;
+    letter-spacing: 0.5px; margin-top: 2px;
+}}
+.exp-divider {{ height: 1px; background: var(--border); margin: 14px 0; }}
+.daily-bar-chart {{ display: flex; align-items: flex-end; gap: 2px; height: 70px; }}
+.daily-bar {{
+    flex: 1; background: #00d4aa; border-radius: 2px 2px 0 0; min-width: 3px;
+    position: relative; cursor: pointer; opacity: 0.7; transition: opacity 0.15s;
+}}
+.daily-bar:hover {{ opacity: 1; }}
+.daily-bar.active {{ opacity: 1; background: #fff; }}
+.daily-bar-tooltip {{
+    display: none; position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%);
+    background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius-sm);
+    padding: 4px 8px; font-size: 11px; white-space: nowrap; z-index: 10;
+    pointer-events: none; color: var(--text-primary);
+}}
+.daily-bar:hover .daily-bar-tooltip {{ display: block; }}
+.mode-switch {{
+    display: flex; gap: 2px; background: var(--bg-tertiary); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 3px; margin-bottom: 14px;
+}}
+.mode-switch button {{
+    flex: 1; padding: 7px 10px; background: transparent; border: none; border-radius: 4px;
+    color: var(--text-secondary); font-family: var(--font-display); font-size: 12px;
+    font-weight: 600; cursor: pointer; transition: all 0.15s; white-space: nowrap;
+}}
+.mode-switch button:hover {{ color: var(--text-primary); }}
+.mode-switch button.active {{ background: var(--accent); color: #fff; }}
+.colormap-legend {{
+    display: flex; align-items: center; gap: 6px; margin-top: 8px;
+    font-size: 10px; color: var(--text-muted);
+}}
+.colormap-bar {{
+    flex: 1; height: 10px; border-radius: 3px;
+    background: linear-gradient(to right, #ffffb2, #fecc5c, #fd8d3c, #f03b20, #bd0026, #800026);
+}}
+.colormap-new {{
+    display: inline-block; width: 14px; height: 10px; background: #00d4aa;
+    border-radius: 2px; margin-left: 8px;
+}}
+.rider-score-row {{
+    display: flex; align-items: center; gap: 10px; padding: 6px 8px;
+    border-radius: var(--radius-sm); margin-bottom: 4px;
+    background: var(--bg-tertiary); border: 1px solid var(--border);
+}}
+.rider-score-row .rs-name {{ flex: 1; font-size: 13px; font-weight: 500; }}
+.rider-score-row .rs-score {{
+    font-family: var(--font-mono); font-size: 14px; font-weight: 700; color: var(--accent);
+}}
+.rider-score-row .rs-rank {{ font-size: 14px; width: 22px; text-align: center; }}
+    </style>
+</head>
+<body>
+    <div id="app">
+        <nav class="topnav">
+            <div class="topnav-brand">
+                <span class="brand-icon">🥕</span>
+                <span class="brand-name">ReTtiCh</span>
+            </div>
+            <div class="topnav-tabs">
+                <a href="index.html" class="tab">Map</a>
+                <a href="commutes.html" class="tab">Commutes</a>
+                <a href="explorer.html" class="tab active">Explorer</a>
+            </div>
+            <div class="topnav-spacer"></div>
+        </nav>
+
+        <div class="explorer-layout">
+            <aside class="explorer-sidebar">
+                <div class="mode-switch">
+                    <button class="active" data-mode="heatmap">All Tiles</button>
+                    <button data-mode="revier">Rettich Revier</button>
+                </div>
+
+                <div class="exp-section">
+                    <div class="exp-section-title">Scores</div>
+                    <div class="exp-stats-grid">
+                        <div class="exp-stat wide highlight">
+                            <div class="exp-val" id="rettich-score">0</div>
+                            <div class="exp-lbl">🥕 Rettich Score</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="exp-section">
+                    <div class="exp-section-title">Tiles</div>
+                    <div class="exp-stats-grid">
+                        <div class="exp-stat">
+                            <div class="exp-val" id="total-tiles">0</div>
+                            <div class="exp-lbl">Total Tiles</div>
+                        </div>
+                        <div class="exp-stat">
+                            <div class="exp-val teal" id="revier-size">0</div>
+                            <div class="exp-lbl">🏠 Revier Size</div>
+                        </div>
+                        <div class="exp-stat">
+                            <div class="exp-val teal" id="new-today">0</div>
+                            <div class="exp-lbl">New Today</div>
+                        </div>
+                        <div class="exp-stat">
+                            <div class="exp-val teal" id="new-week">0</div>
+                            <div class="exp-lbl">New This Week</div>
+                        </div>
+                        <div class="exp-stat">
+                            <div class="exp-val teal" id="revier-new-today">0</div>
+                            <div class="exp-lbl">Revier + Today</div>
+                        </div>
+                        <div class="exp-stat">
+                            <div class="exp-val teal" id="revier-new-week">0</div>
+                            <div class="exp-lbl">Revier + Week</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="exp-divider"></div>
+
+                <div class="exp-section">
+                    <div class="exp-section-title">All Time</div>
+                    <div class="exp-stats-grid">
+                        <div class="exp-stat"><div class="exp-val" id="total-km">0</div><div class="exp-lbl">Kilometers</div></div>
+                        <div class="exp-stat"><div class="exp-val" id="total-hours">0</div><div class="exp-lbl">Hours</div></div>
+                        <div class="exp-stat wide"><div class="exp-val" id="total-acts">0</div><div class="exp-lbl">Activities</div></div>
+                    </div>
+                </div>
+
+                <div class="exp-divider"></div>
+
+                <div class="exp-section">
+                    <div class="exp-section-title">Last 7 Days</div>
+                    <div class="exp-stats-grid">
+                        <div class="exp-stat"><div class="exp-val" id="week-km">0</div><div class="exp-lbl">Kilometers</div></div>
+                        <div class="exp-stat"><div class="exp-val" id="week-hours">0</div><div class="exp-lbl">Hours</div></div>
+                        <div class="exp-stat wide"><div class="exp-val" id="week-acts">0</div><div class="exp-lbl">Activities</div></div>
+                    </div>
+                </div>
+
+                <div class="exp-divider"></div>
+
+                <div class="exp-section">
+                    <div class="exp-section-title">Explorer Scores</div>
+                    <div id="rider-scores"></div>
+                </div>
+
+                <div class="exp-divider"></div>
+
+                <div class="exp-section">
+                    <div class="exp-section-title">New Tiles (30 Days)</div>
+                    <div class="daily-bar-chart" id="daily-chart"></div>
+                </div>
+
+                <div class="exp-section">
+                    <div class="exp-section-title">Legend</div>
+                    <div class="colormap-legend">
+                        <span>1×</span><div class="colormap-bar"></div><span>many</span>
+                        <span class="colormap-new"></span><span>new</span>
+                    </div>
+                </div>
+            </aside>
+
+            <div class="explorer-map">
+                <div id="explorer-map"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+    const EXP = {explorer_json};
+    let currentMode = 'heatmap';
+    let selectedDate = null;
+    let map;
+    const tileLayers = [];
+    let revierBorderLayer = null;
+
+    // Colormap: cool-to-warm with good contrast at both ends
+    const CMAP = [
+        [1,   '#ffffb2'],
+        [3,   '#fecc5c'],
+        [10,  '#fd8d3c'],
+        [30,  '#f03b20'],
+        [80,  '#bd0026'],
+        [200, '#800026'],
+    ];
+    const TEAL = '#00d4aa';
+    const MUTED = '#f6d365';
+
+    function visitColor(v) {{
+        for (let i = CMAP.length - 1; i >= 0; i--)
+            if (v >= CMAP[i][0]) return CMAP[i][1];
+        return CMAP[0][1];
+    }}
+
+    function initExplorer() {{
+        const s = EXP.stats || {{}};
+        document.getElementById('rettich-score').textContent = (s.rettich_score || 0).toLocaleString();
+        document.getElementById('total-tiles').textContent = (s.total_tiles || 0).toLocaleString();
+        document.getElementById('revier-size').textContent = (s.revier_size || 0).toLocaleString();
+        document.getElementById('new-today').textContent = s.new_today || 0;
+        document.getElementById('new-week').textContent = s.new_week || 0;
+        document.getElementById('revier-new-today').textContent = s.revier_new_today || 0;
+        document.getElementById('revier-new-week').textContent = s.revier_new_week || 0;
+        document.getElementById('total-km').textContent = Math.round(s.total_km || 0).toLocaleString();
+        document.getElementById('total-hours').textContent = Math.round(s.total_time_hours || 0).toLocaleString();
+        document.getElementById('total-acts').textContent = (s.total_activities || 0).toLocaleString();
+        document.getElementById('week-km').textContent = Math.round(s.week_km || 0).toLocaleString();
+        document.getElementById('week-hours').textContent = Math.round(s.week_time_hours || 0).toLocaleString();
+        document.getElementById('week-acts').textContent = s.week_activities || 0;
+
+        // Rider scores
+        const rsEl = document.getElementById('rider-scores');
+        const rs = EXP.rider_scores || [];
+        const medals = ['🥇', '🥈', '🥉'];
+        rsEl.innerHTML = rs.map((r, i) => `
+            <div class="rider-score-row">
+                <span class="rs-rank">${{medals[i] || (i+1)}}</span>
+                <span class="rs-name">${{r.rider}}</span>
+                <span class="rs-score">${{r.score.toLocaleString()}}</span>
+            </div>
+        `).join('');
+
+        // Daily chart — clickable to highlight tiles from that day
+        const dailyEl = document.getElementById('daily-chart');
+        const daily = EXP.daily_new || [];
+        if (daily.length > 0) {{
+            const mx = Math.max(...daily.map(d => d.count), 1);
+            dailyEl.innerHTML = daily.map((d, i) => {{
+                const h = Math.max(2, (d.count / mx) * 100);
+                return `<div class="daily-bar" style="height:${{h}}%" data-date="${{d.date}}" data-idx="${{i}}">
+                    <div class="daily-bar-tooltip">${{d.date}}: ${{d.count}} tiles</div></div>`;
+            }}).join('');
+
+            dailyEl.querySelectorAll('.daily-bar').forEach(bar => {{
+                bar.addEventListener('click', () => {{
+                    const date = bar.dataset.date;
+                    if (selectedDate === date) {{
+                        // Deselect
+                        selectedDate = null;
+                        dailyEl.querySelectorAll('.daily-bar').forEach(b => b.classList.remove('active'));
+                    }} else {{
+                        selectedDate = date;
+                        dailyEl.querySelectorAll('.daily-bar').forEach(b => b.classList.remove('active'));
+                        bar.classList.add('active');
+                    }}
+                    drawTiles();
+                }});
+            }});
+        }}
+
+        // Map
+        map = L.map('explorer-map', {{ center: [50.35, 8.5], zoom: 10, zoomControl: true }});
+        L.tileLayer('https://{{s}}.basemaps.cartocdn.com/dark_all/{{z}}/{{x}}/{{y}}{{r}}.png', {{
+            attribution: '&copy; OSM &copy; CARTO', subdomains: 'abcd', maxZoom: 19,
+        }}).addTo(map);
+
+        drawTiles();
+
+        document.querySelectorAll('.mode-switch button').forEach(btn => {{
+            btn.addEventListener('click', () => {{
+                document.querySelectorAll('.mode-switch button').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentMode = btn.dataset.mode;
+                selectedDate = null;
+                document.querySelectorAll('.daily-bar').forEach(b => b.classList.remove('active'));
+                drawTiles();
+            }});
+        }});
+
+        setTimeout(() => map.invalidateSize(), 200);
+        window.addEventListener('resize', () => setTimeout(() => map.invalidateSize(), 100));
+    }}
+
+    function computeRevierBorder() {{
+        // Find revier tiles that have a neighbor NOT in the revier
+        const revierSet = new Set();
+        const tiles = EXP.tiles || [];
+        const tileMap = {{}};
+        for (const t of tiles) {{
+            const k = t.x + ',' + t.y;
+            tileMap[k] = t;
+            if (t.r) revierSet.add(k);
+        }}
+
+        const edges = []; // array of [[lat1,lng1],[lat2,lng2]]
+        const nb = [[-1,0],[1,0],[0,-1],[0,1]];
+        const zoom = EXP.zoom || 16;
+        const n = 2 ** zoom;
+
+        for (const t of tiles) {{
+            if (!t.r) continue;
+            for (const [dx, dy] of nb) {{
+                const nk = (t.x+dx)+','+(t.y+dy);
+                if (!revierSet.has(nk)) {{
+                    // This edge is a border
+                    const b = t.b; // [south, west, north, east]
+                    if (dx === -1) edges.push([[b[0],b[1]],[b[2],b[1]]]); // left: west edge
+                    if (dx === 1) edges.push([[b[0],b[3]],[b[2],b[3]]]); // right: east edge
+                    if (dy === -1) edges.push([[b[2],b[1]],[b[2],b[3]]]); // north neighbor missing: north edge
+                    if (dy === 1) edges.push([[b[0],b[1]],[b[0],b[3]]]); // south neighbor missing: south edge
+                }}
+            }}
+        }}
+        return edges;
+    }}
+
+    function drawTiles() {{
+        tileLayers.forEach(l => map.removeLayer(l));
+        tileLayers.length = 0;
+        if (revierBorderLayer) {{ map.removeLayer(revierBorderLayer); revierBorderLayer = null; }}
+
+        const tiles = EXP.tiles || [];
+        if (tiles.length === 0) return;
+
+        const renderer = L.canvas({{ padding: 0.5 }});
+        const allBounds = [];
+
+        for (const t of tiles) {{
+            const bounds = [[t.b[0], t.b[1]], [t.b[2], t.b[3]]];
+            let color, fillOpacity, weight, opacity;
+
+            if (selectedDate) {{
+                // Date highlight mode: tiles discovered on selectedDate pop
+                if (t.d === selectedDate) {{
+                    color = TEAL; fillOpacity = 0.65; weight = 1.5; opacity = 0.9;
+                }} else {{
+                    color = '#333350'; fillOpacity = 0.15; weight = 0.3; opacity = 0.25;
+                }}
+            }} else if (currentMode === 'revier') {{
+                if (t.r) {{
+                    color = TEAL; fillOpacity = 0.4; weight = 0.8; opacity = 0.6;
+                }} else {{
+                    color = MUTED; fillOpacity = 0.5; weight = 0.5; opacity = 0.4;
+                }}
+            }} else {{
+                if (t.n) {{
+                    color = TEAL; fillOpacity = 0.55; weight = 1.5; opacity = 0.9;
+                }} else {{
+                    color = visitColor(t.v); fillOpacity = 0.4; weight = 0.5; opacity = 0.5;
+                }}
+            }}
+
+            const rect = L.rectangle(bounds, {{
+                color, fillColor: color, fillOpacity, weight, opacity, renderer,
+            }}).addTo(map);
+
+            const tooltipText = selectedDate && t.d === selectedDate
+                ? `New on ${{t.d}} (${{t.v}}× total)`
+                : `${{t.v}}× visited`;
+
+            rect.bindTooltip(tooltipText, {{
+                sticky: true, className: 'rider-marker-label',
+                direction: 'top', offset: [0, -5],
+            }});
+
+            tileLayers.push(rect);
+            allBounds.push(bounds[0], bounds[1]);
+        }}
+
+        // Draw revier border only in revier mode
+        if (!selectedDate && currentMode === 'revier') {{
+            const edges = computeRevierBorder();
+            if (edges.length > 0) {{
+                revierBorderLayer = L.layerGroup();
+                for (const e of edges) {{
+                    L.polyline(e, {{
+                        color: TEAL, weight: 2.5, opacity: 0.8,
+                    }}).addTo(revierBorderLayer);
+                }}
+                revierBorderLayer.addTo(map);
+            }}
+        }}
+
+        if (allBounds.length > 0 && !selectedDate) {{
+            map.fitBounds(L.latLngBounds(allBounds), {{ padding: [30, 30] }});
+        }}
+    }}
+
+    document.addEventListener('DOMContentLoaded', initExplorer);
+    </script>
+</body>
+</html>'''
+
+    out_path = os.path.join(FRONTEND_DIR, 'explorer.html')
     with open(out_path, 'w', encoding='utf-8') as f:
         f.write(html)
     size_kb = os.path.getsize(out_path) / 1024
