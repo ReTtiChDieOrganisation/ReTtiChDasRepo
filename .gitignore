@@ -1,0 +1,7 @@
+config/config.json
+*.db
+frontend/data/*
+__pycache__/
+*.pyc
+.env
+frontend/index.html
