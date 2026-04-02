@@ -2,6 +2,13 @@
     "client_id": "YOUR_STRAVA_CLIENT_ID",
     "client_secret": "YOUR_STRAVA_CLIENT_SECRET",
     "site_password": "rettich",
+        "commute": {
+        "work_bounds": {
+            "lat": [54.846, 54.865],
+            "lon": [6.094, 6.138]
+        },
+        "riders": ["Felix", "Flo", "Philipp"]
+    },
     "riders": {
         "Felix": {
             "refresh_token": "XXX",
