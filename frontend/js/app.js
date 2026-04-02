@@ -1,4 +1,12 @@
-/* ReTtiCh App — Main application controller */
+/* ReTtiCh App — Main application controller
+ *
+ * Architecture:
+ *   - Metadata (riders, groups, shared_segments) is embedded in index.html (~small)
+ *   - Activity data lives in separate .js files (data/activities/12345.js)
+ *   - Activities are loaded on demand when a group is selected
+ *   - Loading uses <script> tag injection which works with file:// (unlike fetch)
+ *   - Loaded activities cache in window.RETTICH_ACT
+ */
 
 const RettichApp = (function () {
     let riders = {};
@@ -9,20 +17,20 @@ const RettichApp = (function () {
 
     let selectedGroupId = null;
     let selectedDate = null;
-    let currentMode = 'time-sync'; // 'time-sync' | 'segment-compare'
+    let currentMode = 'time-sync';
     let groupActivitiesCache = {}; // groupId -> [activity data]
-
-    const DATA_BASE = './data/';
 
     // --- Initialization ---
 
     async function init() {
-        // Check password gate
-        try {
-            siteConfig = await fetchJSON(DATA_BASE + 'site_config.json');
-        } catch {
-            siteConfig = { password_hash: 0 };
+        // Metadata is always embedded via window.RETTICH_DATA
+        if (!window.RETTICH_DATA) {
+            document.getElementById('group-list').innerHTML =
+                '<div class="loading" style="color:var(--danger)">No data found. Run build.py first.</div>';
+            return;
         }
+
+        siteConfig = window.RETTICH_DATA.site_config || { password_hash: 0 };
 
         if (siteConfig.password_hash && siteConfig.password_hash !== 0) {
             showPasswordGate();
@@ -59,29 +67,14 @@ const RettichApp = (function () {
         for (let i = 0; i < s.length; i++) {
             h = ((h << 5) - h + s.charCodeAt(i)) & 0xFFFFFFFF;
         }
-        return h >>> 0; // unsigned
+        return h >>> 0;
     }
 
     async function startApp() {
-        // Load data
-        try {
-            [riders, groups, activitiesIndex] = await Promise.all([
-                fetchJSON(DATA_BASE + 'riders.json'),
-                fetchJSON(DATA_BASE + 'groups.json'),
-                fetchJSON(DATA_BASE + 'activities_index.json'),
-            ]);
-        } catch (e) {
-            console.error('Failed to load data:', e);
-            document.getElementById('group-list').innerHTML =
-                '<div class="loading" style="color:var(--danger)">Failed to load data. Run build.py first.</div>';
-            return;
-        }
-
-        try {
-            sharedSegments = await fetchJSON(DATA_BASE + 'shared_segments.json');
-        } catch {
-            sharedSegments = {};
-        }
+        riders = window.RETTICH_DATA.riders || {};
+        groups = window.RETTICH_DATA.groups || [];
+        activitiesIndex = window.RETTICH_DATA.activities_index || [];
+        sharedSegments = window.RETTICH_DATA.shared_segments || {};
 
         // Init modules
         RettichMap.init();
@@ -97,32 +90,36 @@ const RettichApp = (function () {
         // Fix map size after layout
         setTimeout(() => RettichMap.getMap().invalidateSize(), 200);
 
-        // Auto-select newest date that has data
+        // Auto-select newest date
         const dates = getUniqueDates();
         if (dates.length > 0) {
-            selectDate(dates[0]); // dates are sorted newest first
+            selectDate(dates[0]);
         }
     }
 
-    // --- Data fetching ---
+    // --- On-demand activity loading via <script> injection ---
 
-    async function fetchJSON(url) {
-        // If build.py embedded the data into the HTML, use that directly
-        if (window.RETTICH_DATA) {
-            if (url.includes('riders.json')) return window.RETTICH_DATA.riders;
-            if (url.includes('groups.json')) return window.RETTICH_DATA.groups;
-            if (url.includes('activities_index.json')) return window.RETTICH_DATA.activities_index;
-            if (url.includes('shared_segments.json')) return window.RETTICH_DATA.shared_segments;
-            if (url.includes('site_config.json')) return window.RETTICH_DATA.site_config;
-            const match = url.match(/activities\/(\d+)\.json/);
-            if (match && window.RETTICH_DATA.activities[match[1]]) {
-                return window.RETTICH_DATA.activities[match[1]];
+    function loadActivityScript(aid) {
+        return new Promise((resolve, reject) => {
+            // Already loaded?
+            if (window.RETTICH_ACT && window.RETTICH_ACT[String(aid)]) {
+                resolve(window.RETTICH_ACT[String(aid)]);
+                return;
             }
-        }
-        // Fallback: fetch from server (for Raspberry Pi / http server mode)
-        const resp = await fetch(url);
-        if (!resp.ok) throw new Error(`HTTP ${resp.status}: ${url}`);
-        return resp.json();
+
+            const script = document.createElement('script');
+            script.src = `data/activities/${aid}.js`;
+            script.onload = () => {
+                const data = window.RETTICH_ACT && window.RETTICH_ACT[String(aid)];
+                if (data) {
+                    resolve(data);
+                } else {
+                    reject(new Error(`Activity ${aid} not found after script load`));
+                }
+            };
+            script.onerror = () => reject(new Error(`Failed to load activity ${aid}`));
+            document.head.appendChild(script);
+        });
     }
 
     async function loadGroupActivities(groupId) {
@@ -131,8 +128,12 @@ const RettichApp = (function () {
         const group = groups.find(g => g.id === groupId);
         if (!group) return [];
 
+        // Load all activities for this group in parallel
         const promises = group.activity_ids.map(aid =>
-            fetchJSON(DATA_BASE + `activities/${aid}.json`).catch(() => null)
+            loadActivityScript(aid).catch(err => {
+                console.warn(`Could not load activity ${aid}:`, err.message);
+                return null;
+            })
         );
         const results = await Promise.all(promises);
         const activities = results.filter(Boolean);
@@ -154,18 +155,28 @@ const RettichApp = (function () {
         // Show mode toggle
         document.getElementById('mode-toggle').style.display = 'flex';
 
-        // Load activities
+        // Show loading state
+        const group = groups.find(g => g.id === groupId);
+        const actCount = group ? group.activity_ids.length : 0;
+        document.getElementById('group-list').querySelectorAll('.group-card.active .group-meta').forEach(el => {
+            el.innerHTML += ' <span class="loading-dots">loading...</span>';
+        });
+
+        // Load activities on demand
         const activities = await loadGroupActivities(groupId);
+
+        // Remove loading indicator
+        document.querySelectorAll('.loading-dots').forEach(el => el.remove());
+
         if (activities.length === 0) return;
 
         // Show stats
         RettichStats.computeAndDisplay(activities, riders);
 
         // Load segments for segment mode
-        const group = groups.find(g => g.id === groupId);
         const segments = sharedSegments[String(groupId)] || [];
 
-        // Setup current mode
+        // Apply mode
         applyMode(activities, segments);
     }
 
@@ -180,29 +191,20 @@ const RettichApp = (function () {
             document.getElementById('playback-controls').style.display = 'block';
             document.getElementById('segment-panel').style.display = 'none';
 
-            // Draw all routes
             RettichMap.drawRoutes(activities, riders);
-
-            // Setup timeline
             RettichTimeline.load(activities, riders);
         } else {
             document.getElementById('playback-controls').style.display = 'none';
             document.getElementById('segment-panel').style.display = 'block';
 
-            // Draw all routes first
             RettichMap.drawRoutes(activities, riders);
-
-            // Setup segment comparison
             RettichSegments.load(activities, riders, segments);
         }
     }
 
     function refreshMap() {
-        // Re-apply mode to redraw map without segment selection
         if (!selectedGroupId) return;
         loadGroupActivities(selectedGroupId).then(activities => {
-            const group = groups.find(g => g.id === selectedGroupId);
-            const segments = sharedSegments[String(selectedGroupId)] || [];
             RettichMap.clearAll();
             RettichMap.drawRoutes(activities, riders);
         });
@@ -226,7 +228,7 @@ const RettichApp = (function () {
 
     function getUniqueDates() {
         const dateSet = new Set(groups.map(g => g.date));
-        return [...dateSet].sort((a, b) => b.localeCompare(a)); // newest first
+        return [...dateSet].sort((a, b) => b.localeCompare(a));
     }
 
     function renderDateSelector() {
@@ -237,7 +239,6 @@ const RettichApp = (function () {
         dates.forEach(d => {
             const opt = document.createElement('option');
             opt.value = d;
-            // Format nicely: "Mon, 19 May 2025"
             const dt = new Date(d + 'T12:00:00');
             opt.textContent = dt.toLocaleDateString('en-GB', {
                 weekday: 'short', day: 'numeric', month: 'short', year: 'numeric'
@@ -263,7 +264,6 @@ const RettichApp = (function () {
             return;
         }
 
-        // Sort: segment groups first (by shared_segment_count desc), then daily
         dateGroups.sort((a, b) => {
             if (a.type !== b.type) return a.type === 'segment' ? -1 : 1;
             return b.shared_segment_count - a.shared_segment_count;
@@ -277,11 +277,9 @@ const RettichApp = (function () {
                 ? `${g.shared_segment_count} segments`
                 : 'all rides';
 
-            // Parse display name: "date — riders (info)"
             const parts = g.name.split(' — ');
             const displayName = parts.length > 1 ? parts[1] : g.name;
 
-            // Highlight groups with many shared segments
             const isHighlighted = g.type === 'segment' && g.shared_segment_count >= 15;
             const highlightClass = isHighlighted ? 'highlighted' : '';
 
@@ -295,17 +293,12 @@ const RettichApp = (function () {
         });
         el.innerHTML = html;
 
-        // Auto-select first segment group for this date, or first group
+        // Auto-select best group
         const firstSeg = dateGroups.find(g => g.type === 'segment');
         const autoSelect = firstSeg || dateGroups[0];
         if (autoSelect) {
             selectGroup(autoSelect.id);
         }
-    }
-
-    function renderGroups() {
-        // kept for compatibility — just renders for current date
-        if (selectedDate) renderGroupsForDate(selectedDate);
     }
 
     function setupModeToggle() {

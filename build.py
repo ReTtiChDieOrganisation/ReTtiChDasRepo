@@ -1,10 +1,14 @@
 #!/usr/bin/env python3
-"""Build frontend: compute groups, export JSON, and produce a self-contained index.html."""
+"""Build frontend: compute groups, export data, and produce index.html.
+
+Usage:
+    python build.py          Incremental build (only new activities exported)
+    python build.py --full   Full rebuild (re-export all activities)
+"""
 
 import json
 import os
 import sys
-import glob
 
 sys.path.insert(0, os.path.dirname(__file__))
 
@@ -18,6 +22,8 @@ DATA_DIR = os.path.join(FRONTEND_DIR, 'data')
 
 
 def main():
+    full = '--full' in sys.argv
+
     db_path = os.path.join(BASE_DIR, 'rettich.db')
     if not os.path.exists(db_path):
         print("Error: rettich.db not found. Run sync.py first.")
@@ -26,14 +32,18 @@ def main():
     conn = db.get_connection()
 
     print("=== ReTtiCh Build ===")
+    if full:
+        print("  Mode: FULL rebuild")
+    else:
+        print("  Mode: incremental (use --full to rebuild all)")
 
     # Step 1: Compute groups
     print("Computing ride groups...")
     compute_groups(conn)
 
-    # Step 2: Export data as JSON files (also used by the server mode later)
+    # Step 2: Export data (activities as .js files, metadata as .json)
     print("Exporting data for frontend...")
-    export_all(conn, DATA_DIR)
+    export_all(conn, DATA_DIR, full=full)
     conn.close()
 
     # Step 3: Read site password from config
@@ -45,31 +55,26 @@ def main():
             site_password = config.get('site_password', site_password)
 
     site_config = {'password_hash': _simple_hash(site_password)}
-    _write_json(os.path.join(DATA_DIR, 'site_config.json'), site_config)
 
-    # Step 4: Build self-contained index.html
-    print("Building self-contained index.html...")
-    build_self_contained_html(site_config)
+    # Step 4: Build index.html (only metadata embedded, activities loaded on demand)
+    print("Building index.html...")
+    build_html(site_config)
 
     print(f"\nDone! Open {os.path.join(FRONTEND_DIR, 'index.html')} in your browser.")
 
 
-def build_self_contained_html(site_config):
-    """Read all JSON data + JS/CSS and produce a single index.html."""
+def build_html(site_config):
+    """Build index.html with only lightweight metadata embedded.
+    
+    Activity data lives in separate .js files under data/activities/
+    and is loaded on demand via <script> tag injection.
+    """
 
-    # --- Load all exported data ---
+    # Load metadata (small)
     riders = _read_json(os.path.join(DATA_DIR, 'riders.json'))
     groups = _read_json(os.path.join(DATA_DIR, 'groups.json'))
     activities_index = _read_json(os.path.join(DATA_DIR, 'activities_index.json'))
     shared_segments = _read_json(os.path.join(DATA_DIR, 'shared_segments.json'))
-
-    # Load individual activity files
-    activities = {}
-    activities_dir = os.path.join(DATA_DIR, 'activities')
-    if os.path.isdir(activities_dir):
-        for fpath in glob.glob(os.path.join(activities_dir, '*.json')):
-            aid = os.path.splitext(os.path.basename(fpath))[0]
-            activities[aid] = _read_json(fpath)
 
     embedded_data = {
         'riders': riders,
@@ -77,11 +82,10 @@ def build_self_contained_html(site_config):
         'activities_index': activities_index,
         'shared_segments': shared_segments,
         'site_config': site_config,
-        'activities': activities,
     }
     embedded_json = json.dumps(embedded_data, separators=(',', ':'))
 
-    # --- Load CSS and JS source files ---
+    # Load CSS and JS source files
     css = _read_text(os.path.join(FRONTEND_DIR, 'css', 'style.css'))
 
     js_files = ['icons.js', 'map.js', 'timeline.js', 'segments.js', 'stats.js', 'app.js']
@@ -91,7 +95,6 @@ def build_self_contained_html(site_config):
         js_parts.append(_read_text(os.path.join(FRONTEND_DIR, 'js', name)))
     js_all = '\n'.join(js_parts)
 
-    # --- Assemble HTML ---
     html = f'''<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -211,9 +214,10 @@ def build_self_contained_html(site_config):
         </div>
     </div>
 
-    <!-- Embedded data (so file:// works without a server) -->
+    <!-- Metadata only (lightweight). Activity data loaded on demand. -->
     <script>
     window.RETTICH_DATA = {embedded_json};
+    window.RETTICH_ACT = {{}};
     </script>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -233,7 +237,6 @@ def build_self_contained_html(site_config):
 # --- Helpers ---
 
 def _simple_hash(s):
-    """Very simple hash for the weak password gate. NOT cryptographic."""
     h = 0
     for c in s:
         h = ((h << 5) - h + ord(c)) & 0xFFFFFFFF
@@ -248,11 +251,6 @@ def _read_json(path):
 def _read_text(path):
     with open(path, 'r', encoding='utf-8') as f:
         return f.read()
-
-
-def _write_json(path, data):
-    with open(path, 'w', encoding='utf-8') as f:
-        json.dump(data, f, separators=(',', ':'))
 
 
 if __name__ == '__main__':
