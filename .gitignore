@@ -1,5 +1,7 @@
 config/config.json
 *.db
+*.db-shm
+*.db-wal
 frontend/data/*
 __pycache__/
 *.pyc

@@ -25,12 +25,6 @@ def sync_rider(conn, client_id, client_secret, rider_name):
 
     # Fetch activities incrementally (only after last sync)
     last_epoch = db.get_last_sync_epoch(conn, rider_name)
-
-    # Only fetch from 2025 onwards (epoch 1735689600 = 2025-01-01T00:00:00Z)
-    MIN_EPOCH = 1735689600
-    if last_epoch < MIN_EPOCH:
-        last_epoch = MIN_EPOCH
-
     print(f"  Fetching activities for {rider_name} after epoch {last_epoch}...")
 
     max_epoch = last_epoch
