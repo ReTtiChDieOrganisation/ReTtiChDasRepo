@@ -1,6 +1,4 @@
-# 🥕 ReTtiCh — Ride Tracking & Comparison Hub
-
-A cycling visualization tool for friends who commute by bike and track rides on Strava.
+# 🥕 ReTtiCh
 
 ## Features
 
