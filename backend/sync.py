@@ -37,11 +37,12 @@ def sync_rider(conn, client_id, client_secret, rider_name):
             break
 
         for act_json in activities:
-            # Include rides, runs, walks — but not virtual rides
+            # Include rides, runs, walks, hikes, skiing — but not virtual rides
             act_type = act_json.get('type', '')
             if act_type == 'VirtualRide':
                 continue
-            if act_type not in ('Ride', 'Run', 'Walk'):
+            if act_type not in ('Ride', 'Run', 'Walk', 'Hike',
+                                'AlpineSki', 'NordicSki', 'BackcountrySki'):
                 continue
 
             act = strava.parse_activity_summary(rider_name, act_json)
