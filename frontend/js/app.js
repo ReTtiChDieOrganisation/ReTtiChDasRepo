@@ -223,7 +223,7 @@ const RettichApp = (function () {
         let html = '';
         Object.values(riders).forEach(r => {
             const color = getRiderColor(r);
-            html += `<div class="rider-row">
+            html += `<div class="rider-row" style="cursor:pointer;" onclick="RettichApp.focusRider('${r.name}')">
                 <div class="rider-color" style="background:${color};"></div>
                 <span class="rider-name">${r.name}</span>
                 <span class="rider-frame">${r.frame}</span>
@@ -326,10 +326,26 @@ const RettichApp = (function () {
         });
     }
 
+    async function focusRider(riderName) {
+        if (!selectedGroupId) return;
+        const activities = await loadGroupActivities(selectedGroupId);
+        const riderActs = activities.filter(a =>
+            a.rider_name === riderName && a.streams && a.streams.latlng && a.streams.latlng.length > 1
+        );
+        if (riderActs.length === 0) return;
+
+        const allPoints = [];
+        riderActs.forEach(a => allPoints.push(...a.streams.latlng));
+        if (allPoints.length > 0) {
+            RettichMap.fitBounds(L.latLngBounds(allPoints), [50, 50]);
+        }
+    }
+
     return {
         init,
         selectGroup,
         refreshMap,
+        focusRider,
     };
 })();
 
