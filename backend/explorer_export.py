@@ -74,12 +74,16 @@ def export_explorer_data(conn, output_dir, config=None):
     today_str = datetime.now().strftime('%Y-%m-%d')
     week_ago = (datetime.now() - timedelta(days=7)).strftime('%Y-%m-%d')
 
-    # tiles: (x,y) -> { visits: int, first_date, riders_by_date: {date: set(riders)} }
+    # tiles: (x,y) -> { visits: int, first_date }
     tiles = {}
     # Per-rider visits per tile: {(x,y): {rider: visit_count}}
     rider_tile_visits = defaultdict(lambda: defaultdict(int))
+    # Same but only visits BEFORE 30 days ago (for delta computation)
+    rider_tile_visits_old = defaultdict(lambda: defaultdict(int))
     # Track first discovery: {(x,y): {date: set(riders)}} - who discovered on which day
     tile_discovery = defaultdict(lambda: defaultdict(set))
+
+    thirty_ago = (datetime.now() - timedelta(days=30)).strftime('%Y-%m-%d')
 
     all_activities = conn.execute("""
         SELECT a.id, a.rider_name, a.date, a.elapsed_time, a.moving_time,
@@ -127,6 +131,8 @@ def export_explorer_data(conn, output_dir, config=None):
 
         for key in act_tiles:
             rider_tile_visits[key][rider] += 1
+            if date < thirty_ago:
+                rider_tile_visits_old[key][rider] += 1
 
             if key not in tiles:
                 tiles[key] = {'visits': 1, 'first_date': date}
@@ -158,6 +164,7 @@ def export_explorer_data(conn, output_dir, config=None):
     # First visit to a tile: if N riders discovered it on the same day, each gets 1/N
     # Subsequent personal visits: +1/(personal_visit_number)
     rider_scores = defaultdict(float)
+    rider_scores_old = defaultdict(float)  # score from visits before 30 days ago
     all_rider_names = set()
 
     for key, info in tiles.items():
@@ -167,16 +174,31 @@ def export_explorer_data(conn, output_dir, config=None):
 
         for rider, visit_count in rider_tile_visits[key].items():
             all_rider_names.add(rider)
-            # First visit credit (shared if co-discovered)
+            old_count = rider_tile_visits_old.get(key, {}).get(rider, 0)
+
+            # All-time score
             if rider in discoverers:
                 rider_scores[rider] += 1.0 / n_discoverers
-                # Additional personal visits start from visit 2
                 for k in range(2, visit_count + 1):
                     rider_scores[rider] += 1.0 / k
             else:
-                # This rider visited later — all visits are personal
                 for k in range(1, visit_count + 1):
                     rider_scores[rider] += 1.0 / k
+
+            # Old score (same logic, but with old visit counts)
+            if old_count > 0:
+                if rider in discoverers and first_date < thirty_ago:
+                    rider_scores_old[rider] += 1.0 / n_discoverers
+                    for k in range(2, old_count + 1):
+                        rider_scores_old[rider] += 1.0 / k
+                elif rider not in discoverers:
+                    for k in range(1, old_count + 1):
+                        rider_scores_old[rider] += 1.0 / k
+                else:
+                    # Rider was discoverer but discovery was within 30 days
+                    # All old visits are non-discovery visits
+                    for k in range(1, old_count + 1):
+                        rider_scores_old[rider] += 1.0 / k
 
     # Find max visits for normalization
     max_visits = max((t['visits'] for t in tiles.values()), default=1)
@@ -200,12 +222,14 @@ def export_explorer_data(conn, output_dir, config=None):
     new_today = new_tiles_by_date.get(today_str, 0)
     new_week = sum(v for d, v in new_tiles_by_date.items() if d >= week_ago)
 
-    thirty_ago = (datetime.now() - timedelta(days=30)).strftime('%Y-%m-%d')
     daily_new = [{'date': d, 'count': c}
                  for d, c in sorted(new_tiles_by_date.items()) if d >= thirty_ago]
 
-    rider_score_list = [{'rider': r, 'score': round(rider_scores[r], 1)}
-                        for r in sorted(all_rider_names)]
+    rider_score_list = [{
+        'rider': r,
+        'score': round(rider_scores[r], 1),
+        'score_30d': round(rider_scores[r] - rider_scores_old.get(r, 0), 1),
+    } for r in sorted(all_rider_names)]
     rider_score_list.sort(key=lambda x: -x['score'])
 
     data = {

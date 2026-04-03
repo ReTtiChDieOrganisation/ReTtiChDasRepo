@@ -967,7 +967,13 @@ def build_explorer_html(explorer_data, site_config):
                 <div class="exp-divider"></div>
 
                 <div class="exp-section">
-                    <div class="exp-section-title">Explorer Scores</div>
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+                        <div class="exp-section-title" style="margin-bottom:0">Explorer Scores</div>
+                        <div class="mode-switch" style="margin-bottom:0;padding:2px;">
+                            <button class="active" data-score="alltime" style="padding:4px 8px;font-size:11px;">All Time</button>
+                            <button data-score="30d" style="padding:4px 8px;font-size:11px;">30 Days</button>
+                        </div>
+                    </div>
                     <div id="rider-scores"></div>
                 </div>
 
@@ -1036,17 +1042,40 @@ def build_explorer_html(explorer_data, site_config):
         document.getElementById('week-hours').textContent = Math.round(s.week_time_hours || 0).toLocaleString();
         document.getElementById('week-acts').textContent = s.week_activities || 0;
 
-        // Rider scores
-        const rsEl = document.getElementById('rider-scores');
-        const rs = EXP.rider_scores || [];
-        const medals = ['🥇', '🥈', '🥉'];
-        rsEl.innerHTML = rs.map((r, i) => `
-            <div class="rider-score-row">
-                <span class="rs-rank">${{medals[i] || (i+1)}}</span>
-                <span class="rs-name">${{r.rider}}</span>
-                <span class="rs-score">${{r.score.toLocaleString()}}</span>
-            </div>
-        `).join('');
+        // Rider scores with toggle
+        let scoreMode = 'alltime';
+        function renderRiderScores() {{
+            const rsEl = document.getElementById('rider-scores');
+            const rs = EXP.rider_scores || [];
+            const medals = ['🥇', '🥈', '🥉'];
+
+            // Sort by current mode's score
+            const sorted = [...rs].sort((a, b) => {{
+                const sa = scoreMode === '30d' ? (b.score_30d || 0) : b.score;
+                const sb = scoreMode === '30d' ? (a.score_30d || 0) : a.score;
+                return sa - sb;
+            }});
+
+            rsEl.innerHTML = sorted.map((r, i) => {{
+                const val = scoreMode === '30d' ? (r.score_30d || 0) : r.score;
+                const prefix = scoreMode === '30d' && val > 0 ? '+' : '';
+                return `<div class="rider-score-row">
+                    <span class="rs-rank">${{medals[i] || (i+1)}}</span>
+                    <span class="rs-name">${{r.rider}}</span>
+                    <span class="rs-score">${{prefix}}${{val.toLocaleString()}}</span>
+                </div>`;
+            }}).join('');
+        }}
+        renderRiderScores();
+
+        document.querySelectorAll('[data-score]').forEach(btn => {{
+            btn.addEventListener('click', () => {{
+                document.querySelectorAll('[data-score]').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                scoreMode = btn.dataset.score;
+                renderRiderScores();
+            }});
+        }});
 
         // Daily chart — clickable to highlight tiles from that day
         const dailyEl = document.getElementById('daily-chart');
