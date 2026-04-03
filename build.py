@@ -872,6 +872,13 @@ def build_explorer_html(explorer_data, site_config):
     display: flex; align-items: center; gap: 10px; padding: 6px 8px;
     border-radius: var(--radius-sm); margin-bottom: 4px;
     background: var(--bg-tertiary); border: 1px solid var(--border);
+    transition: border-color 0.15s, background 0.15s;
+}}
+.rider-score-row:hover {{
+    border-color: var(--border-light); background: var(--bg-hover);
+}}
+.rider-score-row.active {{
+    border-color: #00d4aa; background: rgba(0, 212, 170, 0.1);
 }}
 .rider-score-row .rs-name {{ flex: 1; font-size: 13px; font-weight: 500; }}
 .rider-score-row .rs-score {{
@@ -1004,6 +1011,7 @@ def build_explorer_html(explorer_data, site_config):
     const EXP = {explorer_json};
     let currentMode = 'heatmap';
     let selectedDate = null;
+    let selectedRider = null;
     let map;
     const tileLayers = [];
     let revierBorderLayer = null;
@@ -1059,12 +1067,28 @@ def build_explorer_html(explorer_data, site_config):
             rsEl.innerHTML = sorted.map((r, i) => {{
                 const val = scoreMode === '30d' ? (r.score_30d || 0) : r.score;
                 const prefix = scoreMode === '30d' && val > 0 ? '+' : '';
-                return `<div class="rider-score-row">
+                const active = selectedRider === r.rider ? 'active' : '';
+                return `<div class="rider-score-row ${{active}}" data-rider="${{r.rider}}" style="cursor:pointer;">
                     <span class="rs-rank">${{medals[i] || (i+1)}}</span>
                     <span class="rs-name">${{r.rider}}</span>
-                    <span class="rs-score">${{prefix}}${{val.toLocaleString()}}</span>
+                    <span class="rs-score">${{prefix}}${{val.toFixed(1)}}</span>
                 </div>`;
             }}).join('');
+
+            rsEl.querySelectorAll('.rider-score-row').forEach(row => {{
+                row.addEventListener('click', () => {{
+                    const rider = row.dataset.rider;
+                    if (selectedRider === rider) {{
+                        selectedRider = null;
+                    }} else {{
+                        selectedRider = rider;
+                        selectedDate = null;
+                        document.querySelectorAll('.daily-bar').forEach(b => b.classList.remove('active'));
+                    }}
+                    renderRiderScores();
+                    drawTiles();
+                }});
+            }});
         }}
         renderRiderScores();
 
@@ -1091,8 +1115,9 @@ def build_explorer_html(explorer_data, site_config):
             dailyEl.querySelectorAll('.daily-bar').forEach(bar => {{
                 bar.addEventListener('click', () => {{
                     const date = bar.dataset.date;
+                    selectedRider = null;
+                    renderRiderScores();
                     if (selectedDate === date) {{
-                        // Deselect
                         selectedDate = null;
                         dailyEl.querySelectorAll('.daily-bar').forEach(b => b.classList.remove('active'));
                     }} else {{
@@ -1119,7 +1144,9 @@ def build_explorer_html(explorer_data, site_config):
                 btn.classList.add('active');
                 currentMode = btn.dataset.mode;
                 selectedDate = null;
+                selectedRider = null;
                 document.querySelectorAll('.daily-bar').forEach(b => b.classList.remove('active'));
+                renderRiderScores();
                 drawTiles();
             }});
         }});
@@ -1176,7 +1203,14 @@ def build_explorer_html(explorer_data, site_config):
             const bounds = [[t.b[0], t.b[1]], [t.b[2], t.b[3]]];
             let color, fillOpacity, weight, opacity;
 
-            if (selectedDate) {{
+            if (selectedRider) {{
+                // Rider highlight mode: tiles this rider visited pop
+                if (t.p && t.p.includes(selectedRider)) {{
+                    color = TEAL; fillOpacity = 0.55; weight = 1.2; opacity = 0.8;
+                }} else {{
+                    color = '#333350'; fillOpacity = 0.15; weight = 0.3; opacity = 0.25;
+                }}
+            }} else if (selectedDate) {{
                 // Date highlight mode: tiles discovered on selectedDate pop
                 if (t.d === selectedDate) {{
                     color = TEAL; fillOpacity = 0.65; weight = 1.5; opacity = 0.9;
@@ -1201,9 +1235,12 @@ def build_explorer_html(explorer_data, site_config):
                 color, fillColor: color, fillOpacity, weight, opacity, renderer,
             }}).addTo(map);
 
-            const tooltipText = selectedDate && t.d === selectedDate
-                ? `New on ${{t.d}} (${{t.v}}× total)`
-                : `${{t.v}}× visited`;
+            let tooltipText = `${{t.v}}× visited`;
+            if (selectedRider && t.p && t.p.includes(selectedRider)) {{
+                tooltipText = `${{selectedRider}}'s tile (${{t.v}}× total)`;
+            }} else if (selectedDate && t.d === selectedDate) {{
+                tooltipText = `New on ${{t.d}} (${{t.v}}× total)`;
+            }}
 
             rect.bindTooltip(tooltipText, {{
                 sticky: true, className: 'rider-marker-label',
@@ -1215,7 +1252,7 @@ def build_explorer_html(explorer_data, site_config):
         }}
 
         // Draw revier border only in revier mode
-        if (!selectedDate && currentMode === 'revier') {{
+        if (!selectedDate && !selectedRider && currentMode === 'revier') {{
             const edges = computeRevierBorder();
             if (edges.length > 0) {{
                 revierBorderLayer = L.layerGroup();
@@ -1228,7 +1265,7 @@ def build_explorer_html(explorer_data, site_config):
             }}
         }}
 
-        if (allBounds.length > 0 && !selectedDate) {{
+        if (allBounds.length > 0 && !selectedDate && !selectedRider) {{
             map.fitBounds(L.latLngBounds(allBounds), {{ padding: [30, 30] }});
         }}
     }}

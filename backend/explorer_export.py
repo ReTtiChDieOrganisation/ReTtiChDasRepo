@@ -209,6 +209,7 @@ def export_explorer_data(conn, output_dir, config=None):
         bounds = tile_to_bounds(tx, ty, zoom)
         is_new = info['first_date'] >= week_ago
         in_revier = (tx, ty) in revier
+        tile_riders = list(rider_tile_visits[(tx, ty)].keys())
 
         tiles_list.append({
             'x': tx, 'y': ty,
@@ -217,6 +218,7 @@ def export_explorer_data(conn, output_dir, config=None):
             'n': is_new,
             'r': in_revier,
             'd': info['first_date'],
+            'p': tile_riders,  # riders who visited this tile
         })
 
     new_today = new_tiles_by_date.get(today_str, 0)
