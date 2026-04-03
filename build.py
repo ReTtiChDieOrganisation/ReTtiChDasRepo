@@ -76,7 +76,7 @@ def main():
 
     # Step 4: Build index.html (only metadata embedded, activities loaded on demand)
     print("Building index.html...")
-    build_html(site_config)
+    build_html(site_config, explorer_data)
 
     # Step 5: Build commutes.html
     print("Building commutes.html...")
@@ -88,23 +88,31 @@ def main():
 
     # Step 7: Build riders.html
     print("Building riders.html...")
-    build_riders_html(rider_stats_data, site_config)
+    build_riders_html(rider_stats_data, site_config, explorer_data)
 
     print(f"\nDone! Open {os.path.join(FRONTEND_DIR, 'index.html')} in your browser.")
 
 
-def build_html(site_config):
-    """Build index.html with only lightweight metadata embedded.
-    
-    Activity data lives in separate .js files under data/activities/
-    and is loaded on demand via <script> tag injection.
-    """
+def build_html(site_config, explorer_data=None):
+    """Build index.html with only lightweight metadata embedded."""
 
     # Load metadata (small)
     riders = _read_json(os.path.join(DATA_DIR, 'riders.json'))
     groups = _read_json(os.path.join(DATA_DIR, 'groups.json'))
     activities_index = _read_json(os.path.join(DATA_DIR, 'activities_index.json'))
     shared_segments = _read_json(os.path.join(DATA_DIR, 'shared_segments.json'))
+
+    # Merge per-activity rettiche scores from explorer data
+    if explorer_data and 'activity_rettiche' in explorer_data:
+        act_rettiche = explorer_data['activity_rettiche']
+        for act in activities_index:
+            info = act_rettiche.get(act['id'], act_rettiche.get(str(act['id']), {}))
+            if isinstance(info, dict):
+                act['new_tiles'] = info.get('new', 0)
+                act['total_tiles'] = info.get('total', 0)
+            else:
+                act['new_tiles'] = 0
+                act['total_tiles'] = 0
 
     embedded_data = {
         'riders': riders,
@@ -184,6 +192,11 @@ def build_html(site_config):
                 <div class="sidebar-section" id="stats-section" style="display:none;">
                     <h3 class="section-title">Stats</h3>
                     <div id="stats-content"></div>
+                </div>
+
+                <div class="sidebar-section" id="activities-section" style="display:none;">
+                    <h3 class="section-title">Activities</h3>
+                    <div id="activities-list" class="activities-list"></div>
                 </div>
 
                 <div class="sidebar-section" id="riders-section">
@@ -936,11 +949,11 @@ def build_explorer_html(explorer_data, site_config):
                     <div class="exp-stats-grid">
                         <div class="exp-stat">
                             <div class="exp-val" id="total-tiles">0</div>
-                            <div class="exp-lbl">Total Tiles</div>
+                            <div class="exp-lbl">Beete</div>
                         </div>
                         <div class="exp-stat">
                             <div class="exp-val teal" id="feld-size">0</div>
-                            <div class="exp-lbl">🏠 Feld Size</div>
+                            <div class="exp-lbl">🏠 Acker Größe</div>
                         </div>
                         <div class="exp-stat">
                             <div class="exp-val teal" id="new-today">0</div>
@@ -952,11 +965,11 @@ def build_explorer_html(explorer_data, site_config):
                         </div>
                         <div class="exp-stat">
                             <div class="exp-val teal" id="feld-new-today">0</div>
-                            <div class="exp-lbl">Feld + Today</div>
+                            <div class="exp-lbl">Acker + Today</div>
                         </div>
                         <div class="exp-stat">
                             <div class="exp-val teal" id="feld-new-week">0</div>
-                            <div class="exp-lbl">Feld + Week</div>
+                            <div class="exp-lbl">Acker + Week</div>
                         </div>
                     </div>
                 </div>
@@ -1210,6 +1223,7 @@ def build_explorer_html(explorer_data, site_config):
 
         const renderer = L.canvas({{ padding: 0.5 }});
         const allBounds = [];
+        const highlightBounds = [];
 
         for (const t of tiles) {{
             const bounds = [[t.b[0], t.b[1]], [t.b[2], t.b[3]]];
@@ -1261,6 +1275,10 @@ def build_explorer_html(explorer_data, site_config):
 
             tileLayers.push(rect);
             allBounds.push(bounds[0], bounds[1]);
+            if ((selectedDate && t.d === selectedDate) ||
+                (selectedRider && t.p && t.p.includes(selectedRider))) {{
+                highlightBounds.push(bounds[0], bounds[1]);
+            }}
         }}
 
         // Draw feld border only in feld mode
@@ -1277,7 +1295,10 @@ def build_explorer_html(explorer_data, site_config):
             }}
         }}
 
-        if (allBounds.length > 0 && !selectedDate && !selectedRider) {{
+        // Fit to highlighted tiles, or all tiles on first load
+        if (highlightBounds.length > 0) {{
+            map.fitBounds(L.latLngBounds(highlightBounds), {{ padding: [40, 40] }});
+        }} else if (allBounds.length > 0 && !selectedDate && !selectedRider) {{
             map.fitBounds(L.latLngBounds(allBounds), {{ padding: [30, 30] }});
         }}
     }}
@@ -1294,10 +1315,18 @@ def build_explorer_html(explorer_data, site_config):
     print(f"  Written {out_path} ({size_kb:.0f} KB)")
 
 
-def build_riders_html(rider_stats_data, site_config):
-    """Build the Die Rettiche rider stats page."""
+def build_riders_html(rider_stats_data, site_config, explorer_data=None):
+    """Build the Die Rettiche page: pivot table + bar chart."""
     if not rider_stats_data:
         rider_stats_data = {'riders': []}
+
+    # Override rider rettiche scores with explorer's scores for consistency
+    if explorer_data and 'rider_scores' in explorer_data:
+        explorer_scores = {s['rider']: s for s in explorer_data['rider_scores']}
+        for r in rider_stats_data['riders']:
+            es = explorer_scores.get(r['name'], {})
+            r['rettiche'] = es.get('score', r.get('rettiche', 0))
+            r['rettiche_30d'] = es.get('score_30d', r.get('rettiche_30d', 0))
 
     css = _read_text(os.path.join(FRONTEND_DIR, 'css', 'style.css'))
     riders_json = json.dumps(rider_stats_data, separators=(',', ':'))
@@ -1318,6 +1347,7 @@ def build_riders_html(rider_stats_data, site_config):
     <title>ReTtiCh — Die Rettiche</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.plot.ly/plotly-2.35.0.min.js"></script>
     <style>
 {css}
 .riders-page {{
@@ -1329,12 +1359,10 @@ def build_riders_html(rider_stats_data, site_config):
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 24px;
+    margin-bottom: 20px;
 }}
 .riders-header h1 {{
-    font-size: 26px;
-    font-weight: 800;
-    letter-spacing: -0.5px;
+    font-size: 26px; font-weight: 800; letter-spacing: -0.5px;
 }}
 .riders-toggle {{
     display: flex; gap: 2px; background: var(--bg-tertiary);
@@ -1348,74 +1376,94 @@ def build_riders_html(rider_stats_data, site_config):
 .riders-toggle button:hover {{ color: var(--text-primary); }}
 .riders-toggle button.active {{ background: var(--accent); color: #fff; }}
 
-.rider-cards {{
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 16px;
+.riders-content {{
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
 }}
-.rider-card {{
+.riders-table-wrap {{
+    flex: 1;
+    min-width: 0;
     background: var(--bg-secondary);
     border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
+    border-radius: var(--radius-md);
     overflow: hidden;
-    transition: border-color 0.2s;
 }}
-.rider-card:hover {{
-    border-color: var(--border-light);
-}}
-.rider-card-header {{
-    padding: 20px 20px 14px;
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    border-bottom: 1px solid var(--border);
-}}
-.rider-card-color {{
-    width: 8px;
-    height: 48px;
-    border-radius: 4px;
+.riders-chart-wrap {{
+    width: 400px;
     flex-shrink: 0;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 12px;
 }}
-.rider-card-name {{
-    font-size: 20px;
-    font-weight: 700;
-    letter-spacing: -0.3px;
+#riders-chart {{
+    width: 100%;
+    height: 360px;
 }}
-.rider-card-frame {{
-    font-family: var(--font-mono);
+
+.riders-table {{
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}}
+.riders-table th {{
+    text-align: right;
+    font-weight: 600;
     font-size: 11px;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    margin-top: 2px;
-}}
-.rider-card-body {{
-    padding: 16px 20px 20px;
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 12px;
-}}
-.rc-stat {{
-    text-align: center;
-}}
-.rc-stat-val {{
-    font-family: var(--font-mono);
-    font-size: 18px;
-    font-weight: 700;
-    color: var(--text-primary);
-}}
-.rc-stat-val.accent {{ color: var(--accent); }}
-.rc-stat-val.teal {{ color: #00d4aa; }}
-.rc-stat-lbl {{
-    font-size: 10px;
-    color: var(--text-muted);
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    margin-top: 2px;
+    color: var(--text-muted);
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: color 0.15s;
+    white-space: nowrap;
+    user-select: none;
 }}
-.rc-divider {{
-    grid-column: span 3;
-    height: 1px;
-    background: var(--border);
+.riders-table th:first-child {{
+    text-align: left;
+}}
+.riders-table th:hover {{
+    color: var(--text-primary);
+}}
+.riders-table th.active {{
+    color: var(--accent);
+    border-bottom: 2px solid var(--accent);
+}}
+.riders-table th .sort-arrow {{
+    font-size: 9px;
+    margin-left: 3px;
+    opacity: 0.5;
+}}
+.riders-table th.active .sort-arrow {{
+    opacity: 1;
+}}
+.riders-table td {{
+    padding: 10px 12px;
+    border-bottom: 1px solid rgba(42, 47, 69, 0.4);
+    text-align: right;
+    font-family: var(--font-mono);
+    font-size: 13px;
+}}
+.riders-table td:first-child {{
+    text-align: left;
+    font-family: var(--font-display);
+    font-weight: 600;
+}}
+.riders-table tr:hover {{
+    background: var(--bg-hover);
+}}
+.rider-name-cell {{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}}
+.rider-dot {{
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
 }}
     </style>
 </head>
@@ -1443,7 +1491,17 @@ def build_riders_html(rider_stats_data, site_config):
                     <button data-period="30d">Last 30 Days</button>
                 </div>
             </div>
-            <div class="rider-cards" id="rider-cards"></div>
+            <div class="riders-content">
+                <div class="riders-table-wrap">
+                    <table class="riders-table" id="riders-table">
+                        <thead><tr id="table-header"></tr></thead>
+                        <tbody id="table-body"></tbody>
+                    </table>
+                </div>
+                <div class="riders-chart-wrap">
+                    <div id="riders-chart"></div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -1451,79 +1509,111 @@ def build_riders_html(rider_stats_data, site_config):
     const DATA = {riders_json};
     const FRAME_COLORS = {frame_colors_json};
     let period = 'alltime';
+    let selectedCol = 'rettiche';
+    let sortDir = -1; // -1 = desc
 
-    function renderCards() {{
-        const el = document.getElementById('rider-cards');
+    const COLUMNS = {{
+        rettiche:   {{ label: 'Rettiche',      unit: '',   allKey: 'rettiche',   thirtyKey: 'rettiche_30d',   fmt: v => v.toFixed(1) }},
+        tiles:      {{ label: 'Beete',          unit: '',   allKey: 'total_tiles', thirtyKey: 'tiles_30d',     fmt: v => v.toLocaleString() }},
+        feld_size:  {{ label: 'Acker Größe',    unit: '',   allKey: 'feld_size',   thirtyKey: 'feld_size_30d', fmt: v => v.toLocaleString(), prefix30d: true }},
+        km:         {{ label: 'km',             unit: 'km', allKey: 'total_km',    thirtyKey: 'km_30d',        fmt: v => Math.round(v).toLocaleString() }},
+        elev:       {{ label: 'Elevation',      unit: 'm',  allKey: 'total_elev',  thirtyKey: 'elev_30d',      fmt: v => Math.round(v).toLocaleString() }},
+        hours:      {{ label: 'Hours',          unit: 'h',  allKey: 'total_hours', thirtyKey: 'hours_30d',     fmt: v => v.toFixed(1) }},
+        acts:       {{ label: 'Activities',     unit: '',   allKey: 'total_acts',  thirtyKey: 'acts_30d',      fmt: v => v.toLocaleString() }},
+    }};
+
+    function getVal(rider, colKey) {{
+        const col = COLUMNS[colKey];
+        const key = period === '30d' ? col.thirtyKey : col.allKey;
+        return rider[key] || 0;
+    }}
+
+    function render() {{
         const riders = DATA.riders || [];
 
-        // Sort: by explorer score in current period
-        const sorted = [...riders].sort((a, b) => {{
-            if (period === '30d') return (b.rettiche_30d || 0) - (a.rettiche_30d || 0);
-            return (b.rettiche || 0) - (a.rettiche || 0);
+        // Sort
+        const sorted = [...riders].sort((a, b) => sortDir * (getVal(a, selectedCol) - getVal(b, selectedCol)));
+
+        // Header
+        const headerEl = document.getElementById('table-header');
+        headerEl.innerHTML = '<th>Rider</th>' + Object.entries(COLUMNS).map(([key, col]) => {{
+            const active = key === selectedCol ? 'active' : '';
+            const arrow = key === selectedCol ? (sortDir < 0 ? '▼' : '▲') : '';
+            return `<th class="${{active}}" data-col="${{key}}">${{col.label}} <span class="sort-arrow">${{arrow}}</span></th>`;
+        }}).join('');
+
+        // Body
+        const bodyEl = document.getElementById('table-body');
+        bodyEl.innerHTML = sorted.map(r => {{
+            const color = FRAME_COLORS[r.frame] || FRAME_COLORS['default'];
+            let cells = `<td><div class="rider-name-cell"><div class="rider-dot" style="background:${{color}}"></div>${{r.name}}</div></td>`;
+            for (const [key, col] of Object.entries(COLUMNS)) {{
+                const val = getVal(r, key);
+                let display = col.fmt(Math.abs(val));
+                if (period === '30d' && col.prefix30d && val > 0) display = '+' + display;
+                if (period === '30d' && col.prefix30d && val < 0) display = '-' + display;
+                cells += `<td>${{display}}</td>`;
+            }}
+            return `<tr>${{cells}}</tr>`;
+        }}).join('');
+
+        // Header click handlers
+        headerEl.querySelectorAll('th[data-col]').forEach(th => {{
+            th.addEventListener('click', () => {{
+                const col = th.dataset.col;
+                if (col === selectedCol) {{
+                    sortDir *= -1;
+                }} else {{
+                    selectedCol = col;
+                    sortDir = -1;
+                }}
+                render();
+            }});
         }});
 
-        el.innerHTML = sorted.map(r => {{
-            const color = FRAME_COLORS[r.frame] || FRAME_COLORS['default'];
-            const km = period === '30d' ? r.km_30d : r.total_km;
-            const elev = period === '30d' ? r.elev_30d : r.total_elev;
-            const hours = period === '30d' ? r.hours_30d : r.total_hours;
-            const acts = period === '30d' ? r.acts_30d : r.total_acts;
-            const score = period === '30d' ? r.rettiche_30d : r.rettiche;
-            const tiles = period === '30d' ? r.tiles_30d : r.total_tiles;
-            const scorePrefix = period === '30d' && score > 0 ? '+' : '';
+        // Bar chart
+        const col = COLUMNS[selectedCol];
+        const chartRiders = sorted;
+        const names = chartRiders.map(r => r.name);
+        const values = chartRiders.map(r => getVal(r, selectedCol));
+        const colors = chartRiders.map(r => FRAME_COLORS[r.frame] || FRAME_COLORS['default']);
 
-            return `<div class="rider-card">
-                <div class="rider-card-header">
-                    <div class="rider-card-color" style="background:${{color}}"></div>
-                    <div>
-                        <div class="rider-card-name">${{r.name}}</div>
-                        <div class="rider-card-frame">${{r.frame}}</div>
-                    </div>
-                </div>
-                <div class="rider-card-body">
-                    <div class="rc-stat">
-                        <div class="rc-stat-val accent">${{scorePrefix}}${{score.toFixed(1)}}</div>
-                        <div class="rc-stat-lbl">Rettiche</div>
-                    </div>
-                    <div class="rc-stat">
-                        <div class="rc-stat-val teal">${{tiles.toLocaleString()}}</div>
-                        <div class="rc-stat-lbl">${{period === '30d' ? 'New Tiles' : 'Tiles'}}</div>
-                    </div>
-                    <div class="rc-stat">
-                        <div class="rc-stat-val">${{r.feld_size.toLocaleString()}}</div>
-                        <div class="rc-stat-lbl">Feld</div>
-                    </div>
-                    <div class="rc-divider"></div>
-                    <div class="rc-stat">
-                        <div class="rc-stat-val">${{Math.round(km).toLocaleString()}}</div>
-                        <div class="rc-stat-lbl">km</div>
-                    </div>
-                    <div class="rc-stat">
-                        <div class="rc-stat-val">${{Math.round(elev).toLocaleString()}} m</div>
-                        <div class="rc-stat-lbl">Elevation</div>
-                    </div>
-                    <div class="rc-stat">
-                        <div class="rc-stat-val">${{Math.round(hours)}}</div>
-                        <div class="rc-stat-lbl">Hours</div>
-                    </div>
-                    <div class="rc-divider"></div>
-                    <div class="rc-stat" style="grid-column:span 3;">
-                        <div class="rc-stat-val">${{acts}}</div>
-                        <div class="rc-stat-lbl">Activities</div>
-                    </div>
-                </div>
-            </div>`;
-        }}).join('');
+        Plotly.react('riders-chart', [{{
+            x: names,
+            y: values,
+            type: 'bar',
+            marker: {{ color: colors, opacity: 0.8 }},
+            hovertemplate: '%{{x}}: %{{y:.1f}}<extra></extra>',
+        }}], {{
+            paper_bgcolor: 'rgba(0,0,0,0)',
+            plot_bgcolor: '#151821',
+            font: {{ family: 'Outfit, sans-serif', color: '#e8eaf0', size: 12 }},
+            margin: {{ l: 50, r: 16, t: 32, b: 40 }},
+            title: {{
+                text: col.label + (period === '30d' ? ' (30d)' : ''),
+                font: {{ size: 14 }},
+            }},
+            yaxis: {{
+                gridcolor: '#2a2f45',
+                zerolinecolor: '#2a2f45',
+            }},
+            xaxis: {{
+                gridcolor: '#2a2f45',
+            }},
+        }}, {{
+            responsive: true,
+            displayModeBar: false,
+        }});
     }}
 
     document.addEventListener('DOMContentLoaded', () => {{
-        renderCards();
+        render();
         document.querySelectorAll('.riders-toggle button').forEach(btn => {{
             btn.addEventListener('click', () => {{
                 document.querySelectorAll('.riders-toggle button').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
                 period = btn.dataset.period;
-                renderCards();
+                render();
             }});
         }});
     }});
@@ -1536,6 +1626,7 @@ def build_riders_html(rider_stats_data, site_config):
         f.write(html)
     size_kb = os.path.getsize(out_path) / 1024
     print(f"  Written {out_path} ({size_kb:.0f} KB)")
+
 
 
 # --- Helpers ---

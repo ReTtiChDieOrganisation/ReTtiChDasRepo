@@ -137,8 +137,10 @@ def export_rider_stats(conn, output_dir, config=None):
         score_old = sum(harmonic(v) for v in rider_tile_visits_old[rn].values())
         score_30d = score - score_old
 
-        # Personal feld
+        # Personal feld (all-time and old for delta)
         personal_feld = find_largest_connected(rider_tiles[rn])
+        old_tiles = {k for k in rider_tiles[rn] if rider_tile_visits_old[rn].get(k, 0) > 0}
+        personal_feld_old = find_largest_connected(old_tiles)
 
         rider_stats_list.append({
             'name': rn,
@@ -151,6 +153,7 @@ def export_rider_stats(conn, output_dir, config=None):
             'rettiche': round(score, 1),
             'rettiche_30d': round(score_30d, 1),
             'feld_size': len(personal_feld),
+            'feld_size_30d': len(personal_feld) - len(personal_feld_old),
             'km_30d': round(rd['km_30d'], 1),
             'elev_30d': round(rd['elev_30d'], 0),
             'hours_30d': round(rd['time_30d_s'] / 3600, 1),

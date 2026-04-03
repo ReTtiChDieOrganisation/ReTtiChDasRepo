@@ -102,11 +102,15 @@ def export_explorer_data(conn, output_dir, config=None):
 
     new_tiles_by_date = defaultdict(int)
 
+    # Per-activity rettiche: tracks each activity's contribution
+    activity_rettiche = {}  # act_id -> float
+
     for act in all_activities:
         dist = act['distance'] or 0
         elapsed = act['elapsed_time'] or 0
         date = act['date']
         rider = act['rider_name']
+        act_id = act['id']
 
         total_km += dist / 1000
         total_time_s += elapsed
@@ -117,7 +121,7 @@ def export_explorer_data(conn, output_dir, config=None):
             week_time_s += elapsed
             week_activities += 1
 
-        stream = db.get_stream(conn, act['id'])
+        stream = db.get_stream(conn, act_id)
         if not stream or not stream['latlng_data']:
             continue
 
@@ -129,6 +133,8 @@ def export_explorer_data(conn, output_dir, config=None):
         for point in latlng:
             act_tiles.add(lat_lon_to_tile(point[0], point[1], zoom))
 
+        # Track per-activity: new tiles discovered and total tiles touched
+        new_tiles_count = 0
         for key in act_tiles:
             rider_tile_visits[key][rider] += 1
             if date < thirty_ago:
@@ -138,10 +144,16 @@ def export_explorer_data(conn, output_dir, config=None):
                 tiles[key] = {'visits': 1, 'first_date': date}
                 new_tiles_by_date[date] += 1
                 tile_discovery[key][date].add(rider)
+                new_tiles_count += 1
             else:
                 tiles[key]['visits'] += 1
                 if date == tiles[key]['first_date']:
                     tile_discovery[key][date].add(rider)
+
+        activity_rettiche[act_id] = {
+            'new': new_tiles_count,
+            'total': len(act_tiles),
+        }
 
     # Largest connected area (Rettich Feld)
     tile_coords = set(tiles.keys())
@@ -255,10 +267,13 @@ def export_explorer_data(conn, output_dir, config=None):
         },
         'daily_new': daily_new,
         'rider_scores': rider_score_list,
+        'activity_rettiche': activity_rettiche,
     }
 
+    # Write explorer JS (without activity_rettiche to keep file small)
     js_path = os.path.join(output_dir, 'explorer_data.js')
-    json_str = json.dumps(data, separators=(',', ':'))
+    js_data = {k: v for k, v in data.items() if k != 'activity_rettiche'}
+    json_str = json.dumps(js_data, separators=(',', ':'))
     with open(js_path, 'w', encoding='utf-8') as f:
         f.write(f'window.RETTICH_EXPLORER={json_str};')
 

@@ -330,6 +330,45 @@ html, body {
     border-color: var(--border-light);
     background: var(--bg-hover);
 }
+
+/* Activity list items */
+.activities-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.activity-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    transition: border-color 0.15s, background 0.15s;
+    font-size: 12px;
+}
+.activity-item:hover {
+    border-color: var(--border-light);
+    background: var(--bg-hover);
+}
+.activity-name {
+    flex: 1;
+    font-weight: 500;
+    font-size: 13px;
+}
+.activity-dist {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-secondary);
+}
+.activity-rettiche {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--accent);
+    white-space: nowrap;
+}
 .rider-color {
     width: 14px;
     height: 14px;

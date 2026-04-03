@@ -179,6 +179,9 @@ const RettichApp = (function () {
         // Show stats
         RettichStats.computeAndDisplay(activities, riders);
 
+        // Show per-activity rettiche
+        renderActivitiesList(group, activities);
+
         // Load segments for segment mode
         const segments = sharedSegments[String(groupId)] || [];
 
@@ -230,6 +233,41 @@ const RettichApp = (function () {
             </div>`;
         });
         el.innerHTML = html;
+    }
+
+    function renderActivitiesList(group, activities) {
+        const section = document.getElementById('activities-section');
+        const el = document.getElementById('activities-list');
+        if (!group || !activities || activities.length === 0) {
+            section.style.display = 'none';
+            return;
+        }
+
+        // Look up tile info from activitiesIndex
+        const indexById = {};
+        activitiesIndex.forEach(a => { indexById[a.id] = a; });
+
+        // Build list sorted by new tiles desc
+        const items = activities.map(act => {
+            const idx = indexById[act.id] || {};
+            const rider = riders[act.rider_name] || {};
+            const color = getRiderColor(rider);
+            const newTiles = idx.new_tiles != null ? idx.new_tiles : 0;
+            const totalTiles = idx.total_tiles != null ? idx.total_tiles : 0;
+            const dist = act.distance ? (act.distance / 1000).toFixed(1) : '?';
+            return { act, rider, color, newTiles, totalTiles, dist, name: act.rider_name };
+        }).sort((a, b) => b.newTiles - a.newTiles);
+
+        el.innerHTML = items.map(it => `
+            <div class="activity-item" style="cursor:pointer;" onclick="RettichApp.focusRider('${it.name}')">
+                <div class="rider-color" style="background:${it.color};width:10px;height:10px;border-radius:50%;flex-shrink:0;"></div>
+                <span class="activity-name">${it.name}</span>
+                <span class="activity-dist">${it.dist} km</span>
+                <span class="activity-rettiche" title="${it.totalTiles} tiles touched, ${it.newTiles} new">🥕 ${it.newTiles} new / ${it.totalTiles}</span>
+            </div>
+        `).join('');
+
+        section.style.display = 'block';
     }
 
     function getUniqueDates() {
