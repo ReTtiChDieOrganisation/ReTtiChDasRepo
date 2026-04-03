@@ -796,7 +796,7 @@ def build_commutes_html(commute_data, site_config):
 
 
 def build_explorer_html(explorer_data, site_config):
-    """Build the tile explorer page with heatmap, Rettich Revier, per-rider scores."""
+    """Build the tile explorer page with heatmap, Rettich Feld, per-rider scores."""
     if not explorer_data:
         explorer_data = {'tiles': [], 'stats': {}, 'daily_new': [], 'rider_scores': [], 'zoom': 16, 'max_visits': 1}
 
@@ -918,15 +918,15 @@ def build_explorer_html(explorer_data, site_config):
             <aside class="explorer-sidebar">
                 <div class="mode-switch">
                     <button class="active" data-mode="heatmap">All Tiles</button>
-                    <button data-mode="revier">Rettich Revier</button>
+                    <button data-mode="feld">Rettich Feld</button>
                 </div>
 
                 <div class="exp-section">
                     <div class="exp-section-title">Scores</div>
                     <div class="exp-stats-grid">
                         <div class="exp-stat wide highlight">
-                            <div class="exp-val" id="rettich-score">0</div>
-                            <div class="exp-lbl">🥕 Rettich Score</div>
+                            <div class="exp-val" id="rettiche-id">0</div>
+                            <div class="exp-lbl">🥕 Rettiche</div>
                         </div>
                     </div>
                 </div>
@@ -939,8 +939,8 @@ def build_explorer_html(explorer_data, site_config):
                             <div class="exp-lbl">Total Tiles</div>
                         </div>
                         <div class="exp-stat">
-                            <div class="exp-val teal" id="revier-size">0</div>
-                            <div class="exp-lbl">🏠 Revier Size</div>
+                            <div class="exp-val teal" id="feld-size">0</div>
+                            <div class="exp-lbl">🏠 Feld Size</div>
                         </div>
                         <div class="exp-stat">
                             <div class="exp-val teal" id="new-today">0</div>
@@ -951,12 +951,12 @@ def build_explorer_html(explorer_data, site_config):
                             <div class="exp-lbl">New This Week</div>
                         </div>
                         <div class="exp-stat">
-                            <div class="exp-val teal" id="revier-new-today">0</div>
-                            <div class="exp-lbl">Revier + Today</div>
+                            <div class="exp-val teal" id="feld-new-today">0</div>
+                            <div class="exp-lbl">Feld + Today</div>
                         </div>
                         <div class="exp-stat">
-                            <div class="exp-val teal" id="revier-new-week">0</div>
-                            <div class="exp-lbl">Revier + Week</div>
+                            <div class="exp-val teal" id="feld-new-week">0</div>
+                            <div class="exp-lbl">Feld + Week</div>
                         </div>
                     </div>
                 </div>
@@ -987,7 +987,7 @@ def build_explorer_html(explorer_data, site_config):
 
                 <div class="exp-section">
                     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-                        <div class="exp-section-title" style="margin-bottom:0">Explorer Scores</div>
+                        <div class="exp-section-title" style="margin-bottom:0">Rettiche</div>
                         <div class="mode-switch" style="margin-bottom:0;padding:2px;">
                             <button class="active" data-score="alltime" style="padding:4px 8px;font-size:11px;">All Time</button>
                             <button data-score="30d" style="padding:4px 8px;font-size:11px;">30 Days</button>
@@ -1026,7 +1026,7 @@ def build_explorer_html(explorer_data, site_config):
     let selectedRider = null;
     let map;
     const tileLayers = [];
-    let revierBorderLayer = null;
+    let feldBorderLayer = null;
 
     // Colormap: cool-to-warm with good contrast at both ends
     const CMAP = [
@@ -1048,13 +1048,13 @@ def build_explorer_html(explorer_data, site_config):
 
     function initExplorer() {{
         const s = EXP.stats || {{}};
-        document.getElementById('rettich-score').textContent = (s.rettich_score || 0).toLocaleString();
+        document.getElementById('rettiche-id').textContent = (s.rettiche || 0).toLocaleString();
         document.getElementById('total-tiles').textContent = (s.total_tiles || 0).toLocaleString();
-        document.getElementById('revier-size').textContent = (s.revier_size || 0).toLocaleString();
+        document.getElementById('feld-size').textContent = (s.feld_size || 0).toLocaleString();
         document.getElementById('new-today').textContent = s.new_today || 0;
         document.getElementById('new-week').textContent = s.new_week || 0;
-        document.getElementById('revier-new-today').textContent = s.revier_new_today || 0;
-        document.getElementById('revier-new-week').textContent = s.revier_new_week || 0;
+        document.getElementById('feld-new-today').textContent = s.feld_new_today || 0;
+        document.getElementById('feld-new-week').textContent = s.feld_new_week || 0;
         document.getElementById('total-km').textContent = Math.round(s.total_km || 0).toLocaleString();
         document.getElementById('total-hours').textContent = Math.round(s.total_time_hours || 0).toLocaleString();
         document.getElementById('total-acts').textContent = (s.total_activities || 0).toLocaleString();
@@ -1167,15 +1167,15 @@ def build_explorer_html(explorer_data, site_config):
         window.addEventListener('resize', () => setTimeout(() => map.invalidateSize(), 100));
     }}
 
-    function computeRevierBorder() {{
-        // Find revier tiles that have a neighbor NOT in the revier
-        const revierSet = new Set();
+    function computeFeldBorder() {{
+        // Find feld tiles that have a neighbor NOT in the feld
+        const feldSet = new Set();
         const tiles = EXP.tiles || [];
         const tileMap = {{}};
         for (const t of tiles) {{
             const k = t.x + ',' + t.y;
             tileMap[k] = t;
-            if (t.r) revierSet.add(k);
+            if (t.r) feldSet.add(k);
         }}
 
         const edges = []; // array of [[lat1,lng1],[lat2,lng2]]
@@ -1187,7 +1187,7 @@ def build_explorer_html(explorer_data, site_config):
             if (!t.r) continue;
             for (const [dx, dy] of nb) {{
                 const nk = (t.x+dx)+','+(t.y+dy);
-                if (!revierSet.has(nk)) {{
+                if (!feldSet.has(nk)) {{
                     // This edge is a border
                     const b = t.b; // [south, west, north, east]
                     if (dx === -1) edges.push([[b[0],b[1]],[b[2],b[1]]]); // left: west edge
@@ -1203,7 +1203,7 @@ def build_explorer_html(explorer_data, site_config):
     function drawTiles() {{
         tileLayers.forEach(l => map.removeLayer(l));
         tileLayers.length = 0;
-        if (revierBorderLayer) {{ map.removeLayer(revierBorderLayer); revierBorderLayer = null; }}
+        if (feldBorderLayer) {{ map.removeLayer(feldBorderLayer); feldBorderLayer = null; }}
 
         const tiles = EXP.tiles || [];
         if (tiles.length === 0) return;
@@ -1229,7 +1229,7 @@ def build_explorer_html(explorer_data, site_config):
                 }} else {{
                     color = '#333350'; fillOpacity = 0.15; weight = 0.3; opacity = 0.25;
                 }}
-            }} else if (currentMode === 'revier') {{
+            }} else if (currentMode === 'feld') {{
                 if (t.r) {{
                     color = TEAL; fillOpacity = 0.4; weight = 0.8; opacity = 0.6;
                 }} else {{
@@ -1263,17 +1263,17 @@ def build_explorer_html(explorer_data, site_config):
             allBounds.push(bounds[0], bounds[1]);
         }}
 
-        // Draw revier border only in revier mode
-        if (!selectedDate && !selectedRider && currentMode === 'revier') {{
-            const edges = computeRevierBorder();
+        // Draw feld border only in feld mode
+        if (!selectedDate && !selectedRider && currentMode === 'feld') {{
+            const edges = computeFeldBorder();
             if (edges.length > 0) {{
-                revierBorderLayer = L.layerGroup();
+                feldBorderLayer = L.layerGroup();
                 for (const e of edges) {{
                     L.polyline(e, {{
                         color: TEAL, weight: 2.5, opacity: 0.8,
-                    }}).addTo(revierBorderLayer);
+                    }}).addTo(feldBorderLayer);
                 }}
-                revierBorderLayer.addTo(map);
+                feldBorderLayer.addTo(map);
             }}
         }}
 
@@ -1458,8 +1458,8 @@ def build_riders_html(rider_stats_data, site_config):
 
         // Sort: by explorer score in current period
         const sorted = [...riders].sort((a, b) => {{
-            if (period === '30d') return (b.explorer_score_30d || 0) - (a.explorer_score_30d || 0);
-            return (b.explorer_score || 0) - (a.explorer_score || 0);
+            if (period === '30d') return (b.rettiche_30d || 0) - (a.rettiche_30d || 0);
+            return (b.rettiche || 0) - (a.rettiche || 0);
         }});
 
         el.innerHTML = sorted.map(r => {{
@@ -1468,7 +1468,7 @@ def build_riders_html(rider_stats_data, site_config):
             const elev = period === '30d' ? r.elev_30d : r.total_elev;
             const hours = period === '30d' ? r.hours_30d : r.total_hours;
             const acts = period === '30d' ? r.acts_30d : r.total_acts;
-            const score = period === '30d' ? r.explorer_score_30d : r.explorer_score;
+            const score = period === '30d' ? r.rettiche_30d : r.rettiche;
             const tiles = period === '30d' ? r.tiles_30d : r.total_tiles;
             const scorePrefix = period === '30d' && score > 0 ? '+' : '';
 
@@ -1483,15 +1483,15 @@ def build_riders_html(rider_stats_data, site_config):
                 <div class="rider-card-body">
                     <div class="rc-stat">
                         <div class="rc-stat-val accent">${{scorePrefix}}${{score.toFixed(1)}}</div>
-                        <div class="rc-stat-lbl">Explorer Score</div>
+                        <div class="rc-stat-lbl">Rettiche</div>
                     </div>
                     <div class="rc-stat">
                         <div class="rc-stat-val teal">${{tiles.toLocaleString()}}</div>
                         <div class="rc-stat-lbl">${{period === '30d' ? 'New Tiles' : 'Tiles'}}</div>
                     </div>
                     <div class="rc-stat">
-                        <div class="rc-stat-val">${{r.revier_size.toLocaleString()}}</div>
-                        <div class="rc-stat-lbl">Revier</div>
+                        <div class="rc-stat-val">${{r.feld_size.toLocaleString()}}</div>
+                        <div class="rc-stat-lbl">Feld</div>
                     </div>
                     <div class="rc-divider"></div>
                     <div class="rc-stat">

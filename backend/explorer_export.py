@@ -2,11 +2,11 @@
 
 Tiles at zoom 16 (~600m at 50°N). Virtual rides excluded.
 
-Rettich Score: harmonic scoring per tile (1 + 1/2 + 1/3 + ...).
-Per-rider Explorer Score: when N riders discover a tile on the same day,
+Rettiche: harmonic scoring per tile (1 + 1/2 + 1/3 + ...).
+Per-rider Rettiche: when N riders discover a tile on the same day,
 each gets 1/N credit for that discovery. Revisit scoring is personal.
 
-Rettich Revier: largest 8-connected component of collected tiles.
+Rettich Feld: largest 8-connected component of collected tiles.
 """
 
 import json
@@ -143,24 +143,24 @@ def export_explorer_data(conn, output_dir, config=None):
                 if date == tiles[key]['first_date']:
                     tile_discovery[key][date].add(rider)
 
-    # Largest connected area (Rettich Revier)
+    # Largest connected area (Rettich Feld)
     tile_coords = set(tiles.keys())
-    revier = find_largest_connected(tile_coords)
+    feld = find_largest_connected(tile_coords)
 
-    # Track revier new tiles
-    new_revier_today = 0
-    new_revier_week = 0
-    for key in revier:
+    # Track feld new tiles
+    new_feld_today = 0
+    new_feld_week = 0
+    for key in feld:
         fd = tiles[key]['first_date']
         if fd == today_str:
-            new_revier_today += 1
+            new_feld_today += 1
         if fd >= week_ago:
-            new_revier_week += 1
+            new_feld_week += 1
 
-    # Global Rettich Score
-    rettich_score = sum(harmonic(t['visits']) for t in tiles.values())
+    # Global Rettiche
+    rettiche = sum(harmonic(t['visits']) for t in tiles.values())
 
-    # Per-rider Explorer Score:
+    # Per-rider Rettiche:
     # First visit to a tile: if N riders discovered it on the same day, each gets 1/N
     # Subsequent personal visits: +1/(personal_visit_number)
     rider_scores = defaultdict(float)
@@ -208,7 +208,7 @@ def export_explorer_data(conn, output_dir, config=None):
     for (tx, ty), info in tiles.items():
         bounds = tile_to_bounds(tx, ty, zoom)
         is_new = info['first_date'] >= week_ago
-        in_revier = (tx, ty) in revier
+        in_feld = (tx, ty) in feld
         tile_riders = list(rider_tile_visits[(tx, ty)].keys())
 
         tiles_list.append({
@@ -216,7 +216,7 @@ def export_explorer_data(conn, output_dir, config=None):
             'b': bounds,
             'v': info['visits'],
             'n': is_new,
-            'r': in_revier,
+            'r': in_feld,
             'd': info['first_date'],
             'p': tile_riders,  # riders who visited this tile
         })
@@ -242,10 +242,10 @@ def export_explorer_data(conn, output_dir, config=None):
             'total_tiles': len(tiles_list),
             'new_today': new_today,
             'new_week': new_week,
-            'revier_size': len(revier),
-            'revier_new_today': new_revier_today,
-            'revier_new_week': new_revier_week,
-            'rettich_score': round(rettich_score, 1),
+            'feld_size': len(feld),
+            'feld_new_today': new_feld_today,
+            'feld_new_week': new_feld_week,
+            'rettiche': round(rettiche, 1),
             'total_km': round(total_km, 1),
             'total_time_hours': round(total_time_s / 3600, 1),
             'total_activities': total_activities,
@@ -263,6 +263,6 @@ def export_explorer_data(conn, output_dir, config=None):
         f.write(f'window.RETTICH_EXPLORER={json_str};')
 
     print(f"  Explorer: {len(tiles_list)} tiles (zoom {zoom}), "
-          f"Score {rettich_score:.1f}, Revier {len(revier)} tiles, "
+          f"Score {rettiche:.1f}, Feld {len(feld)} tiles, "
           f"from {total_activities} activities")
     return data

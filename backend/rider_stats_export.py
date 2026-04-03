@@ -3,7 +3,7 @@
 Computes for each rider:
 - Total/30d: km, elevation, time, activities
 - Explorer score (all-time + 30d)
-- Personal Revier (largest connected area of tiles they've visited)
+- Personal Feld (largest connected area of tiles they've visited)
 """
 
 import json
@@ -129,7 +129,7 @@ def export_rider_stats(conn, output_dir, config=None):
             if date < thirty_ago:
                 rider_tile_visits_old[rn][key] += 1
 
-    # Compute per-rider explorer score and personal revier
+    # Compute per-rider explorer score and personal feld
     rider_stats_list = []
     for rn, rd in rider_data.items():
         # Explorer score: harmonic of personal visit counts
@@ -137,8 +137,8 @@ def export_rider_stats(conn, output_dir, config=None):
         score_old = sum(harmonic(v) for v in rider_tile_visits_old[rn].values())
         score_30d = score - score_old
 
-        # Personal revier
-        personal_revier = find_largest_connected(rider_tiles[rn])
+        # Personal feld
+        personal_feld = find_largest_connected(rider_tiles[rn])
 
         rider_stats_list.append({
             'name': rn,
@@ -148,9 +148,9 @@ def export_rider_stats(conn, output_dir, config=None):
             'total_hours': round(rd['total_time_s'] / 3600, 1),
             'total_acts': rd['total_acts'],
             'total_tiles': len(rider_tiles[rn]),
-            'explorer_score': round(score, 1),
-            'explorer_score_30d': round(score_30d, 1),
-            'revier_size': len(personal_revier),
+            'rettiche': round(score, 1),
+            'rettiche_30d': round(score_30d, 1),
+            'feld_size': len(personal_feld),
             'km_30d': round(rd['km_30d'], 1),
             'elev_30d': round(rd['elev_30d'], 0),
             'hours_30d': round(rd['time_30d_s'] / 3600, 1),
@@ -160,7 +160,7 @@ def export_rider_stats(conn, output_dir, config=None):
         })
 
     # Sort by explorer score
-    rider_stats_list.sort(key=lambda x: -x['explorer_score'])
+    rider_stats_list.sort(key=lambda x: -x['rettiche'])
 
     data = {
         'riders': rider_stats_list,
