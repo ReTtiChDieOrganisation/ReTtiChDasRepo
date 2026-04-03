@@ -19,11 +19,12 @@ const RettichTimeline = (function () {
     let ridersData = {};
 
     // DOM
-    let elPlay, elTimeline, elCurrent, elEnd, elSpeedBtn, elClock;
+    let elPlay, elTimeline, elCurrent, elEnd, elSpeedBtn, elClock, elTimelineWrap;
 
     function init() {
         elPlay = document.getElementById('pb-play');
         elTimeline = document.getElementById('pb-timeline');
+        elTimelineWrap = document.getElementById('pb-timeline-wrap');
         elCurrent = document.getElementById('pb-current-time');
         elEnd = document.getElementById('pb-end-time');
         elSpeedBtn = document.getElementById('pb-speed-btn');
@@ -80,8 +81,60 @@ const RettichTimeline = (function () {
         elCurrent.textContent = formatTime(0);
         elTimeline.value = 0;
 
+        renderActivityBars();
         updateUI();
         updatePositions();
+    }
+
+    function renderActivityBars() {
+        // Remove old bars
+        if (elTimelineWrap) {
+            elTimelineWrap.querySelectorAll('.activity-bar').forEach(el => el.remove());
+        }
+        if (totalDuration <= 0 || !elTimelineWrap) return;
+
+        // Group activities by rider name (a rider can have multiple activities)
+        const riderActs = {};
+        activitiesData.forEach(act => {
+            const name = act.rider_name;
+            if (!riderActs[name]) riderActs[name] = [];
+            riderActs[name].push(act);
+        });
+
+        const riderNames = Object.keys(riderActs);
+        const barHeight = Math.min(4, Math.max(2, 14 / riderNames.length));
+        const totalBarHeight = riderNames.length * (barHeight + 1);
+
+        riderNames.forEach((name, idx) => {
+            const rider = ridersData[name] || {};
+            const color = getRiderColor(rider);
+
+            riderActs[name].forEach(act => {
+                const actStart = act.start_epoch - globalStartEpoch;
+                const actEnd = actStart + (act.streams.time[act.streams.time.length - 1] || act.elapsed_time);
+
+                const leftPct = (actStart / totalDuration) * 100;
+                const widthPct = ((actEnd - actStart) / totalDuration) * 100;
+
+                const bar = document.createElement('div');
+                bar.className = 'activity-bar';
+                bar.style.cssText = `
+                    position: absolute;
+                    left: ${leftPct}%;
+                    width: ${widthPct}%;
+                    height: ${barHeight}px;
+                    bottom: ${idx * (barHeight + 1)}px;
+                    background: ${color};
+                    opacity: 0.7;
+                    border-radius: 1px;
+                    pointer-events: none;
+                `;
+                elTimelineWrap.appendChild(bar);
+            });
+        });
+
+        // Adjust the wrap's padding-bottom so bars don't overlap the slider
+        elTimelineWrap.style.paddingBottom = totalBarHeight + 'px';
     }
 
     function togglePlay() {
@@ -230,6 +283,11 @@ const RettichTimeline = (function () {
     function destroy() {
         stop();
         activitiesData = [];
+        // Remove activity bars
+        if (elTimelineWrap) {
+            elTimelineWrap.querySelectorAll('.activity-bar').forEach(el => el.remove());
+            elTimelineWrap.style.paddingBottom = '';
+        }
     }
 
     return {

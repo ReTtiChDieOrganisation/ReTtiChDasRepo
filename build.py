@@ -202,7 +202,7 @@ def build_html(site_config):
                     <div class="playback-bar">
                         <button class="pb-btn" id="pb-play" title="Play/Pause">▶</button>
                         <span class="pb-time" id="pb-current-time">00:00:00</span>
-                        <div class="pb-timeline-wrap">
+                        <div class="pb-timeline-wrap" id="pb-timeline-wrap">
                             <input type="range" id="pb-timeline" class="pb-timeline" min="0" max="1000" value="0" step="1" />
                         </div>
                         <span class="pb-time" id="pb-end-time">00:00:00</span>
