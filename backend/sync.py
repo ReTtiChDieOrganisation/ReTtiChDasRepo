@@ -42,7 +42,7 @@ def sync_rider(conn, client_id, client_secret, rider_name):
             if act_type == 'VirtualRide':
                 continue
             if act_type not in ('Ride', 'Run', 'Walk', 'Hike',
-                                'AlpineSki', 'NordicSki', 'BackcountrySki'):
+                                'AlpineSki', 'NordicSki', 'BackcountrySki','EBikeRide'):
                 continue
 
             act = strava.parse_activity_summary(rider_name, act_json)
