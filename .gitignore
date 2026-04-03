@@ -6,6 +6,5 @@ frontend/data/*
 __pycache__/
 *.pyc
 .env
-frontend/index.html
-frontend/explorer.html
-frontend/riders.html
+frontend/*.html
+
