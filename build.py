@@ -62,6 +62,11 @@ def main():
     explorer_config = config.get('explorer', {})
     explorer_data = export_explorer_data(conn, DATA_DIR, explorer_config)
 
+    # Step 2d: Export per-rider statistics
+    print("Exporting rider statistics...")
+    from backend.rider_stats_export import export_rider_stats
+    rider_stats_data = export_rider_stats(conn, DATA_DIR, explorer_config)
+
     conn.close()
 
     # Step 3: Read site password from config
@@ -80,6 +85,10 @@ def main():
     # Step 6: Build explorer.html
     print("Building explorer.html...")
     build_explorer_html(explorer_data, site_config)
+
+    # Step 7: Build riders.html
+    print("Building riders.html...")
+    build_riders_html(rider_stats_data, site_config)
 
     print(f"\nDone! Open {os.path.join(FRONTEND_DIR, 'index.html')} in your browser.")
 
@@ -153,6 +162,7 @@ def build_html(site_config):
                 <a href="#" class="tab active" id="tab-map">Map</a>
                 <a href="commutes.html" class="tab" id="tab-commutes">Commutes</a>
                 <a href="explorer.html" class="tab" id="tab-explorer">Explorer</a>
+                <a href="riders.html" class="tab" id="tab-riders">Die Rettiche</a>
             </div>
             <div class="topnav-spacer"></div>
         </nav>
@@ -420,6 +430,7 @@ def build_commutes_html(commute_data, site_config):
                 <a href="index.html" class="tab">Map</a>
                 <a href="commutes.html" class="tab active">Commutes</a>
                 <a href="explorer.html" class="tab">Explorer</a>
+                <a href="riders.html" class="tab">Die Rettiche</a>
             </div>
             <div class="topnav-spacer"></div>
         </nav>
@@ -898,6 +909,7 @@ def build_explorer_html(explorer_data, site_config):
                 <a href="index.html" class="tab">Map</a>
                 <a href="commutes.html" class="tab">Commutes</a>
                 <a href="explorer.html" class="tab active">Explorer</a>
+                <a href="riders.html" class="tab">Die Rettiche</a>
             </div>
             <div class="topnav-spacer"></div>
         </nav>
@@ -1276,6 +1288,250 @@ def build_explorer_html(explorer_data, site_config):
 </html>'''
 
     out_path = os.path.join(FRONTEND_DIR, 'explorer.html')
+    with open(out_path, 'w', encoding='utf-8') as f:
+        f.write(html)
+    size_kb = os.path.getsize(out_path) / 1024
+    print(f"  Written {out_path} ({size_kb:.0f} KB)")
+
+
+def build_riders_html(rider_stats_data, site_config):
+    """Build the Die Rettiche rider stats page."""
+    if not rider_stats_data:
+        rider_stats_data = {'riders': []}
+
+    css = _read_text(os.path.join(FRONTEND_DIR, 'css', 'style.css'))
+    riders_json = json.dumps(rider_stats_data, separators=(',', ':'))
+
+    frame_colors = {
+        'cinelli': '#ff6600', 'orbea': '#cfb53b', 'speedster': '#888888',
+        'red': '#8b0000', 'blue': '#00387b', 'green': '#065000',
+        'purple': '#7030a0', 'orange': '#843c0c', 'navyblue': '#203864',
+        'black': '#333333', 'default': '#646464',
+    }
+    frame_colors_json = json.dumps(frame_colors)
+
+    html = f'''<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ReTtiCh — Die Rettiche</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+{css}
+.riders-page {{
+    padding: 24px 32px;
+    overflow-y: auto;
+    height: calc(100vh - var(--topnav-height));
+}}
+.riders-header {{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+}}
+.riders-header h1 {{
+    font-size: 26px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+}}
+.riders-toggle {{
+    display: flex; gap: 2px; background: var(--bg-tertiary);
+    border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 3px;
+}}
+.riders-toggle button {{
+    padding: 7px 14px; background: transparent; border: none; border-radius: 4px;
+    color: var(--text-secondary); font-family: var(--font-display); font-size: 12px;
+    font-weight: 600; cursor: pointer; transition: all 0.15s;
+}}
+.riders-toggle button:hover {{ color: var(--text-primary); }}
+.riders-toggle button.active {{ background: var(--accent); color: #fff; }}
+
+.rider-cards {{
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 16px;
+}}
+.rider-card {{
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    transition: border-color 0.2s;
+}}
+.rider-card:hover {{
+    border-color: var(--border-light);
+}}
+.rider-card-header {{
+    padding: 20px 20px 14px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    border-bottom: 1px solid var(--border);
+}}
+.rider-card-color {{
+    width: 8px;
+    height: 48px;
+    border-radius: 4px;
+    flex-shrink: 0;
+}}
+.rider-card-name {{
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+}}
+.rider-card-frame {{
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin-top: 2px;
+}}
+.rider-card-body {{
+    padding: 16px 20px 20px;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+}}
+.rc-stat {{
+    text-align: center;
+}}
+.rc-stat-val {{
+    font-family: var(--font-mono);
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-primary);
+}}
+.rc-stat-val.accent {{ color: var(--accent); }}
+.rc-stat-val.teal {{ color: #00d4aa; }}
+.rc-stat-lbl {{
+    font-size: 10px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 2px;
+}}
+.rc-divider {{
+    grid-column: span 3;
+    height: 1px;
+    background: var(--border);
+}}
+    </style>
+</head>
+<body>
+    <div id="app">
+        <nav class="topnav">
+            <div class="topnav-brand">
+                <span class="brand-icon">🥕</span>
+                <span class="brand-name">ReTtiCh</span>
+            </div>
+            <div class="topnav-tabs">
+                <a href="index.html" class="tab">Map</a>
+                <a href="commutes.html" class="tab">Commutes</a>
+                <a href="explorer.html" class="tab">Explorer</a>
+                <a href="riders.html" class="tab active">Die Rettiche</a>
+            </div>
+            <div class="topnav-spacer"></div>
+        </nav>
+
+        <div class="riders-page">
+            <div class="riders-header">
+                <h1>🥕 Die Rettiche</h1>
+                <div class="riders-toggle">
+                    <button class="active" data-period="alltime">All Time</button>
+                    <button data-period="30d">Last 30 Days</button>
+                </div>
+            </div>
+            <div class="rider-cards" id="rider-cards"></div>
+        </div>
+    </div>
+
+    <script>
+    const DATA = {riders_json};
+    const FRAME_COLORS = {frame_colors_json};
+    let period = 'alltime';
+
+    function renderCards() {{
+        const el = document.getElementById('rider-cards');
+        const riders = DATA.riders || [];
+
+        // Sort: by explorer score in current period
+        const sorted = [...riders].sort((a, b) => {{
+            if (period === '30d') return (b.explorer_score_30d || 0) - (a.explorer_score_30d || 0);
+            return (b.explorer_score || 0) - (a.explorer_score || 0);
+        }});
+
+        el.innerHTML = sorted.map(r => {{
+            const color = FRAME_COLORS[r.frame] || FRAME_COLORS['default'];
+            const km = period === '30d' ? r.km_30d : r.total_km;
+            const elev = period === '30d' ? r.elev_30d : r.total_elev;
+            const hours = period === '30d' ? r.hours_30d : r.total_hours;
+            const acts = period === '30d' ? r.acts_30d : r.total_acts;
+            const score = period === '30d' ? r.explorer_score_30d : r.explorer_score;
+            const tiles = period === '30d' ? r.tiles_30d : r.total_tiles;
+            const scorePrefix = period === '30d' && score > 0 ? '+' : '';
+
+            return `<div class="rider-card">
+                <div class="rider-card-header">
+                    <div class="rider-card-color" style="background:${{color}}"></div>
+                    <div>
+                        <div class="rider-card-name">${{r.name}}</div>
+                        <div class="rider-card-frame">${{r.frame}}</div>
+                    </div>
+                </div>
+                <div class="rider-card-body">
+                    <div class="rc-stat">
+                        <div class="rc-stat-val accent">${{scorePrefix}}${{score.toFixed(1)}}</div>
+                        <div class="rc-stat-lbl">Explorer Score</div>
+                    </div>
+                    <div class="rc-stat">
+                        <div class="rc-stat-val teal">${{tiles.toLocaleString()}}</div>
+                        <div class="rc-stat-lbl">${{period === '30d' ? 'New Tiles' : 'Tiles'}}</div>
+                    </div>
+                    <div class="rc-stat">
+                        <div class="rc-stat-val">${{r.revier_size.toLocaleString()}}</div>
+                        <div class="rc-stat-lbl">Revier</div>
+                    </div>
+                    <div class="rc-divider"></div>
+                    <div class="rc-stat">
+                        <div class="rc-stat-val">${{Math.round(km).toLocaleString()}}</div>
+                        <div class="rc-stat-lbl">km</div>
+                    </div>
+                    <div class="rc-stat">
+                        <div class="rc-stat-val">${{Math.round(elev).toLocaleString()}} m</div>
+                        <div class="rc-stat-lbl">Elevation</div>
+                    </div>
+                    <div class="rc-stat">
+                        <div class="rc-stat-val">${{Math.round(hours)}}</div>
+                        <div class="rc-stat-lbl">Hours</div>
+                    </div>
+                    <div class="rc-divider"></div>
+                    <div class="rc-stat" style="grid-column:span 3;">
+                        <div class="rc-stat-val">${{acts}}</div>
+                        <div class="rc-stat-lbl">Activities</div>
+                    </div>
+                </div>
+            </div>`;
+        }}).join('');
+    }}
+
+    document.addEventListener('DOMContentLoaded', () => {{
+        renderCards();
+        document.querySelectorAll('.riders-toggle button').forEach(btn => {{
+            btn.addEventListener('click', () => {{
+                document.querySelectorAll('.riders-toggle button').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                period = btn.dataset.period;
+                renderCards();
+            }});
+        }});
+    }});
+    </script>
+</body>
+</html>'''
+
+    out_path = os.path.join(FRONTEND_DIR, 'riders.html')
     with open(out_path, 'w', encoding='utf-8') as f:
         f.write(html)
     size_kb = os.path.getsize(out_path) / 1024
