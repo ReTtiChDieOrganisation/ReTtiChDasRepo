@@ -8,3 +8,4 @@ __pycache__/
 .env
 frontend/index.html
 frontend/explorer.html
+frontend/riders.html
