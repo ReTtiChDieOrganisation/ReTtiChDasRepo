@@ -23,13 +23,17 @@ DATA_DIR = os.path.join(FRONTEND_DIR, 'data')
 
 def main():
     full = '--full' in sys.argv
-
-    db_path = os.path.join(BASE_DIR, 'rettich.db')
+    db_path = None
+    for arg in sys.argv[1:]:
+        if arg.startswith('--db='):
+            db_path = arg.split('=', 1)[1]
+    if db_path is None:
+        db_path = os.path.join(BASE_DIR, 'rettich.db')
     if not os.path.exists(db_path):
         print("Error: rettich.db not found. Run sync.py first.")
         sys.exit(1)
 
-    conn = db.get_connection()
+    conn = db.get_connection(db_path)
 
     print("=== ReTtiCh Build ===")
     if full:
@@ -524,8 +528,7 @@ def build_commutes_html(commute_data, site_config):
             </div>
             <div class="stat-big rettich">
                 <div class="stat-icon">🥕</div>
-                <div class="stat-value">${{s.rettich_count.toLocaleString()}} Rettiche</div>
-                <div class="stat-label">${{s.rettich_kg.toLocaleString()}} kg Rettich</div>
+                <div class="stat-value">${{s.rettich_kg.toLocaleString()}} kg Rettiche</div>
             </div>
         `;
 
@@ -1097,7 +1100,7 @@ def build_explorer_html(explorer_data, site_config):
                 return `<div class="rider-score-row ${{active}}" data-rider="${{r.rider}}" style="cursor:pointer;">
                     <span class="rs-rank">${{medals[i] || (i+1)}}</span>
                     <span class="rs-name">${{r.rider}}</span>
-                    <span class="rs-score">${{prefix}}${{val.toFixed(1)}}</span>
+                    <span class="rs-score">${{prefix}}${{val.toLocaleString(undefined, {{minimumFractionDigits: 1, maximumFractionDigits: 1}})}}</span>
                 </div>`;
             }}).join('');
 
@@ -1513,13 +1516,13 @@ def build_riders_html(rider_stats_data, site_config, explorer_data=None):
     let selectedCol = 'rettiche';
     let sortDir = -1; // -1 = desc
 
-    const COLUMNS = {{
-        rettiche:   {{ label: 'Rettiche',      unit: '',   allKey: 'rettiche',   thirtyKey: 'rettiche_30d',   fmt: v => v.toFixed(1) }},
+const COLUMNS = {{
+        rettiche:   {{ label: 'Rettiche',      unit: '',   allKey: 'rettiche',   thirtyKey: 'rettiche_30d',   fmt: v => v.toLocaleString(undefined, {{minimumFractionDigits: 1, maximumFractionDigits: 1}}) }},
         tiles:      {{ label: 'Beete',          unit: '',   allKey: 'total_tiles', thirtyKey: 'tiles_30d',     fmt: v => v.toLocaleString() }},
         feld_size:  {{ label: 'Acker Größe',    unit: '',   allKey: 'feld_size',   thirtyKey: 'feld_size_30d', fmt: v => v.toLocaleString(), prefix30d: true }},
         km:         {{ label: 'km',             unit: 'km', allKey: 'total_km',    thirtyKey: 'km_30d',        fmt: v => Math.round(v).toLocaleString() }},
         elev:       {{ label: 'Elevation',      unit: 'm',  allKey: 'total_elev',  thirtyKey: 'elev_30d',      fmt: v => Math.round(v).toLocaleString() }},
-        hours:      {{ label: 'Hours',          unit: 'h',  allKey: 'total_hours', thirtyKey: 'hours_30d',     fmt: v => v.toFixed(1) }},
+        hours:      {{ label: 'Hours',          unit: 'h',  allKey: 'total_hours', thirtyKey: 'hours_30d',     fmt: v => v.toLocaleString(undefined, {{minimumFractionDigits: 1, maximumFractionDigits: 1}}) }},
         acts:       {{ label: 'Activities',     unit: '',   allKey: 'total_acts',  thirtyKey: 'acts_30d',      fmt: v => v.toLocaleString() }},
     }};
 

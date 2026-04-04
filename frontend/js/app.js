@@ -255,12 +255,12 @@ const RettichApp = (function () {
             const newTiles = idx.new_tiles != null ? idx.new_tiles : 0;
             const totalTiles = idx.total_tiles != null ? idx.total_tiles : 0;
             const retticheScore = idx.rettiche_score != null ? idx.rettiche_score : 0;
-            const dist = act.distance ? (act.distance / 1000).toFixed(1) : '?';
+            const dist = act.distance ? (act.distance / 1000).toLocaleString(undefined, {minimumFractionDigits: 1, maximumFractionDigits: 1}) : '?';
             return { act, rider, color, newTiles, totalTiles, retticheScore, dist, name: act.rider_name };
         }).sort((a, b) => b.retticheScore - a.retticheScore);
 
         el.innerHTML = items.map(it => {
-            const scoreDisplay = it.retticheScore > 0 ? it.retticheScore.toFixed(1) : '0.0';
+            const scoreDisplay = it.retticheScore > 0 ? it.retticheScore.toLocaleString(undefined, {minimumFractionDigits: 1, maximumFractionDigits: 1}) : (0).toLocaleString(undefined, {minimumFractionDigits: 1, maximumFractionDigits: 1});
             return `
             <div class="activity-item" style="cursor:pointer;" onclick="RettichApp.focusRider('${it.name}')">
                 <div class="rider-color" style="background:${it.color};width:10px;height:10px;border-radius:50%;flex-shrink:0;"></div>
