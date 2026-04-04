@@ -133,10 +133,15 @@ def export_explorer_data(conn, output_dir, config=None):
         for point in latlng:
             act_tiles.add(lat_lon_to_tile(point[0], point[1], zoom))
 
-        # Track per-activity: new tiles discovered and total tiles touched
+        # Track per-activity: new tiles discovered, total tiles touched, and rettiche score
         new_tiles_count = 0
+        act_score = 0.0
+
         for key in act_tiles:
             rider_tile_visits[key][rider] += 1
+            # Score contribution: 1 / personal visit number for this tile
+            act_score += 1.0 / rider_tile_visits[key][rider]
+
             if date < thirty_ago:
                 rider_tile_visits_old[key][rider] += 1
 
@@ -153,6 +158,7 @@ def export_explorer_data(conn, output_dir, config=None):
         activity_rettiche[act_id] = {
             'new': new_tiles_count,
             'total': len(act_tiles),
+            'score': round(act_score, 2),
         }
 
     # Largest connected area (Rettich Feld)

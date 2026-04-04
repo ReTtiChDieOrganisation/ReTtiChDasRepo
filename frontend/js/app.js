@@ -247,25 +247,28 @@ const RettichApp = (function () {
         const indexById = {};
         activitiesIndex.forEach(a => { indexById[a.id] = a; });
 
-        // Build list sorted by new tiles desc
+        // Build list sorted by rettiche score desc
         const items = activities.map(act => {
             const idx = indexById[act.id] || {};
             const rider = riders[act.rider_name] || {};
             const color = getRiderColor(rider);
             const newTiles = idx.new_tiles != null ? idx.new_tiles : 0;
             const totalTiles = idx.total_tiles != null ? idx.total_tiles : 0;
+            const retticheScore = idx.rettiche_score != null ? idx.rettiche_score : 0;
             const dist = act.distance ? (act.distance / 1000).toFixed(1) : '?';
-            return { act, rider, color, newTiles, totalTiles, dist, name: act.rider_name };
-        }).sort((a, b) => b.newTiles - a.newTiles);
+            return { act, rider, color, newTiles, totalTiles, retticheScore, dist, name: act.rider_name };
+        }).sort((a, b) => b.retticheScore - a.retticheScore);
 
-        el.innerHTML = items.map(it => `
+        el.innerHTML = items.map(it => {
+            const scoreDisplay = it.retticheScore > 0 ? it.retticheScore.toFixed(1) : '0.0';
+            return `
             <div class="activity-item" style="cursor:pointer;" onclick="RettichApp.focusRider('${it.name}')">
                 <div class="rider-color" style="background:${it.color};width:10px;height:10px;border-radius:50%;flex-shrink:0;"></div>
                 <span class="activity-name">${it.name}</span>
                 <span class="activity-dist">${it.dist} km</span>
-                <span class="activity-rettiche" title="${it.totalTiles} tiles touched, ${it.newTiles} new">🥕 ${it.newTiles} new / ${it.totalTiles}</span>
+                <span class="activity-rettiche" title="${it.totalTiles} tiles touched, ${it.newTiles} new">🥕 ${scoreDisplay} (${it.newTiles} new / ${it.totalTiles})</span>
             </div>
-        `).join('');
+        `}).join('');
 
         section.style.display = 'block';
     }

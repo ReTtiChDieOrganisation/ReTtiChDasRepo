@@ -110,6 +110,7 @@ def build_html(site_config, explorer_data=None):
             if isinstance(info, dict):
                 act['new_tiles'] = info.get('new', 0)
                 act['total_tiles'] = info.get('total', 0)
+                act['rettiche_score'] = info.get('score', 0.0)
             else:
                 act['new_tiles'] = 0
                 act['total_tiles'] = 0
