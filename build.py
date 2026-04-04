@@ -813,7 +813,7 @@ def build_commutes_html(commute_data, site_config):
 
 
 def build_explorer_html(explorer_data, site_config):
-    """Build the tile explorer page with heatmap, Rettich Feld, per-rider scores."""
+    """Build the tile explorer page with heatmap, Acker, per-rider scores."""
     if not explorer_data:
         explorer_data = {'tiles': [], 'stats': {}, 'daily_new': [], 'rider_scores': [], 'zoom': 16, 'max_visits': 1}
 
@@ -934,8 +934,8 @@ def build_explorer_html(explorer_data, site_config):
         <div class="explorer-layout">
             <aside class="explorer-sidebar">
                 <div class="mode-switch">
-                    <button class="active" data-mode="heatmap">All Tiles</button>
-                    <button data-mode="feld">Rettich Feld</button>
+                    <button class="active" data-mode="heatmap">Beete</button>
+                    <button data-mode="feld">Acker</button>
                 </div>
 
                 <div class="exp-section">
