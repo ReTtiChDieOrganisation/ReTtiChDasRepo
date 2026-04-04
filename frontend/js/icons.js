@@ -33,16 +33,52 @@ function getRiderColor(rider) {
     return frameData.hex;
 }
 
-function createRiderMarkerIcon(rider, size = 12) {
+function createRiderMarkerIcon(rider, size = 36) {
     const color = getRiderColor(rider);
+    const iconUrl = rider.icon_url || '';
+
+    if (iconUrl) {
+        const border = 3;
+        const total = size + border * 2;
+        const triangle = 8;
+
+        const html = `
+            <div style="display:flex;flex-direction:column;align-items:center;">
+                <div style="
+                    width:${size}px;height:${size}px;
+                    border-radius:50%;
+                    border:${border}px solid ${color};
+                    box-shadow:0 0 6px ${color}88, 0 2px 6px rgba(0,0,0,0.5);
+                    overflow:hidden;
+                    flex-shrink:0;
+                ">
+                    <img src="${iconUrl}" style="width:100%;height:100%;object-fit:cover;" />
+                </div>
+                <div style="
+                    width:0;height:0;
+                    border-left:${triangle/2}px solid transparent;
+                    border-right:${triangle/2}px solid transparent;
+                    border-top:${triangle}px solid ${color};
+                "></div>
+            </div>`;
+
+        return L.divIcon({
+            className: 'rider-marker-frame',
+            html,
+            iconSize: [total, total + triangle],
+            iconAnchor: [total / 2, total + triangle - 6],
+        });
+    }
+
+    // Fallback: colored circle
     return L.divIcon({
         className: 'rider-marker-custom',
         html: `<div style="
-            width: ${size}px; height: ${size}px;
-            background: ${color};
-            border: 2px solid white;
-            border-radius: 50%;
-            box-shadow: 0 0 6px ${color}, 0 2px 4px rgba(0,0,0,0.4);
+            width:${size}px;height:${size}px;
+            background:${color};
+            border:2px solid white;
+            border-radius:50%;
+            box-shadow:0 0 6px ${color},0 2px 4px rgba(0,0,0,0.4);
         "></div>`,
         iconSize: [size, size],
         iconAnchor: [size / 2, size / 2],

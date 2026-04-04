@@ -85,16 +85,9 @@ const RettichMap = (function () {
         if (riderMarkers[riderName]) {
             riderMarkers[riderName].setLatLng(latlng);
         } else {
-            const icon = createRiderMarkerIcon(rider, 14);
+            const icon = createRiderMarkerIcon(rider, 40);
             const marker = L.marker(latlng, { icon, zIndexOffset: 1000 }).addTo(map);
 
-            // Tooltip with name
-            marker.bindTooltip(riderName, {
-                permanent: true,
-                direction: 'top',
-                offset: [0, -10],
-                className: 'rider-marker-label'
-            });
 
             riderMarkers[riderName] = marker;
             markerLayers.push(marker);

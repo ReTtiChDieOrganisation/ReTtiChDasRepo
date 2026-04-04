@@ -7,4 +7,5 @@ __pycache__/
 *.pyc
 .env
 frontend/*.html
-
+frontend/icons/profile_pictures/*
+!frontend/icons/profile_pictures/default.png
