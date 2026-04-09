@@ -165,7 +165,7 @@ html, body {
 /* === Main Layout === */
 .main-layout {
     display: flex;
-    height: calc(100dvh - var(--topnav-height));
+    height: calc(var(--app-vh, 100dvh) - var(--topnav-height));
 }
 
 /* === Sidebar === */
@@ -685,7 +685,7 @@ html, body {
 .commute-page {
     padding: 32px;
     overflow-y: auto;
-    height: calc(100dvh - var(--topnav-height));
+    height: calc(var(--app-vh, 100dvh) - var(--topnav-height));
 }
 .commute-header {
     margin-bottom: 32px;
@@ -908,18 +908,15 @@ html, body {
 .mobile-view .sidebar.open { transform: translateX(0); }
 .mobile-view .map-area {
     width: 100%;
-    height: calc(100dvh - var(--topnav-height));
+    height: calc(var(--app-vh, 100dvh) - var(--topnav-height));
 }
 
-/* Lift playback bar above iOS home indicator */
-.mobile-view .playback-controls {
-    padding-bottom: max(8px, env(safe-area-inset-bottom));
-}
-
-/* Playback controls — compact */
+/* Playback controls — compact + lift above home indicator / Android nav bar */
 .mobile-view .pb-clock { font-size: 20px; margin-bottom: 4px; }
 .mobile-view .pb-time { display: none; }
-.mobile-view .playback-controls { padding: 12px 10px 8px; }
+.mobile-view .playback-controls {
+    padding: 12px 10px max(8px, env(safe-area-inset-bottom));
+}
 
 /* Mode toggle — compact */
 .mobile-view .mode-btn { padding: 7px 10px; font-size: 11px; }

@@ -837,7 +837,7 @@ def build_explorer_html(explorer_data, site_config):
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
 {css}
-.explorer-layout {{ display: flex; height: calc(100dvh - var(--topnav-height)); }}
+.explorer-layout {{ display: flex; height: calc(var(--app-vh, 100dvh) - var(--topnav-height)); }}
 .explorer-sidebar {{
     width: 360px; background: var(--bg-secondary); border-right: 1px solid var(--border);
     overflow-y: auto; flex-shrink: 0; padding: 20px 16px;
@@ -1706,6 +1706,14 @@ def _shared_mobile_js():
     applyView();
     window.addEventListener('resize', applyView);
     window.applyRettichView = applyView;
+
+    // Set --app-vh so CSS can use actual visible viewport height on all browsers
+    // (100dvh is unreliable on older Android Chrome; window.innerHeight always correct)
+    function setAppVh() {
+        document.documentElement.style.setProperty('--app-vh', window.innerHeight + 'px');
+    }
+    setAppVh();
+    window.addEventListener('resize', setAppVh);
 })();
 </script>'''
 
