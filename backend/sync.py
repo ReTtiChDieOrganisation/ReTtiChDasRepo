@@ -19,7 +19,7 @@ def sync_rider(conn, client_id, client_secret, rider_name):
         access_token, expires_at, new_refresh = strava.refresh_access_token(
             client_id, client_secret, rider['refresh_token']
         )
-        db.update_token(conn, rider_name, access_token, expires_at)
+        db.update_token(conn, rider_name, access_token, expires_at, new_refresh)
     else:
         access_token = rider['access_token']
 
@@ -37,22 +37,28 @@ def sync_rider(conn, client_id, client_secret, rider_name):
             break
 
         for act_json in activities:
+            act = strava.parse_activity_summary(rider_name, act_json)
+
+            # Advance epoch for ALL Strava activities regardless of type,
+            # so filtered types (e.g. swimming) don't stall the sync pointer.
+            if act['start_epoch'] > max_epoch:
+                max_epoch = act['start_epoch']
+
             # Include rides, runs, walks, hikes, skiing — but not virtual rides
             act_type = act_json.get('type', '')
             if act_type == 'VirtualRide':
                 continue
             if act_type not in ('Ride', 'Run', 'Walk', 'Hike',
-                                'AlpineSki', 'NordicSki', 'BackcountrySki','EBikeRide'):
+                                'AlpineSki', 'NordicSki', 'BackcountrySki', 'EBikeRide'):
                 continue
-
-            act = strava.parse_activity_summary(rider_name, act_json)
 
             if db.activity_exists(conn, act['id']):
                 continue
 
-            # Insert activity
-            db.insert_activity(conn, act)
-            total_new += 1
+            # Insert activity — count only rows actually written (INSERT OR IGNORE
+            # can silently do nothing on constraint conflicts)
+            if db.insert_activity(conn, act):
+                total_new += 1
 
             # Fetch detailed activity for segment efforts
             print(f"    Fetching details for activity {act['id']} ({act['name']})...")
@@ -77,9 +83,6 @@ def sync_rider(conn, client_id, client_secret, rider_name):
                 raise  # Let caller handle
             except Exception as e:
                 print(f"    [!] Error fetching details for {act['id']}: {e}")
-
-            if act['start_epoch'] > max_epoch:
-                max_epoch = act['start_epoch']
 
         page += 1
 

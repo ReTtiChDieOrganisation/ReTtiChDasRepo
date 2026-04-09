@@ -119,11 +119,14 @@ def upsert_rider(conn, name, refresh_token, icon_url, frame):
     conn.commit()
 
 
-def update_token(conn, rider_name, access_token, expires_at):
+def update_token(conn, rider_name, access_token, expires_at, refresh_token=None):
     conn.execute("""
-        UPDATE riders SET access_token=?, token_expires_at=?
+        UPDATE riders
+        SET access_token=?,
+            token_expires_at=?,
+            refresh_token=COALESCE(?, refresh_token)
         WHERE name=?
-    """, (access_token, expires_at, rider_name))
+    """, (access_token, expires_at, refresh_token, rider_name))
     conn.commit()
 
 
@@ -143,7 +146,8 @@ def activity_exists(conn, activity_id):
 
 
 def insert_activity(conn, act):
-    conn.execute("""
+    """Insert an activity. Returns True if the row was actually inserted, False if it already existed."""
+    cursor = conn.execute("""
         INSERT OR IGNORE INTO activities
         (id, rider_name, name, activity_type, date, start_date_local, start_epoch,
          elapsed_time, moving_time, distance, total_elevation_gain,
@@ -159,6 +163,7 @@ def insert_activity(conn, act):
         act.get('average_watts'), act.get('summary_polyline')
     ))
     conn.commit()
+    return cursor.rowcount > 0
 
 
 def insert_stream(conn, activity_id, time_data, latlng_data, distance_data, altitude_data, watts_data=None):
@@ -217,6 +222,20 @@ def update_last_sync_epoch(conn, rider_name, epoch):
 def clear_groups(conn):
     conn.execute("DELETE FROM group_activities")
     conn.execute("DELETE FROM groups_table")
+    conn.commit()
+
+
+def clear_groups_for_dates(conn, dates):
+    if not dates:
+        return
+    placeholders = ','.join('?' * len(dates))
+    group_ids = [r[0] for r in conn.execute(
+        f"SELECT id FROM groups_table WHERE date IN ({placeholders})", list(dates)
+    ).fetchall()]
+    if group_ids:
+        ph = ','.join('?' * len(group_ids))
+        conn.execute(f"DELETE FROM group_activities WHERE group_id IN ({ph})", group_ids)
+        conn.execute(f"DELETE FROM groups_table WHERE id IN ({ph})", group_ids)
     conn.commit()
 
 
