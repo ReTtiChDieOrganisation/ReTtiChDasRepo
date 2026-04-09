@@ -165,7 +165,6 @@ html, body {
 /* === Main Layout === */
 .main-layout {
     display: flex;
-    height: calc(100vh - var(--topnav-height));
     height: calc(100dvh - var(--topnav-height));
 }
 
@@ -686,7 +685,6 @@ html, body {
 .commute-page {
     padding: 32px;
     overflow-y: auto;
-    height: calc(100vh - var(--topnav-height));
     height: calc(100dvh - var(--topnav-height));
 }
 .commute-header {
@@ -910,8 +908,12 @@ html, body {
 .mobile-view .sidebar.open { transform: translateX(0); }
 .mobile-view .map-area {
     width: 100%;
-    height: calc(100vh - var(--topnav-height));
     height: calc(100dvh - var(--topnav-height));
+}
+
+/* Lift playback bar above iOS home indicator */
+.mobile-view .playback-controls {
+    padding-bottom: max(8px, env(safe-area-inset-bottom));
 }
 
 /* Playback controls — compact */
