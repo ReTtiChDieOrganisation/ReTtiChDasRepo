@@ -1,4 +1,4 @@
-"""Explorer: compute collected map tiles from GPS tracks.
+"""Explorer: export collected map tiles from GPS tracks.
 
 Tiles at zoom 16 (~600m at 50°N). Virtual rides excluded.
 
@@ -7,24 +7,15 @@ Per-rider Rettiche: when N riders discover a tile on the same day,
 each gets 1/N credit for that discovery. Revisit scoring is personal.
 
 Rettich Feld: largest 8-connected component of collected tiles.
+
+Tile computation is done once in tile_engine.py and passed in as TileData.
 """
 
 import json
 import math
 import os
-from collections import defaultdict, deque
+from collections import defaultdict
 from datetime import datetime, timedelta
-from backend import database as db
-
-DEFAULT_ZOOM = 16
-
-
-def lat_lon_to_tile(lat, lon, zoom):
-    n = 2 ** zoom
-    x = int((lon + 180.0) / 360.0 * n)
-    lat_rad = math.radians(lat)
-    y = int((1.0 - math.log(math.tan(lat_rad) + 1.0 / math.cos(lat_rad)) / math.pi) / 2.0 * n)
-    return x, y
 
 
 def tile_to_bounds(x, y, zoom):
@@ -36,136 +27,51 @@ def tile_to_bounds(x, y, zoom):
     return [math.degrees(south_rad), west, math.degrees(north_rad), east]
 
 
-def harmonic(n):
-    return sum(1.0 / k for k in range(1, n + 1))
+def export_explorer_data(conn, output_dir, tile_data, config=None):
+    """Export explorer tile data.
 
-
-def find_largest_connected(tile_set):
-    """BFS with 8-connectivity."""
-    if not tile_set:
-        return set()
-    visited = set()
-    largest = set()
-    neighbors = [(-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1)]
-    for start in tile_set:
-        if start in visited:
-            continue
-        component = set()
-        queue = deque([start])
-        while queue:
-            node = queue.popleft()
-            if node in visited:
-                continue
-            visited.add(node)
-            component.add(node)
-            for dx, dy in neighbors:
-                nb = (node[0] + dx, node[1] + dy)
-                if nb in tile_set and nb not in visited:
-                    queue.append(nb)
-        if len(component) > len(largest):
-            largest = component
-    return largest
-
-
-def export_explorer_data(conn, output_dir, config=None):
+    Args:
+        conn: database connection
+        output_dir: path to frontend/data
+        tile_data: TileData from tile_engine.compute_tile_data()
+        config: explorer config dict
+    """
     config = config or {}
-    zoom = config.get('zoom', DEFAULT_ZOOM)
+    zoom = tile_data.zoom
 
     today_str = datetime.now().strftime('%Y-%m-%d')
     week_ago = (datetime.now() - timedelta(days=7)).strftime('%Y-%m-%d')
-
-    # tiles: (x,y) -> { visits: int, first_date }
-    tiles = {}
-    # Per-rider visits per tile: {(x,y): {rider: visit_count}}
-    rider_tile_visits = defaultdict(lambda: defaultdict(int))
-    # Same but only visits BEFORE 30 days ago (for delta computation)
-    rider_tile_visits_old = defaultdict(lambda: defaultdict(int))
-    # Track first discovery: {(x,y): {date: set(riders)}} - who discovered on which day
-    tile_discovery = defaultdict(lambda: defaultdict(set))
-
     thirty_ago = (datetime.now() - timedelta(days=30)).strftime('%Y-%m-%d')
 
-    all_activities = conn.execute("""
-        SELECT a.id, a.rider_name, a.date, a.elapsed_time, a.moving_time,
-               a.distance, a.activity_type
-        FROM activities a
-        WHERE a.activity_type != 'VirtualRide'
-        ORDER BY a.start_epoch ASC
-    """).fetchall()
+    tiles = tile_data.tiles
+    tile_rider_visits = tile_data.tile_rider_visits
+    tile_rider_visits_old = tile_data.tile_rider_visits_old
+    tile_discovery = tile_data.tile_discovery
+    feld = tile_data.feld
+    new_tiles_by_date = tile_data.new_tiles_by_date
+    activity_rettiche = tile_data.activity_rettiche
 
-    total_km = 0
-    total_time_s = 0
-    total_activities = 0
-    week_km = 0
-    week_time_s = 0
-    week_activities = 0
+    # Global activity stats (simple aggregate — no stream loading needed here)
+    row = conn.execute("""
+        SELECT
+            COUNT(*) AS total_activities,
+            SUM(distance) / 1000.0 AS total_km,
+            SUM(elapsed_time) AS total_time_s,
+            COUNT(CASE WHEN date >= ? THEN 1 END) AS week_activities,
+            SUM(CASE WHEN date >= ? THEN distance ELSE 0 END) / 1000.0 AS week_km,
+            SUM(CASE WHEN date >= ? THEN elapsed_time ELSE 0 END) AS week_time_s
+        FROM activities
+        WHERE activity_type != 'VirtualRide'
+    """, (week_ago, week_ago, week_ago)).fetchone()
 
-    new_tiles_by_date = defaultdict(int)
+    total_activities = row['total_activities'] or 0
+    total_km = row['total_km'] or 0.0
+    total_time_s = row['total_time_s'] or 0
+    week_activities = row['week_activities'] or 0
+    week_km = row['week_km'] or 0.0
+    week_time_s = row['week_time_s'] or 0
 
-    # Per-activity rettiche: tracks each activity's contribution
-    activity_rettiche = {}  # act_id -> float
-
-    for act in all_activities:
-        dist = act['distance'] or 0
-        elapsed = act['elapsed_time'] or 0
-        date = act['date']
-        rider = act['rider_name']
-        act_id = act['id']
-
-        total_km += dist / 1000
-        total_time_s += elapsed
-        total_activities += 1
-
-        if date >= week_ago:
-            week_km += dist / 1000
-            week_time_s += elapsed
-            week_activities += 1
-
-        stream = db.get_stream(conn, act_id)
-        if not stream or not stream['latlng_data']:
-            continue
-
-        latlng = json.loads(stream['latlng_data'])
-        if not latlng:
-            continue
-
-        act_tiles = set()
-        for point in latlng:
-            act_tiles.add(lat_lon_to_tile(point[0], point[1], zoom))
-
-        # Track per-activity: new tiles discovered, total tiles touched, and rettiche score
-        new_tiles_count = 0
-        act_score = 0.0
-
-        for key in act_tiles:
-            rider_tile_visits[key][rider] += 1
-            # Score contribution: 1 / personal visit number for this tile
-            act_score += 1.0 / rider_tile_visits[key][rider]
-
-            if date < thirty_ago:
-                rider_tile_visits_old[key][rider] += 1
-
-            if key not in tiles:
-                tiles[key] = {'visits': 1, 'first_date': date}
-                new_tiles_by_date[date] += 1
-                tile_discovery[key][date].add(rider)
-                new_tiles_count += 1
-            else:
-                tiles[key]['visits'] += 1
-                if date == tiles[key]['first_date']:
-                    tile_discovery[key][date].add(rider)
-
-        activity_rettiche[act_id] = {
-            'new': new_tiles_count,
-            'total': len(act_tiles),
-            'score': round(act_score, 2),
-        }
-
-    # Largest connected area (Rettich Feld)
-    tile_coords = set(tiles.keys())
-    feld = find_largest_connected(tile_coords)
-
-    # Track feld new tiles
+    # Feld stats
     new_feld_today = 0
     new_feld_week = 0
     for key in feld:
@@ -175,14 +81,17 @@ def export_explorer_data(conn, output_dir, config=None):
         if fd >= week_ago:
             new_feld_week += 1
 
-    # Global Rettiche
-    rettiche = sum(harmonic(t['visits']) for t in tiles.values())
+    # Global Rettiche (harmonic sum over all tile visit counts)
+    rettiche = sum(
+        sum(1.0 / k for k in range(1, t['visits'] + 1))
+        for t in tiles.values()
+    )
 
-    # Per-rider Rettiche:
-    # First visit to a tile: if N riders discovered it on the same day, each gets 1/N
+    # Per-rider Rettiche using discovery model:
+    # First visit: if N riders discovered tile on same day, each gets 1/N
     # Subsequent personal visits: +1/(personal_visit_number)
     rider_scores = defaultdict(float)
-    rider_scores_old = defaultdict(float)  # score from visits before 30 days ago
+    rider_scores_old = defaultdict(float)
     all_rider_names = set()
 
     for key, info in tiles.items():
@@ -190,11 +99,10 @@ def export_explorer_data(conn, output_dir, config=None):
         discoverers = tile_discovery[key].get(first_date, set())
         n_discoverers = max(1, len(discoverers))
 
-        for rider, visit_count in rider_tile_visits[key].items():
+        for rider, visit_count in tile_rider_visits[key].items():
             all_rider_names.add(rider)
-            old_count = rider_tile_visits_old.get(key, {}).get(rider, 0)
+            old_count = tile_rider_visits_old.get(key, {}).get(rider, 0)
 
-            # All-time score
             if rider in discoverers:
                 rider_scores[rider] += 1.0 / n_discoverers
                 for k in range(2, visit_count + 1):
@@ -203,7 +111,6 @@ def export_explorer_data(conn, output_dir, config=None):
                 for k in range(1, visit_count + 1):
                     rider_scores[rider] += 1.0 / k
 
-            # Old score (same logic, but with old visit counts)
             if old_count > 0:
                 if rider in discoverers and first_date < thirty_ago:
                     rider_scores_old[rider] += 1.0 / n_discoverers
@@ -213,21 +120,17 @@ def export_explorer_data(conn, output_dir, config=None):
                     for k in range(1, old_count + 1):
                         rider_scores_old[rider] += 1.0 / k
                 else:
-                    # Rider was discoverer but discovery was within 30 days
-                    # All old visits are non-discovery visits
                     for k in range(1, old_count + 1):
                         rider_scores_old[rider] += 1.0 / k
 
-    # Find max visits for normalization
     max_visits = max((t['visits'] for t in tiles.values()), default=1)
 
-    # Build export
     tiles_list = []
     for (tx, ty), info in tiles.items():
         bounds = tile_to_bounds(tx, ty, zoom)
         is_new = info['first_date'] >= week_ago
         in_feld = (tx, ty) in feld
-        tile_riders = list(rider_tile_visits[(tx, ty)].keys())
+        tile_riders = list(tile_rider_visits[(tx, ty)].keys())
 
         tiles_list.append({
             'x': tx, 'y': ty,
@@ -236,7 +139,7 @@ def export_explorer_data(conn, output_dir, config=None):
             'n': is_new,
             'r': in_feld,
             'd': info['first_date'],
-            'p': tile_riders,  # riders who visited this tile
+            'p': tile_riders,
         })
 
     new_today = new_tiles_by_date.get(today_str, 0)
@@ -276,7 +179,6 @@ def export_explorer_data(conn, output_dir, config=None):
         'activity_rettiche': activity_rettiche,
     }
 
-    # Write explorer JS (without activity_rettiche to keep file small)
     js_path = os.path.join(output_dir, 'explorer_data.js')
     js_data = {k: v for k, v in data.items() if k != 'activity_rettiche'}
     json_str = json.dumps(js_data, separators=(',', ':'))

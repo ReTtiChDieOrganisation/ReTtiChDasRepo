@@ -220,6 +220,20 @@ def clear_groups(conn):
     conn.commit()
 
 
+def clear_groups_for_dates(conn, dates):
+    if not dates:
+        return
+    placeholders = ','.join('?' * len(dates))
+    group_ids = [r[0] for r in conn.execute(
+        f"SELECT id FROM groups_table WHERE date IN ({placeholders})", list(dates)
+    ).fetchall()]
+    if group_ids:
+        ph = ','.join('?' * len(group_ids))
+        conn.execute(f"DELETE FROM group_activities WHERE group_id IN ({ph})", group_ids)
+        conn.execute(f"DELETE FROM groups_table WHERE id IN ({ph})", group_ids)
+    conn.commit()
+
+
 def insert_group(conn, name, date, group_type, shared_segment_count, activity_ids):
     c = conn.cursor()
     c.execute("""

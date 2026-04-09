@@ -13,7 +13,7 @@ import sys
 sys.path.insert(0, os.path.dirname(__file__))
 
 from backend import database as db
-from backend.grouping import compute_groups
+from backend.grouping import compute_groups, compute_groups_for_dates
 from backend.export import export_all
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -35,41 +35,65 @@ def main():
 
     conn = db.get_connection(db_path)
 
-    print("=== ReTtiCh Build ===")
-    if full:
-        print("  Mode: FULL rebuild")
-    else:
-        print("  Mode: incremental (use --full to rebuild all)")
-
-    # Step 1: Compute groups
-    print("Computing ride groups...")
-    compute_groups(conn)
-
-    # Step 2: Export data (activities as .js files, metadata as .json)
-    print("Exporting data for frontend...")
-    export_all(conn, DATA_DIR, full=full)
-
-    # Step 2b: Export commute data
-    print("Exporting commute data...")
-    from backend.commute_export import export_commute_data
     config_path = os.path.join(BASE_DIR, 'config', 'config.json')
     config = {}
     if os.path.exists(config_path):
         with open(config_path) as f:
             config = json.load(f)
     commute_config = config.get('commute', {})
-    commute_data = export_commute_data(conn, DATA_DIR, commute_config)
+    explorer_config = config.get('explorer', {})
 
-    # Step 2c: Export explorer tile data
+    print("=== ReTtiCh Build ===")
+    if full:
+        print("  Mode: FULL rebuild")
+    else:
+        print("  Mode: incremental (use --full to rebuild all)")
+
+    # Detect new activity IDs (in DB but no .js file exported yet)
+    new_ids = _get_new_activity_ids(conn, DATA_DIR)
+    if not new_ids and not full:
+        print("No new activities. Nothing to do.")
+        conn.close()
+        return
+
+    if new_ids:
+        print(f"  {len(new_ids)} new activity/activities to process")
+
+    # Step 1: Compute groups
+    print("Computing ride groups...")
+    if full:
+        compute_groups(conn)
+    else:
+        new_dates = _get_dates_for_ids(conn, new_ids)
+        compute_groups_for_dates(conn, new_dates)
+
+    # Step 2: Export data (activities as .js files, metadata as .json)
+    print("Exporting data for frontend...")
+    export_all(conn, DATA_DIR, full=full)
+
+    # Step 2b: Export commute data (skip if no new Ride-type activities)
+    from backend.commute_export import export_commute_data
+    if full or _has_new_rides(conn, new_ids):
+        print("Exporting commute data...")
+        commute_data = export_commute_data(conn, DATA_DIR, commute_config)
+    else:
+        print("  Skipping commute export (no new ride activities)")
+        commute_data = _load_js_data(os.path.join(DATA_DIR, 'commute_data.js'), 'RETTICH_COMMUTE')
+
+    # Step 2c: Compute tile data once for both explorer and rider stats
+    print("Computing tile data...")
+    from backend.tile_engine import compute_tile_data
+    tile_data = compute_tile_data(conn, explorer_config)
+
+    # Step 2d: Export explorer tile data
     print("Exporting explorer data...")
     from backend.explorer_export import export_explorer_data
-    explorer_config = config.get('explorer', {})
-    explorer_data = export_explorer_data(conn, DATA_DIR, explorer_config)
+    explorer_data = export_explorer_data(conn, DATA_DIR, tile_data, explorer_config)
 
-    # Step 2d: Export per-rider statistics
+    # Step 2e: Export per-rider statistics (reuses tile_data — no second stream pass)
     print("Exporting rider statistics...")
     from backend.rider_stats_export import export_rider_stats
-    rider_stats_data = export_rider_stats(conn, DATA_DIR, explorer_config)
+    rider_stats_data = export_rider_stats(conn, DATA_DIR, tile_data, explorer_config)
 
     conn.close()
 
@@ -1634,6 +1658,58 @@ const COLUMNS = {{
 
 
 # --- Helpers ---
+
+def _get_new_activity_ids(conn, data_dir):
+    """Return IDs of activities in the DB that have no exported .js file yet."""
+    acts_dir = os.path.join(data_dir, 'activities')
+    existing = set()
+    if os.path.exists(acts_dir):
+        for fname in os.listdir(acts_dir):
+            if fname.endswith('.js'):
+                try:
+                    existing.add(int(fname[:-3]))
+                except ValueError:
+                    pass
+    all_ids = {row['id'] for row in conn.execute("SELECT id FROM activities").fetchall()}
+    return all_ids - existing
+
+
+def _get_dates_for_ids(conn, activity_ids):
+    """Return the unique dates for a set of activity IDs."""
+    if not activity_ids:
+        return []
+    placeholders = ','.join('?' * len(activity_ids))
+    rows = conn.execute(
+        f"SELECT DISTINCT date FROM activities WHERE id IN ({placeholders})",
+        list(activity_ids)
+    ).fetchall()
+    return [r['date'] for r in rows]
+
+
+def _has_new_rides(conn, activity_ids):
+    """Return True if any of the given IDs is a Ride activity."""
+    if not activity_ids:
+        return False
+    placeholders = ','.join('?' * len(activity_ids))
+    return conn.execute(
+        f"SELECT 1 FROM activities WHERE id IN ({placeholders}) AND activity_type='Ride' LIMIT 1",
+        list(activity_ids)
+    ).fetchone() is not None
+
+
+def _load_js_data(js_path, var_name):
+    """Load data previously written as window.VAR_NAME = {...};  Returns dict or None."""
+    if not os.path.exists(js_path):
+        return None
+    try:
+        text = _read_text(js_path)
+        prefix = f'window.{var_name}='
+        if text.startswith(prefix):
+            return json.loads(text[len(prefix):].rstrip(';'))
+    except Exception:
+        pass
+    return None
+
 
 def _simple_hash(s):
     h = 0
