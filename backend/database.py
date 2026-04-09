@@ -146,7 +146,8 @@ def activity_exists(conn, activity_id):
 
 
 def insert_activity(conn, act):
-    conn.execute("""
+    """Insert an activity. Returns True if the row was actually inserted, False if it already existed."""
+    cursor = conn.execute("""
         INSERT OR IGNORE INTO activities
         (id, rider_name, name, activity_type, date, start_date_local, start_epoch,
          elapsed_time, moving_time, distance, total_elevation_gain,
@@ -162,6 +163,7 @@ def insert_activity(conn, act):
         act.get('average_watts'), act.get('summary_polyline')
     ))
     conn.commit()
+    return cursor.rowcount > 0
 
 
 def insert_stream(conn, activity_id, time_data, latlng_data, distance_data, altitude_data, watts_data=None):
