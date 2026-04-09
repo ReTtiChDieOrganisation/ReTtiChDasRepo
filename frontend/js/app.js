@@ -394,3 +394,30 @@ const RettichApp = (function () {
 document.addEventListener('DOMContentLoaded', () => {
     RettichApp.init();
 });
+
+// Mobile sidebar drawer (map page)
+(function () {
+    function setupMobileSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebar-overlay');
+        const btn = document.getElementById('sidebar-toggle-btn');
+        if (!btn || !overlay || !sidebar) return;
+
+        btn.addEventListener('click', function () {
+            sidebar.classList.toggle('open');
+            overlay.classList.toggle('active');
+        });
+        overlay.addEventListener('click', function () {
+            sidebar.classList.remove('open');
+            overlay.classList.remove('active');
+        });
+        // Auto-close drawer when a group is selected on mobile
+        document.addEventListener('rettich:groupSelected', function () {
+            if (document.body.classList.contains('mobile-view')) {
+                sidebar.classList.remove('open');
+                overlay.classList.remove('active');
+            }
+        });
+    }
+    document.addEventListener('DOMContentLoaded', setupMobileSidebar);
+})();
