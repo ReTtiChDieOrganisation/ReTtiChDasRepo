@@ -189,20 +189,10 @@ def build_html(site_config, explorer_data=None):
 
     <!-- Main App -->
     <div id="app">
-        <!-- Top Navigation -->
-        <nav class="topnav">
-            <div class="topnav-brand">
-                <span class="brand-icon">🥕</span>
-                <span class="brand-name">ReTtiCh</span>
-            </div>
-            <div class="topnav-tabs">
-                <a href="#" class="tab active" id="tab-map">Map</a>
-                <a href="commutes.html" class="tab" id="tab-commutes">Commutes</a>
-                <a href="explorer.html" class="tab" id="tab-explorer">Explorer</a>
-                <a href="riders.html" class="tab" id="tab-riders">Die Rettiche</a>
-            </div>
-            <div class="topnav-spacer"></div>
-        </nav>
+{_topnav_html('map')}
+
+        <!-- Mobile sidebar overlay -->
+        <div id="sidebar-overlay" class="sidebar-overlay"></div>
 
         <!-- Main Layout -->
         <div class="main-layout">
@@ -236,6 +226,8 @@ def build_html(site_config, explorer_data=None):
 
             <!-- Map + Controls -->
             <div class="map-area">
+                <!-- Mobile sidebar toggle -->
+                <button id="sidebar-toggle-btn" class="sidebar-toggle-btn" title="Open/close sidebar">☰</button>
                 <div id="map"></div>
 
                 <!-- Mode Toggle -->
@@ -298,6 +290,7 @@ def build_html(site_config, explorer_data=None):
     <script>
 {js_all}
     </script>
+{_shared_mobile_js()}
 </body>
 </html>'''
 
@@ -463,19 +456,7 @@ def build_commutes_html(commute_data, site_config):
 </head>
 <body>
     <div id="app">
-        <nav class="topnav">
-            <div class="topnav-brand">
-                <span class="brand-icon">🥕</span>
-                <span class="brand-name">ReTtiCh</span>
-            </div>
-            <div class="topnav-tabs">
-                <a href="index.html" class="tab">Map</a>
-                <a href="commutes.html" class="tab active">Commutes</a>
-                <a href="explorer.html" class="tab">Explorer</a>
-                <a href="riders.html" class="tab">Die Rettiche</a>
-            </div>
-            <div class="topnav-spacer"></div>
-        </nav>
+{_topnav_html('commutes')}
 
         <div class="commute-page">
             <!-- Stats Banner -->
@@ -826,6 +807,7 @@ def build_commutes_html(commute_data, site_config):
         document.getElementById('window-select').addEventListener('change', updateChart);
     }});
     </script>
+{_shared_mobile_js()}
 </body>
 </html>'''
 
@@ -941,22 +923,10 @@ def build_explorer_html(explorer_data, site_config):
 </head>
 <body>
     <div id="app">
-        <nav class="topnav">
-            <div class="topnav-brand">
-                <span class="brand-icon">🥕</span>
-                <span class="brand-name">ReTtiCh</span>
-            </div>
-            <div class="topnav-tabs">
-                <a href="index.html" class="tab">Map</a>
-                <a href="commutes.html" class="tab">Commutes</a>
-                <a href="explorer.html" class="tab active">Explorer</a>
-                <a href="riders.html" class="tab">Die Rettiche</a>
-            </div>
-            <div class="topnav-spacer"></div>
-        </nav>
+{_topnav_html('explorer')}
 
         <div class="explorer-layout">
-            <aside class="explorer-sidebar">
+            <aside class="explorer-sidebar" id="explorer-sidebar">
                 <div class="mode-switch">
                     <button class="active" data-mode="heatmap">Beete</button>
                     <button data-mode="feld">Acker</button>
@@ -1054,6 +1024,8 @@ def build_explorer_html(explorer_data, site_config):
             </aside>
 
             <div class="explorer-map">
+                <button id="explorer-sidebar-toggle-btn" class="sidebar-toggle-btn" aria-label="Open explorer panel">☰</button>
+                <div id="explorer-sidebar-overlay" class="sidebar-overlay"></div>
                 <div id="explorer-map"></div>
             </div>
         </div>
@@ -1333,6 +1305,26 @@ def build_explorer_html(explorer_data, site_config):
 
     document.addEventListener('DOMContentLoaded', initExplorer);
     </script>
+    <script>
+    (function () {{
+        function setupExplorerSidebar() {{
+            const sidebar = document.getElementById('explorer-sidebar');
+            const overlay = document.getElementById('explorer-sidebar-overlay');
+            const btn = document.getElementById('explorer-sidebar-toggle-btn');
+            if (!btn || !overlay || !sidebar) return;
+            btn.addEventListener('click', function () {{
+                sidebar.classList.toggle('open');
+                overlay.classList.toggle('active');
+            }});
+            overlay.addEventListener('click', function () {{
+                sidebar.classList.remove('open');
+                overlay.classList.remove('active');
+            }});
+        }}
+        document.addEventListener('DOMContentLoaded', setupExplorerSidebar);
+    }})();
+    </script>
+{_shared_mobile_js()}
 </body>
 </html>'''
 
@@ -1497,19 +1489,7 @@ def build_riders_html(rider_stats_data, site_config, explorer_data=None):
 </head>
 <body>
     <div id="app">
-        <nav class="topnav">
-            <div class="topnav-brand">
-                <span class="brand-icon">🥕</span>
-                <span class="brand-name">ReTtiCh</span>
-            </div>
-            <div class="topnav-tabs">
-                <a href="index.html" class="tab">Map</a>
-                <a href="commutes.html" class="tab">Commutes</a>
-                <a href="explorer.html" class="tab">Explorer</a>
-                <a href="riders.html" class="tab active">Die Rettiche</a>
-            </div>
-            <div class="topnav-spacer"></div>
-        </nav>
+{_topnav_html('riders')}
 
         <div class="riders-page">
             <div class="riders-header">
@@ -1646,6 +1626,7 @@ const COLUMNS = {{
         }});
     }});
     </script>
+{_shared_mobile_js()}
 </body>
 </html>'''
 
@@ -1655,6 +1636,78 @@ const COLUMNS = {{
     size_kb = os.path.getsize(out_path) / 1024
     print(f"  Written {out_path} ({size_kb:.0f} KB)")
 
+
+
+# --- Mobile helpers ---
+
+def _topnav_html(active_tab):
+    """Return the shared topnav HTML with view-toggle button.
+    active_tab: 'map' | 'commutes' | 'explorer' | 'riders'
+    """
+    def _tab(href, full, short, key):
+        cls = 'tab active' if key == active_tab else 'tab'
+        return (f'<a href="{href}" class="{cls}">'
+                f'<span class="tab-full">{full}</span>'
+                f'<span class="tab-short">{short}</span>'
+                f'</a>')
+
+    tabs = (
+        _tab('index.html', 'Map',          'Map',   'map')
+        + _tab('commutes.html', 'Commutes', 'Rides', 'commutes')
+        + _tab('explorer.html', 'Explorer', 'Tiles', 'explorer')
+        + _tab('riders.html',   'Die Rettiche', 'Stats', 'riders')
+    )
+    return f'''        <nav class="topnav">
+            <div class="topnav-brand">
+                <span class="brand-icon">🥕</span>
+                <span class="brand-name">ReTtiCh</span>
+            </div>
+            <div class="topnav-tabs">{tabs}</div>
+            <div class="topnav-spacer"></div>
+            <button class="view-toggle-btn" id="view-toggle-btn" title="Toggle mobile/desktop view">📱</button>
+        </nav>'''
+
+
+def _shared_mobile_js():
+    """Return an inline <script> block for view-mode detection + toggle button."""
+    return '''<script>
+(function () {
+    var KEY = 'rettich-view';
+    var btn = document.getElementById('view-toggle-btn');
+    function isMobileScreen() { return window.innerWidth <= 768; }
+    function getMode() { return localStorage.getItem(KEY); }
+    function isEffectiveMobile() {
+        var m = getMode();
+        if (m === 'desktop') return false;
+        if (m === 'mobile')  return true;
+        return isMobileScreen();
+    }
+    function applyView() {
+        if (isEffectiveMobile()) {
+            document.body.classList.add('mobile-view');
+        } else {
+            document.body.classList.remove('mobile-view');
+        }
+        if (btn) {
+            var m = getMode();
+            btn.textContent = (m === 'desktop') ? '📱' : (m === 'mobile') ? '🖥' : (isMobileScreen() ? '🖥' : '📱');
+            btn.title = isEffectiveMobile() ? 'Switch to desktop view' : 'Switch to mobile view';
+        }
+    }
+    if (btn) {
+        btn.addEventListener('click', function () {
+            var m = getMode();
+            if (!m)            { localStorage.setItem(KEY, isMobileScreen() ? 'desktop' : 'mobile'); }
+            else if (m === 'mobile')  { localStorage.setItem(KEY, 'desktop'); }
+            else               { localStorage.removeItem(KEY); }
+            applyView();
+        });
+    }
+    applyView();
+    window.addEventListener('resize', applyView);
+    window.applyRettichView = applyView;
+})();
+</script>'''
 
 
 # --- Helpers ---

@@ -812,3 +812,150 @@ html, body {
 @keyframes spin {
     to { transform: rotate(360deg); }
 }
+
+/* =====================================================================
+   MOBILE / RESPONSIVE
+   All mobile styles are scoped to body.mobile-view so the desktop
+   layout is never touched. JS auto-applies the class on small screens
+   and lets the user force either mode via the view-toggle button.
+   ===================================================================== */
+
+/* --- View-toggle button (topnav, always visible) --- */
+.view-toggle-btn {
+    width: 34px;
+    height: 34px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 16px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: border-color 0.15s, color 0.15s;
+    margin-left: 8px;
+}
+.view-toggle-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+/* Tab short/full label switching */
+.tab-short { display: none; }
+
+/* --- Sidebar overlay (drawer backdrop, hidden on desktop) --- */
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 499;
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+}
+.sidebar-overlay.active { display: block; }
+
+/* --- Sidebar / explorer-sidebar toggle button (hidden on desktop) --- */
+.sidebar-toggle-btn {
+    display: none;
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    z-index: 200;
+    width: 42px;
+    height: 42px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-size: 20px;
+    cursor: pointer;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+    transition: border-color 0.15s;
+}
+.sidebar-toggle-btn:hover { border-color: var(--accent); }
+
+/* ===================================================================
+   body.mobile-view — everything below only applies in mobile mode
+   =================================================================== */
+
+/* Topnav */
+.mobile-view .topnav { padding: 0 10px; gap: 6px; }
+.mobile-view .topnav-tabs { gap: 2px; }
+.mobile-view .tab { padding: 6px 8px; font-size: 11px; }
+.mobile-view .tab-full { display: none; }
+.mobile-view .tab-short { display: inline; }
+.mobile-view .brand-name { font-size: 15px; }
+
+/* Show hamburger button on pages that have a sidebar */
+.mobile-view .sidebar-toggle-btn { display: flex; }
+
+/* MAP PAGE — Sidebar becomes a slide-in drawer */
+.mobile-view .main-layout { display: block; }
+.mobile-view .sidebar {
+    position: fixed;
+    top: var(--topnav-height);
+    left: 0;
+    bottom: 0;
+    z-index: 500;
+    width: 85%;
+    max-width: 320px;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.5);
+}
+.mobile-view .sidebar.open { transform: translateX(0); }
+.mobile-view .map-area {
+    width: 100%;
+    height: calc(100vh - var(--topnav-height));
+}
+
+/* Playback controls — compact */
+.mobile-view .pb-clock { font-size: 20px; margin-bottom: 4px; }
+.mobile-view .pb-time { display: none; }
+.mobile-view .playback-controls { padding: 12px 10px 8px; }
+
+/* Mode toggle — compact */
+.mobile-view .mode-btn { padding: 7px 10px; font-size: 11px; }
+.mobile-view .mode-icon { display: none; }
+
+/* Segment panel — full-width, above playback bar */
+.mobile-view .segment-panel {
+    left: 8px;
+    right: 8px;
+    bottom: 68px;
+    width: auto;
+}
+
+/* EXPLORER PAGE — sidebar drawer */
+.mobile-view .explorer-sidebar {
+    position: fixed;
+    top: var(--topnav-height);
+    left: 0;
+    bottom: 0;
+    z-index: 500;
+    width: 85%;
+    max-width: 360px;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.5);
+}
+.mobile-view .explorer-sidebar.open { transform: translateX(0); }
+.mobile-view .explorer-map { width: 100%; }
+
+/* COMMUTES PAGE */
+.mobile-view .commute-page { padding: 16px; }
+.mobile-view .commute-header { flex-direction: column; gap: 6px; align-items: flex-start; }
+.mobile-view .controls-row { flex-direction: column; align-items: stretch; gap: 8px; }
+.mobile-view .control-group { justify-content: space-between; }
+.mobile-view .control-select { flex: 1; }
+.mobile-view .rider-stat-card { min-width: 100%; flex-basis: 100%; }
+.mobile-view #plotly-chart { height: 300px !important; }
+
+/* RIDERS PAGE */
+.mobile-view .riders-page { padding: 16px; }
+.mobile-view .riders-header { flex-wrap: wrap; gap: 10px; }
+.mobile-view .riders-content { flex-direction: column; }
+.mobile-view .riders-chart-wrap { width: 100%; flex-shrink: 1; }
+.mobile-view .riders-table-wrap { overflow-x: auto; }
