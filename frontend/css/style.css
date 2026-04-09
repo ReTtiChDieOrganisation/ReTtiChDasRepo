@@ -166,6 +166,7 @@ html, body {
 .main-layout {
     display: flex;
     height: calc(100vh - var(--topnav-height));
+    height: calc(100dvh - var(--topnav-height));
 }
 
 /* === Sidebar === */
@@ -686,6 +687,7 @@ html, body {
     padding: 32px;
     overflow-y: auto;
     height: calc(100vh - var(--topnav-height));
+    height: calc(100dvh - var(--topnav-height));
 }
 .commute-header {
     margin-bottom: 32px;
@@ -909,6 +911,7 @@ html, body {
 .mobile-view .map-area {
     width: 100%;
     height: calc(100vh - var(--topnav-height));
+    height: calc(100dvh - var(--topnav-height));
 }
 
 /* Playback controls — compact */
