@@ -119,11 +119,14 @@ def upsert_rider(conn, name, refresh_token, icon_url, frame):
     conn.commit()
 
 
-def update_token(conn, rider_name, access_token, expires_at):
+def update_token(conn, rider_name, access_token, expires_at, refresh_token=None):
     conn.execute("""
-        UPDATE riders SET access_token=?, token_expires_at=?
+        UPDATE riders
+        SET access_token=?,
+            token_expires_at=?,
+            refresh_token=COALESCE(?, refresh_token)
         WHERE name=?
-    """, (access_token, expires_at, rider_name))
+    """, (access_token, expires_at, refresh_token, rider_name))
     conn.commit()
 
 

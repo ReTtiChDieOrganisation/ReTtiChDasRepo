@@ -19,7 +19,7 @@ def sync_rider(conn, client_id, client_secret, rider_name):
         access_token, expires_at, new_refresh = strava.refresh_access_token(
             client_id, client_secret, rider['refresh_token']
         )
-        db.update_token(conn, rider_name, access_token, expires_at)
+        db.update_token(conn, rider_name, access_token, expires_at, new_refresh)
     else:
         access_token = rider['access_token']
 
@@ -46,6 +46,11 @@ def sync_rider(conn, client_id, client_secret, rider_name):
                 continue
 
             act = strava.parse_activity_summary(rider_name, act_json)
+
+            # Track max epoch for all API-returned activities (not just new ones)
+            # so sync_state advances even if everything already exists in the DB.
+            if act['start_epoch'] > max_epoch:
+                max_epoch = act['start_epoch']
 
             if db.activity_exists(conn, act['id']):
                 continue
@@ -77,9 +82,6 @@ def sync_rider(conn, client_id, client_secret, rider_name):
                 raise  # Let caller handle
             except Exception as e:
                 print(f"    [!] Error fetching details for {act['id']}: {e}")
-
-            if act['start_epoch'] > max_epoch:
-                max_epoch = act['start_epoch']
 
         page += 1
 
